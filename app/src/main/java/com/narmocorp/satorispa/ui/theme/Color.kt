@@ -1,4 +1,4 @@
-package com.narmocorp.satoriospa.ui.theme
+package com.narmocorp.satorispa.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
