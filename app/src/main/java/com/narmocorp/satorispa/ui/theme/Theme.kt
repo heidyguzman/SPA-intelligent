@@ -1,4 +1,4 @@
-package com.narmocorp.satoriospa.ui.theme
+package com.narmocorp.satorispa.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -34,7 +34,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun SatorioSpaTheme(
+fun SATORISPATheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,

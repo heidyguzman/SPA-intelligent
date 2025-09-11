@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Satorio Spa"
+rootProject.name = "SATORI SPA"
 include(":app")
  

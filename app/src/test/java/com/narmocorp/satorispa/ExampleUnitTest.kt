@@ -1,4 +1,4 @@
-package com.narmocorp.satoriospa
+package com.narmocorp.satorispa
 
 import org.junit.Test
 

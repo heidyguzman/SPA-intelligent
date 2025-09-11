@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.narmocorp.satoriospa"
+    namespace = "com.narmocorp.satorispa"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.narmocorp.satoriospa"
+        applicationId = "com.narmocorp.satorispa"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
