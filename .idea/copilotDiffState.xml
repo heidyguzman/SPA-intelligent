@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/Bienvenida.kt">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/Bienvenida.kt" />
+              <option name="updatedContent" value="// ...existing imports...&#10;&#10;@Composable&#10;fun Bienvenida(modifier: Modifier = Modifier) {&#10;    Box(&#10;        modifier = modifier&#10;            .requiredWidth(width = 412.dp)&#10;            .requiredHeight(height = 917.dp)&#10;    ) {&#10;        // ...existing code...&#10;        // Reemplaza el logo por el nuevo diseño&#10;        Image(&#10;            painter = painterResource(id = R.drawable.nuevo_logo),&#10;            contentDescription = &quot;nuevo logo&quot;,&#10;            contentScale = ContentScale.Crop,&#10;            modifier = Modifier&#10;                .align(alignment = Alignment.TopStart)&#10;                .offset(x = 86.dp, y = 64.dp)&#10;                .requiredWidth(width = 239.dp)&#10;                .requiredHeight(height = 190.dp)&#10;        )&#10;        // Reemplaza el botón por el nuevo diseño&#10;        Box(&#10;            modifier = Modifier&#10;                .align(alignment = Alignment.TopStart)&#10;                .offset(x = 106.dp, y = 730.dp)&#10;                .requiredWidth(width = 230.dp)&#10;                .requiredHeight(height = 73.dp)&#10;        ) {&#10;            // Fondo del botón como imagen&#10;            Image(&#10;                painter = painterResource(id = R.drawable.boton_nuevo),&#10;                contentDescription = &quot;botón nuevo&quot;,&#10;                contentScale = ContentScale.FillBounds,&#10;                modifier = Modifier&#10;                    .requiredWidth(width = 230.dp)&#10;                    .requiredHeight(height = 73.dp)&#10;                    .clip(RoundedCornerShape(30.dp))&#10;            )&#10;            // Texto centrado encima del botón&#10;            Text(&#10;                text = &quot;Iniciar&quot;,&#10;                color = Color.White,&#10;                lineHeight = 1.27.em,&#10;                style = AppTypes.type_M3_title_large,&#10;                modifier = Modifier&#10;                    .align(Alignment.Center)&#10;            )&#10;        }&#10;        // ...existing code...&#10;    }&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

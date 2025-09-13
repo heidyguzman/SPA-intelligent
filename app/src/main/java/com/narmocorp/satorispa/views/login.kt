@@ -1,292 +1,220 @@
 package com.narmocorp.satorispa.views
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.requiredWidth
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ContentScale.Crop
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import com.narmocorp.satorispa.R
 
 @Composable
 fun Login(modifier: Modifier = Modifier, label1901: String) {
-    Box(
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
+    BoxWithConstraints(
         modifier = modifier
-            .requiredWidth(width = 412.dp)
-            .requiredHeight(height = 917.dp)
-            .background(color = Color.White)
+            .fillMaxSize()
+            .background(Color.White)
     ) {
+        val screenWidth = maxWidth
+        val screenHeight = maxHeight
+
+        // Fondo superior con imagen
         Image(
-            painter = painterResource(id = R.drawable.image2),
-            contentDescription = "image 2",
-            contentScale = ContentScale.Crop,
+            painter = painterResource(id = R.drawable.fondo),
+            contentDescription = "fondo",
             modifier = Modifier
-                .requiredWidth(width = 412.dp)
-                .requiredHeight(height = 404.dp))
+                .fillMaxWidth()
+                .height(screenHeight * 0.44f),
+            contentScale = ContentScale.Crop
+        )
+        // Logo con imagen
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "logo",
-            contentScale = ContentScale.Crop,
             modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 85.dp,
-                    y = 24.dp)
-                .requiredWidth(width = 239.dp)
-                .requiredHeight(height = 190.dp))
-        Image(
-            painter = painterResource(id = R.drawable.rectangle2),
-            contentDescription = "Rectangle 2",
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.03f)
+                .size(screenWidth * 0.58f, screenHeight * 0.21f),
+            contentScale = ContentScale.Crop
+        )
+        // Card principal
+        Card(
             modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 1.dp,
-                    y = 265.dp)
-                .requiredWidth(width = 410.dp)
-                .requiredHeight(height = 652.dp)
-                .clip(shape = RoundedCornerShape(30.dp)))
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.98f)
+                .fillMaxHeight(0.72f),
+            shape = RoundedCornerShape(30.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {}
+        // Tabs de Inicio/Registro
         Box(
             modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 37.dp,
-                    y = 289.dp)
-                .requiredWidth(width = 340.dp)
-                .requiredHeight(height = 101.dp)
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.32f)
+                .fillMaxWidth(0.82f)
+                .height(screenHeight * 0.11f)
         ) {
-            Box(
+            Card(
                 modifier = Modifier
-                    .requiredWidth(width = 340.dp)
-                    .requiredHeight(height = 101.dp)
-                    .clip(shape = RoundedCornerShape(100.dp))
-                    .background(color = Color(0xffdbbba6).copy(alpha = 0.86f)))
-            Image(
-                painter = painterResource(id = R.drawable.rectangle4),
-                contentDescription = "Rectangle 4",
+                    .fillMaxSize(),
+                shape = RoundedCornerShape(100.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xffdbbba6).copy(alpha = 0.86f))
+            ) {}
+            // Botón "Inicio" con Card de fondo
+            Card(
                 modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 12.dp,
-                        y = 13.dp)
-                    .requiredWidth(width = 174.dp)
-                    .requiredHeight(height = 74.dp)
-                    .clip(shape = RoundedCornerShape(100.dp)))
-            Text(
-                text = "Inicio",
-                color = Color.White,
-                lineHeight = 4.24.em,
-                style = TextStyle(
-                    fontSize = 33.sp),
+                    .align(Alignment.TopStart)
+                    .padding(start = screenWidth * 0.09f, top = screenHeight * 0.015f)
+                    .width(screenWidth * 0.32f)
+                    .height(screenHeight * 0.08f),
+                shape = RoundedCornerShape(100.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xffb08d73))
+            ) {}
+            Button(
+                onClick = { /* Acción para ir a Login */ },
                 modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 58.dp,
-                        y = 26.dp)
-                    .requiredWidth(width = 82.dp)
-                    .requiredHeight(height = 47.dp))
-            Text(
-                text = "Registro",
-                color = Color.White,
-                lineHeight = 4.24.em,
-                style = TextStyle(
-                    fontSize = 33.sp),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 197.dp,
-                        y = 26.dp)
-                    .requiredWidth(width = 129.dp)
-                    .requiredHeight(height = 47.dp))
-        }
-        Box(
-            modifier = Modifier
-                .align(alignment = Alignment.TopStart)
-                .offset(x = 25.dp,
-                    y = 404.dp)
-                .requiredWidth(width = 360.dp)
-                .requiredHeight(height = 433.dp)
-        ) {
-            Text(
-                text = "SATORI SPA TE DA LA BIENVENIDA",
-                color = Color(0xff71390c).copy(alpha = 0.79f),
-                textAlign = TextAlign.Center,
-                lineHeight = 6.09.em,
-                style = TextStyle(
-                    fontSize = 23.sp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 39.dp,
-                        y = 0.dp)
-                    .border(border = BorderStroke(1.dp, Color(0xff995d2d).copy(alpha = 0.5f))))
-            TextField(
-                value = "",
-                onValueChange = {},
-                label = {
-                    Text(
-                        text = label1901,
-                        color = AppColors.color_Light_Theme_On_Surface_60,
-                        lineHeight = 1.5.em,
-                        style = AppTypes.type_Subtitle_1,
-                        modifier = Modifier
-                            .wrapContentHeight(align = Alignment.CenterVertically))
-                },
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 39.dp,
-                        y = 98.dp)
-                    .requiredWidth(width = 321.dp)
-                    .padding(horizontal = 16.dp))
-            Icon(
-                painter = painterResource(id = R.drawable.mail),
-                contentDescription = "mail",
-                tint = AppColors.color_M3_sys_light_on_surface,
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 15.dp,
-                        y = 114.dp))
-            TextField(
-                value = "",
-                onValueChange = {},
-                label = {
-                    Text(
-                        text = label1901,
-                        color = AppColors.color_Light_Theme_On_Surface_60,
-                        lineHeight = 1.5.em,
-                        style = AppTypes.type_Subtitle_1,
-                        modifier = Modifier
-                            .wrapContentHeight(align = Alignment.CenterVertically))
-                },
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 39.dp,
-                        y = 178.dp)
-                    .requiredWidth(width = 321.dp)
-                    .padding(horizontal = 16.dp))
-            Image(
-                painter = painterResource(id = R.drawable.formlogin),
-                contentDescription = "Form Log In",
-                colorFilter = ColorFilter.tint(Color(0xff1c1b1f)),
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 22.dp,
-                        y = 204.dp)
-                    .requiredWidth(width = 23.dp))
-            Image(
-                painter = painterResource(id = R.drawable.eyeoff),
-                contentDescription = "Eye off",
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 303.dp,
-                        y = 204.dp)
-                    .requiredWidth(width = 30.dp)
-                    .requiredHeight(height = 21.dp))
-            TextField(
-                value = "",
-                onValueChange = {},
-                label = {
-                    Text(
-                        text = label1901,
-                        color = AppColors.color_Light_Theme_On_Surface_60,
-                        lineHeight = 1.5.em,
-                        style = AppTypes.type_Subtitle_1,
-                        modifier = Modifier
-                            .wrapContentHeight(align = Alignment.CenterVertically))
-                },
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 0.dp,
-                        y = 258.dp)
-                    .requiredWidth(width = 360.dp)
-                    .padding(start = 56.dp,
-                        end = 16.dp))
-            Image(
-                painter = painterResource(id = R.drawable.eyeoff),
-                contentDescription = "Eye off",
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 302.dp,
-                        y = 287.dp)
-                    .requiredWidth(width = 30.dp)
-                    .requiredHeight(height = 21.dp))
-            Box(
-                modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 104.dp,
-                        y = 339.dp)
-                    .requiredWidth(width = 178.dp)
-                    .requiredHeight(height = 46.dp)
+                    .align(Alignment.TopStart)
+                    .padding(start = screenWidth * 0.16f, top = screenHeight * 0.03f)
+                    .height(screenHeight * 0.06f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = Color.Black
+                ),
+                elevation = null,
+                shape = RoundedCornerShape(100.dp),
+                contentPadding = PaddingValues(0.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .requiredWidth(width = 178.dp)
-                        .requiredHeight(height = 46.dp)
-                        .clip(shape = RoundedCornerShape(30.dp))
-                        .background(color = Color(0xffdbbba6))
-                        .border(border = BorderStroke(1.dp, Color(0xff995d2d).copy(alpha = 0.5f)),
-                            shape = RoundedCornerShape(30.dp)))
                 Text(
-                    text = "Iniciar",
-                    color = Color(0xff995d2d),
-                    lineHeight = 1.27.em,
-                    style = AppTypes.type_M3_title_large,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 49.11.dp,
-                            y = 4.32.dp)
-                        .requiredWidth(width = 91.dp)
-                        .requiredHeight(height = 37.dp)
-                        .border(border = BorderStroke(1.dp, Color(0xff995d2d).copy(alpha = 0.5f)))
-                        .wrapContentHeight(align = Alignment.CenterVertically))
-                Image(
-                    painter = painterResource(id = R.drawable.input),
-                    contentDescription = "input",
-                    colorFilter = ColorFilter.tint(Color(0xff1c1b1f)),
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 133.dp,
-                            y = 11.dp)
-                        .requiredSize(size = 24.dp))
+                    text = "Inicio",
+                    lineHeight = 4.24.em,
+                    style = TextStyle(fontSize = (screenWidth.value * 0.08).sp),
+                    color = Color.Black
+                )
             }
-            Text(
-                text = "Olvide contraseña?",
-                color = ColorsColor.color_Text_Default_Default.invoke(),
-                textDecoration = TextDecoration.Underline,
-                lineHeight = 8.75.em,
-                style = AppTypes.type_Body_Link,
+            // Botón "Registro"
+            TextButton(
+                onClick = { /* Acción para ir a Registro */ },
                 modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 123.dp,
-                        y = 411.dp))
+                    .align(Alignment.TopEnd)
+                    .padding(end = screenWidth * 0.08f, top = screenHeight * 0.03f)
+                    .height(screenHeight * 0.06f),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color.White
+                ),
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Text(
+                    text = "Registro",
+                    lineHeight = 4.24.em,
+                    style = TextStyle(fontSize = (screenWidth.value * 0.08).sp),
+                    color = Color.White
+                )
+            }
+        }
+        // Formulario
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(0.84f)
+                .fillMaxHeight(0.48f)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "SATORI SPA TE DA LA BIENVENIDA",
+                    color = Color(0xff71390c).copy(alpha = 0.79f),
+                    textAlign = TextAlign.Center,
+                    style = TextStyle(fontSize = (screenWidth.value * 0.055).sp),
+                    modifier = Modifier.padding(top = screenHeight * 0.025f)
+                )
+
+                Spacer(Modifier.height(screenHeight * 0.035f))
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(text = label1901, color = Color.Gray) },
+                    modifier = Modifier.fillMaxWidth(0.92f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xff995d2d),
+                        unfocusedBorderColor = Color(0xffdbbba6),
+                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
+                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                    )
+                )
+
+                Spacer(Modifier.height(screenHeight * 0.02f))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(text = "Contraseña", color = Color.Gray) }, // Changed label for password
+                    modifier = Modifier.fillMaxWidth(0.92f),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Color(0xff995d2d),
+                        unfocusedBorderColor = Color(0xffdbbba6),
+                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
+                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                    )
+                )
+
+                Spacer(Modifier.height(screenHeight * 0.02f)) // Reducido de 0.035f
+
+                Button(
+                    onClick = { /* Acción de login */ },
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f) // Más ancho
+                        .height(screenHeight * 0.08f), // Más alto
+                    shape = RoundedCornerShape(30.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xffdbbba6),
+                        contentColor = Color(0xff995d2d)
+                    )
+                ) {
+                    Text(
+                        text = "Iniciar",
+                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp) // Texto más grande
+                    )
+                }
+
+                Spacer(Modifier.height(screenHeight * 0.015f)) // Reducido de 0.025f
+
+                TextButton(
+                    onClick = { /* Acción para olvidar contraseña */ },
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f) // Más ancho
+                        .height(screenHeight * 0.07f) // Más alto
+                ) {
+                    Text(
+                        text = "Olvide contraseña?",
+                        color = Color(0xff995d2d),
+                        textDecoration = TextDecoration.Underline,
+                        style = TextStyle(fontSize = (screenWidth.value * 0.05).sp), // Texto más grande
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.Center
+                    )
+                }
+                Spacer(Modifier.weight(1f)) // Este spacer debería ayudar a empujar el contenido hacia arriba si hay espacio, o permitir que se encoja.
+            }
         }
     }
 }
-
-@Preview(widthDp = 412, heightDp = 917)
-@Composable
-private fun LoginPreview() {
-    Login(Modifier, "Correo")
-}
-
