@@ -19,9 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 @Composable
-fun Login(modifier: Modifier = Modifier, label1901: String) {
+fun Login(
+    modifier: Modifier = Modifier,
+    label1901: String,
+    onLogin: (String, String) -> Unit // Nuevo parámetro para manejar el login
+) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -146,18 +151,18 @@ fun Login(modifier: Modifier = Modifier, label1901: String) {
                 )
 
                 Spacer(Modifier.height(screenHeight * 0.035f))
-
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
                     label = { Text(text = label1901, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
+
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
-                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
 
@@ -166,24 +171,25 @@ fun Login(modifier: Modifier = Modifier, label1901: String) {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text(text = "Contraseña", color = Color.Gray) }, // Changed label for password
+                    label = { Text(text = "Contraseña", color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
                     shape = RoundedCornerShape(16.dp),
+                    visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
-                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
 
-                Spacer(Modifier.height(screenHeight * 0.02f)) // Reducido de 0.035f
+                Spacer(Modifier.height(screenHeight * 0.02f))
 
                 Button(
-                    onClick = { /* Acción de login */ },
+                    onClick = { onLogin(email, password) },
                     modifier = Modifier
-                        .fillMaxWidth(0.92f) // Más ancho
-                        .height(screenHeight * 0.08f), // Más alto
+                        .fillMaxWidth(0.92f)
+                        .height(screenHeight * 0.08f),
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xffdbbba6),
@@ -192,7 +198,7 @@ fun Login(modifier: Modifier = Modifier, label1901: String) {
                 ) {
                     Text(
                         text = "Iniciar",
-                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp) // Texto más grande
+                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp)
                     )
                 }
 
