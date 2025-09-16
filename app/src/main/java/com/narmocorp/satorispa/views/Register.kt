@@ -34,6 +34,8 @@ import com.narmocorp.satorispa.api.RetrofitClient
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 
 @Composable
@@ -170,17 +172,24 @@ fun Register(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = nombre,
                     onValueChange = { nombre = it },
-                    label = { Text("Nombre", color = Color.Gray) },
+                    label = { Text("Nombre", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.065f), // Altura fija más pequeña
+                        .heightIn(min = 56.dp), // Usar heightIn en lugar de height fijo
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
                         focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xff995d2d) // Color del cursor
+                    ),
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp // Mejor espaciado de línea
+                    ),
+                    singleLine = true, // Una sola línea
+                    maxLines = 1 // Máximo una línea
                 )
 
                 Spacer(Modifier.height(screenHeight * 0.015f)) // Reducido espaciado
@@ -188,17 +197,24 @@ fun Register(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = apellido,
                     onValueChange = { apellido = it },
-                    label = { Text("Apellido", color = Color.Gray) },
+                    label = { Text("Apellido", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.065f), // Altura fija más pequeña
+                        .heightIn(min = 56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
                         focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xff995d2d)
+                    ),
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp
+                    ),
+                    singleLine = true,
+                    maxLines = 1
                 )
 
                 Spacer(Modifier.height(screenHeight * 0.015f)) // Reducido espaciado
@@ -206,16 +222,26 @@ fun Register(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text("Correo", color = Color.Gray) },
+                    label = { Text("Correo", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.065f), // Altura fija más pequeña
+                        .heightIn(min = 56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
                         focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xff995d2d)
+                    ),
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp
+                    ),
+                    singleLine = true,
+                    maxLines = 1,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email // Teclado optimizado para email
                     )
                 )
 
@@ -231,16 +257,17 @@ fun Register(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Contraseña", color = Color.Gray) },
+                    label = { Text("Contraseña", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.065f),
+                        .heightIn(min = 56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
                         focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xff995d2d)
                     ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -248,13 +275,19 @@ fun Register(modifier: Modifier = Modifier) {
                             Icon(
                                 imageVector = trailingIcon,
                                 contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                tint = Color.Black // O el color que desees para el icono
+                                tint = Color(0xff995d2d) // Color del icono
                             )
                         }
-                    }
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp
+                    ),
+                    singleLine = true,
+                    maxLines = 1
                 )
 
-                Spacer(Modifier.height(screenHeight * 0.015f)) // Reducido espaciado
+                Spacer(Modifier.height(screenHeight * 0.014f)) // Reducido espaciado
 
                 var confirmarPasswordVisible by remember { mutableStateOf(false) }
                 val trailingIconConfirm = if (confirmarPasswordVisible) {
@@ -266,16 +299,17 @@ fun Register(modifier: Modifier = Modifier) {
                 OutlinedTextField(
                     value = confirmarPassword,
                     onValueChange = { confirmarPassword = it },
-                    label = { Text("Verificación", color = Color.Gray) }, // Etiqueta corregida
+                    label = { Text("Verificación", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.065f),
+                        .heightIn(min = 56.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
                         focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
+                        unfocusedTextColor = Color.Black,
+                        cursorColor = Color(0xff995d2d)
                     ),
                     visualTransformation = if (confirmarPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -283,13 +317,19 @@ fun Register(modifier: Modifier = Modifier) {
                             Icon(
                                 imageVector = trailingIconConfirm,
                                 contentDescription = if (confirmarPasswordVisible) "Ocultar contraseña" else "Mostrar contraseña",
-                                tint = Color.Black // O el color que desees para el icono
+                                tint = Color(0xff995d2d)
                             )
                         }
-                    }
+                    },
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        lineHeight = 20.sp
+                    ),
+                    singleLine = true,
+                    maxLines = 1
                 )
 
-                Spacer(Modifier.height(screenHeight * 0.06f)) // Espaciado antes del botón
+                Spacer(Modifier.height(screenHeight * 0.02f)) // Espaciado antes del botón
 
                 Button(
                     onClick = {// Lógica de validación
