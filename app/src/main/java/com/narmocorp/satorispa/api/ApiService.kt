@@ -1,8 +1,10 @@
 package com.narmocorp.satorispa.api
 
+import com.narmocorp.satorispa.models.LoginRequest
 import com.narmocorp.satorispa.models.Usuario
 import retrofit2.Call
 import retrofit2.http.GET
+import retrofit2.http.Query
 import retrofit2.http.POST
 import retrofit2.http.Body
 
@@ -13,19 +15,12 @@ interface ApiService {
 
     //mandar llamar el endpoint de login
     // POST /login
-    @POST("login")
-    fun login(@Body loginRequest: LoginRequest): Call<LoginResponse>
+    @GET("login")
+
+    fun login(@Query("correo") correo: String, @Query("contrasena") contrasena: String): Call<Usuario>
 }
 
 // Si no existen, agrega estas clases:
-data class LoginRequest(
-    val email: String,
-    val password: String
-)
 
-data class LoginResponse(
-    val success: Boolean,
-    val token: String? = null,
-    val usuario: Usuario? = null,
-    val message: String? = null
-)
+
+

@@ -27,8 +27,8 @@ fun Login(
     label1901: String,
     onLogin: (String, String) -> Unit // Nuevo parámetro para manejar el login
 ) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var correo by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
 
     BoxWithConstraints(
         modifier = modifier
@@ -152,8 +152,8 @@ fun Login(
 
                 Spacer(Modifier.height(screenHeight * 0.035f))
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
+                    value = correo,
+                    onValueChange = { correo = it },
                     label = { Text(text = label1901, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
 
@@ -169,8 +169,8 @@ fun Login(
                 Spacer(Modifier.height(screenHeight * 0.02f))
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
+                    value = contrasena,
+                    onValueChange = { contrasena = it },
                     label = { Text(text = "Contraseña", color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
                     shape = RoundedCornerShape(16.dp),
@@ -186,7 +186,7 @@ fun Login(
                 Spacer(Modifier.height(screenHeight * 0.02f))
 
                 Button(
-                    onClick = { onLogin(email, password) },
+                    onClick = { onLogin(correo, contrasena) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
                         .height(screenHeight * 0.08f),

@@ -1,6 +1,8 @@
 package com.narmocorp.satorispa
 
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
@@ -10,21 +12,23 @@ import androidx.navigation.compose.rememberNavController
 import com.narmocorp.satorispa.ui.theme.SATORISPATheme
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.StartScreen
+import com.narmocorp.satorispa.views.Inicio
 import com.narmocorp.satorispa.api.ApiService
-import com.narmocorp.satorispa.api.LoginRequest
-import com.narmocorp.satorispa.api.LoginResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
+import androidx.compose.runtime.*
+import com.narmocorp.satorispa.api.RetrofitClient
+import com.narmocorp.satorispa.models.LoginRequest
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             SATORISPATheme {
                 val navController = rememberNavController()
+
                 NavHost(navController = navController, startDestination = "start") {
                     composable("start") {
                         StartScreen(
@@ -34,37 +38,57 @@ class MainActivity : ComponentActivity() {
                     composable("login") {
                         Login(
                             label1901 = "Correo electrónico",
-                            onLogin = { correo, password ->
-                                // Lógica de autenticación con tu API usando Retrofit
+                            onLogin = { correo, contrasena ->
                                 lifecycleScope.launch {
-                                    val loginExitoso = loginUser(correo, password)
-                                    if (loginExitoso) {
-                                        navController.navigate("home")
-                                    } else {
-                                        // Aquí puedes mostrar un mensaje de error si lo deseas
+                                    try {
+                                        val loginRequest = LoginRequest(correo, contrasena)
+                                        val response = withContext(Dispatchers.IO) {
+                                            RetrofitClient.instance.login(correo, contrasena).execute()
+                                        }
+                                        withContext(Dispatchers.Main) {
+                                            if(response.isSuccessful) {
+
+
+                                            val usuario = response.body()
+                                            if (usuario != null) {
+                                                Toast.makeText(
+                                                    applicationContext,"Login exitoso: ${usuario.nombre}",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                Log.d("MainActivity", "Usuario: $usuario")
+                                                navController.navigate("inicio")
+                                            } else {
+                                                Toast.makeText(
+                                                    applicationContext, "Error en el login",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                Log.d("MainActivity", "Error en el login")
+                                            }
+                                            }
+                                            else {
+                                                val errorBody = response.errorBody()?.string()
+                                                Toast.makeText(
+                                                    applicationContext, "Error en el login: $errorBody",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                Log.d("MainActivity", "Error en el login: ${response.code()}+$errorBody" )
+
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Manejar excepción de red u otros errores
+                                        println("Excepción durante el login: ${e.message}")
                                     }
+
                                 }
+
                             }
                         )
                     }
-                    // composable("home") { HomeScreen() } // Si tienes una pantalla principal
+                    composable("inicio") {
+                        Inicio()
+                    }
                 }
-            }
-        }
-    }
-
-    private suspend fun loginUser(email: String, password: String): Boolean {
-        return withContext(Dispatchers.IO) {
-            try {
-                val retrofit = Retrofit.Builder()
-                    .baseUrl("https://TU_API_BASE_URL/") // Cambia esto por tu URL base real
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build()
-                val api = retrofit.create(ApiService::class.java)
-                val response = api.login(LoginRequest(email, password)).execute()
-                response.isSuccessful && response.body()?.success == true
-            } catch (e: Exception) {
-                false
             }
         }
     }
