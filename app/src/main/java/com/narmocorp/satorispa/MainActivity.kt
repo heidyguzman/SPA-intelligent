@@ -8,7 +8,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.narmocorp.satorispa.ui.theme.SATORISPATheme
 import com.narmocorp.satorispa.views.Login
+import com.narmocorp.satorispa.views.Register
 import com.narmocorp.satorispa.views.StartScreen
+
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,7 +27,10 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("login") {
-                        Login(label1901 = "Correo electrónico")
+                        Login(label1901 = "Correo electrónico", navController = navController)
+                    }
+                    composable("register") {
+                        Register()
                     }
                 }
             }

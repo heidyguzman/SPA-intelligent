@@ -19,9 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
+import androidx.navigation.NavController
 
 @Composable
-fun Login(modifier: Modifier = Modifier, label1901: String) {
+fun Login(modifier: Modifier = Modifier, label1901: String, navController: NavController) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
@@ -108,7 +109,7 @@ fun Login(modifier: Modifier = Modifier, label1901: String) {
             }
             // Botón "Registro"
             TextButton(
-                onClick = { /* Acción para ir a Registro */ },
+                onClick = { navController.navigate("register") },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(end = screenWidth * 0.08f, top = screenHeight * 0.03f)
