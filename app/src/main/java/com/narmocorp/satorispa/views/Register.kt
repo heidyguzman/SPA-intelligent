@@ -29,6 +29,11 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import com.narmocorp.satorispa.models.Usuario
+import com.narmocorp.satorispa.api.RetrofitClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 @Composable
@@ -287,7 +292,40 @@ fun Register(modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(screenHeight * 0.06f)) // Espaciado antes del botón
 
                 Button(
-                    onClick = { /* Acción registrar */ },
+                    onClick = {// Lógica de validación
+                        if (nombre.isNotBlank() && apellido.isNotBlank() && correo.isNotBlank() && password.isNotBlank() && confirmarPassword.isNotBlank()) {
+                            if (password == confirmarPassword) {
+                                // Creación del objeto Usuario para la API
+                                val newUser = Usuario(
+                                    id = 0, // El id se genera en la base de datos
+                                    nombre = nombre,
+                                    apellido = apellido,
+                                    correo = correo,
+                                    contraseña = password
+                                )
+
+                                // Llamada a la API de registro
+                                RetrofitClient.instance.registerUser(newUser).enqueue(object : Callback<Usuario> {
+                                    override fun onResponse(call: Call<Usuario>, response: Response<Usuario>) {
+                                        if (response.isSuccessful) {
+                                            println("Registro exitoso: ${response.body()}")
+                                            // TODO: Aquí, agrega la lógica para navegar a la siguiente pantalla
+                                        } else {
+                                            println("Error en el registro: ${response.errorBody()?.string()}")
+                                        }
+                                    }
+
+                                    override fun onFailure(call: Call<Usuario>, t: Throwable) {
+                                        println("Error de conexión: ${t.message}")
+                                    }
+                                })
+                            } else {
+                                println("Las contraseñas no coinciden")
+                            }
+                        } else {
+                            println("Por favor, completa todos los campos")
+                        }
+                },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
                         .height(screenHeight * 0.065f), // Reducido ligeramente
