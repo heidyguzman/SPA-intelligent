@@ -22,6 +22,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import androidx.compose.runtime.*
 import com.narmocorp.satorispa.api.RetrofitClient
 import com.narmocorp.satorispa.models.LoginRequest
+import com.narmocorp.satorispa.controllers.LoginController
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,45 +42,24 @@ class MainActivity : ComponentActivity() {
                             onLogin = { correo, contrasena ->
                                 lifecycleScope.launch {
                                     try {
-                                        val loginRequest = LoginRequest(correo, contrasena)
-                                        val response = withContext(Dispatchers.IO) {
-                                            RetrofitClient.instance.login(correo, contrasena).execute()
-                                        }
-                                        withContext(Dispatchers.Main) {
-                                            if(response.isSuccessful) {
-
-
-                                            val usuario = response.body()
-                                            if (usuario != null) {
-                                                Toast.makeText(
-                                                    applicationContext,"Login exitoso: ${usuario.nombre}",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                Log.d("MainActivity", "Usuario: $usuario")
-                                                navController.navigate("inicio")
-                                            } else {
-                                                Toast.makeText(
-                                                    applicationContext, "Error en el login",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                Log.d("MainActivity", "Error en el login")
-                                            }
-                                            }
-                                            else {
-                                                val errorBody = response.errorBody()?.string()
-                                                Toast.makeText(
-                                                    applicationContext, "Error en el login: $errorBody",
-                                                    Toast.LENGTH_LONG
-                                                ).show()
-                                                Log.d("MainActivity", "Error en el login: ${response.code()}+$errorBody" )
-
-                                            }
+                                        val usuario = LoginController.loginUser(correo, contrasena)
+                                        if (usuario != null) {
+                                            Toast.makeText(
+                                                applicationContext,"Login exitoso: ${usuario.nombre}",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            Log.d("MainActivity", "Usuario: $usuario")
+                                            navController.navigate("inicio")
+                                        } else {
+                                            Toast.makeText(
+                                                applicationContext, "Error en el login",
+                                                Toast.LENGTH_LONG
+                                            ).show()
+                                            Log.d("MainActivity", "Error en el login")
                                         }
                                     } catch (e: Exception) {
-                                        // Manejar excepción de red u otros errores
                                         println("Excepción durante el login: ${e.message}")
                                     }
-
                                 }
 
                             }
