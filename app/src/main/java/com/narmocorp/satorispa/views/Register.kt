@@ -36,15 +36,34 @@ import retrofit2.Callback
 import retrofit2.Response
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.navigation.NavController
+import androidx.navigation.NavOptionsBuilder
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import android.util.Patterns
 
 
 @Composable
-fun Register(modifier: Modifier = Modifier) {
+fun Register(modifier: Modifier = Modifier, navController: NavController) {
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmarPassword by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
+    var confirmarContrasena by remember { mutableStateOf("") }
+
+    // Variables para los mensajes
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    // Función para mostrar mensajes
+    fun showMessage(message: String) {
+        scope.launch {
+            snackbarHostState.showSnackbar(message)
+        }
+    }
 
     BoxWithConstraints(
         modifier = modifier
@@ -100,7 +119,7 @@ fun Register(modifier: Modifier = Modifier) {
             ) {}
             // Botón Inicio
             TextButton(
-                onClick = { /* ir a Login */ },
+                onClick = { navController.navigate("login") },
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = screenWidth * 0.08f, top = screenHeight * 0.02f) // Ajustado padding
@@ -255,8 +274,8 @@ fun Register(modifier: Modifier = Modifier) {
                 }
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
+                    value = contrasena,
+                    onValueChange = { contrasena = it },
                     label = { Text("Contraseña", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
@@ -297,8 +316,8 @@ fun Register(modifier: Modifier = Modifier) {
                 }
 
                 OutlinedTextField(
-                    value = confirmarPassword,
-                    onValueChange = { confirmarPassword = it },
+                    value = confirmarContrasena,
+                    onValueChange = { confirmarContrasena = it },
                     label = { Text("Verificación", color = Color.Gray, fontSize = 14.sp) },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
@@ -332,40 +351,54 @@ fun Register(modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(screenHeight * 0.02f)) // Espaciado antes del botón
 
                 Button(
-                    onClick = {// Lógica de validación
-                        if (nombre.isNotBlank() && apellido.isNotBlank() && correo.isNotBlank() && password.isNotBlank() && confirmarPassword.isNotBlank()) {
-                            if (password == confirmarPassword) {
-                                // Creación del objeto Usuario para la API
+                    onClick = {
+                        // Lógica de validación con mensajes
+                        when {
+                            nombre.isBlank() -> showMessage("Por favor, ingresa tu nombre")
+                            apellido.isBlank() -> showMessage("Por favor, ingresa tu apellido")
+                            correo.isBlank() -> showMessage("Por favor, ingresa tu correo")
+                            contrasena.isBlank() -> showMessage("Por favor, ingresa tu contraseña")
+                            confirmarContrasena.isBlank() -> showMessage("Por favor, confirma tu contraseña")
+                            contrasena != confirmarContrasena -> showMessage("Las contraseñas no coinciden")
+                            contrasena.length < 6 -> showMessage("La contraseña debe tener al menos 6 caracteres")
+                            !Patterns.EMAIL_ADDRESS.matcher(correo).matches() -> showMessage("Ingresa un correo válido")
+                            else -> {
+                                // Creación del objeto Usuario
                                 val newUser = Usuario(
-                                    id = 0, // El id se genera en la base de datos
+                                    id = 0,
                                     nombre = nombre,
                                     apellido = apellido,
                                     correo = correo,
-                                    contraseña = password
+                                    contrasena = contrasena
                                 )
 
-                                // Llamada a la API de registro
+                                // Llamada a la API
                                 RetrofitClient.instance.registerUser(newUser).enqueue(object : Callback<Usuario> {
                                     override fun onResponse(call: Call<Usuario>, response: Response<Usuario>) {
                                         if (response.isSuccessful) {
-                                            println("Registro exitoso: ${response.body()}")
-                                            // TODO: Aquí, agrega la lógica para navegar a la siguiente pantalla
+                                            // ✅ REGISTRO EXITOSO - IR DIRECTO AL LOGIN
+                                            navController.navigate("login") {
+                                                popUpTo("register") { inclusive = true }
+                                                launchSingleTop = true
+                                            }
                                         } else {
-                                            println("Error en el registro: ${response.errorBody()?.string()}")
+                                            val errorMessage = when (response.code()) {
+                                                409 -> "Este correo ya está registrado"
+                                                400 -> "Datos inválidos, revisa la información"
+                                                500 -> "Error del servidor, intenta más tarde"
+                                                else -> "Error en el registro"
+                                            }
+                                            showMessage(errorMessage)
                                         }
                                     }
 
                                     override fun onFailure(call: Call<Usuario>, t: Throwable) {
-                                        println("Error de conexión: ${t.message}")
+                                        showMessage("Sin conexión a internet, revisa tu conexión")
                                     }
                                 })
-                            } else {
-                                println("Las contraseñas no coinciden")
                             }
-                        } else {
-                            println("Por favor, completa todos los campos")
                         }
-                },
+                    },
                     modifier = Modifier
                         .fillMaxWidth(0.92f)
                         .height(screenHeight * 0.065f), // Reducido ligeramente
@@ -384,6 +417,12 @@ fun Register(modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(screenHeight * 0.01f)) // Pequeño espaciado al final
             }
         }
+
+        // SnackbarHost para mostrar mensajes
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -420,5 +459,6 @@ fun DarkThemeNoIconYes(
 @Preview(widthDp = 412, heightDp = 917, showBackground = true)
 @Composable
 private fun RegisterPreview() {
-    Register()
+    val navController = rememberNavController()
+    Register(navController = navController)
 }
