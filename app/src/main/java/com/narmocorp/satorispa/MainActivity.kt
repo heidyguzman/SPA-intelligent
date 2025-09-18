@@ -23,14 +23,15 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController = navController, startDestination = "start") {
                     composable("start") {
                         StartScreen(
-                            onLoginClick = { navController.navigate("login") }
+                            onLoginClick = { navController.navigate("login") },
+                            onRegisterClick = { navController.navigate("register") }
                         )
                     }
                     composable("login") {
                         Login(label1901 = "Correo electrónico", navController = navController)
                     }
                     composable("register") {
-                        Register()
+                        Register(navController = navController)
                     }
                 }
             }
