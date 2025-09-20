@@ -33,7 +33,8 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController = navController, startDestination = "start") {
                     composable("start") {
                         StartScreen(
-                            onLoginClick = { navController.navigate("login") }
+                            onLoginClick = { navController.navigate("login") },
+                            onRegisterClick = { navController.navigate("register") }
                         )
                     }
                     composable("login") {
@@ -67,6 +68,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("inicio") {
                         Inicio()
+                    }
+                    composable("register") {
+                        com.narmocorp.satorispa.views.Register(navController = navController)
                     }
                 }
             }

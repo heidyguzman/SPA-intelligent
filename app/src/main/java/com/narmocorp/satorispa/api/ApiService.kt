@@ -14,13 +14,15 @@ interface ApiService {
     fun getUsuarios(): Call<List<Usuario>>
 
     //mandar llamar el endpoint de login
-    // POST /login
+    // GET /login
     @GET("login")
-
     fun login(@Query("correo") correo: String, @Query("contrasena") contrasena: String): Call<Usuario>
+
+    // POST /usuarios
+    @POST("usuarios")
+    fun registerUser(@Body usuario: Usuario): Call<Usuario>
 }
 
-// Si no existen, agrega estas clases:
 
 
 
