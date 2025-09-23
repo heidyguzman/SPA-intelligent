@@ -455,10 +455,3 @@ fun DarkThemeNoIconYes(
         )
     }
 }
-
-@Preview(widthDp = 412, heightDp = 917, showBackground = true)
-@Composable
-private fun RegisterPreview() {
-    val navController = rememberNavController()
-    Register(navController = navController)
-}

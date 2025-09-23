@@ -19,12 +19,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
-import androidx.navigation.NavController
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 @Composable
-fun Login(modifier: Modifier = Modifier, label1901: String, navController: NavController) {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun Login(
+    modifier: Modifier = Modifier,
+    label1901: String,
+    onLogin: (String, String) -> Unit // Nuevo parámetro para manejar el login
+) {
+    var correo by remember { mutableStateOf("") }
+    var contrasena by remember { mutableStateOf("") }
 
     BoxWithConstraints(
         modifier = modifier
@@ -109,7 +113,7 @@ fun Login(modifier: Modifier = Modifier, label1901: String, navController: NavCo
             }
             // Botón "Registro"
             TextButton(
-                onClick = { navController.navigate("register") },
+                onClick = { /* Acción para ir a Registro */ },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(end = screenWidth * 0.08f, top = screenHeight * 0.03f)
@@ -147,44 +151,45 @@ fun Login(modifier: Modifier = Modifier, label1901: String, navController: NavCo
                 )
 
                 Spacer(Modifier.height(screenHeight * 0.035f))
-
                 OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
+                    value = correo,
+                    onValueChange = { correo = it },
                     label = { Text(text = label1901, color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
+
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
-                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
 
                 Spacer(Modifier.height(screenHeight * 0.02f))
 
                 OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(text = "Contraseña", color = Color.Gray) }, // Changed label for password
+                    value = contrasena,
+                    onValueChange = { contrasena = it },
+                    label = { Text(text = "Contraseña", color = Color.Gray) },
                     modifier = Modifier.fillMaxWidth(0.92f),
                     shape = RoundedCornerShape(16.dp),
+                    visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xff995d2d),
                         unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,      // Cambia el color del texto ingresado
-                        unfocusedTextColor = Color.Black     // Cambia el color del texto ingresado
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black
                     )
                 )
 
-                Spacer(Modifier.height(screenHeight * 0.02f)) // Reducido de 0.035f
+                Spacer(Modifier.height(screenHeight * 0.02f))
 
                 Button(
-                    onClick = { /* Acción de login */ },
+                    onClick = { onLogin(correo, contrasena) },
                     modifier = Modifier
-                        .fillMaxWidth(0.92f) // Más ancho
-                        .height(screenHeight * 0.08f), // Más alto
+                        .fillMaxWidth(0.92f)
+                        .height(screenHeight * 0.08f),
                     shape = RoundedCornerShape(30.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xffdbbba6),
@@ -193,7 +198,7 @@ fun Login(modifier: Modifier = Modifier, label1901: String, navController: NavCo
                 ) {
                     Text(
                         text = "Iniciar",
-                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp) // Texto más grande
+                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp)
                     )
                 }
 
