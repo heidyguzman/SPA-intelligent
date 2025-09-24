@@ -4,7 +4,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+// It's good practice to import Material 3 components specifically
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,214 +21,197 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.narmocorp.satorispa.R
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    label1901: String,
-    onLogin: (String, String) -> Unit // Nuevo parámetro para manejar el login
+    label1901: String, // Suggest renaming to something like "emailLabel"
+    onLogin: (String, String) -> Unit,
+    navController: NavController
 ) {
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
 
+    // Consider defining these in your MaterialTheme.colorScheme
+    val primaryBrandColor = Color(0xff995d2d)
+    val secondaryBrandColor = Color(0xffdbbba6) // Used for backgrounds/accents
+    val tertiaryBrandColor = Color(0xffb08d73)  // Used for selected tab/active elements
+    val textOnPrimaryBrand = Color.White
+    val textOnSecondaryPlatform = Color(0xff71390c) // For titles or important text on lighter backgrounds
+    val subtleTextColor = Color.Gray
+    val pageBackgroundColor = Color.White
+
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(pageBackgroundColor)
     ) {
-        val screenWidth = maxWidth
         val screenHeight = maxHeight
+        // val screenWidth = maxWidth // Not directly used in this version, relying more on fillMaxWidth and fixed dp
 
-        // Fondo superior con imagen
+        // Background Image
         Image(
             painter = painterResource(id = R.drawable.fondo),
-            contentDescription = "fondo",
+            contentDescription = "Background Image",
             modifier = Modifier
                 .fillMaxWidth()
                 .height(screenHeight * 0.44f),
             contentScale = ContentScale.Crop
         )
-        // Logo con imagen
+
+        // Logo
         Image(
             painter = painterResource(id = R.drawable.logo),
-            contentDescription = "logo",
+            contentDescription = "Logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.03f)
-                .size(screenWidth * 0.58f, screenHeight * 0.21f),
-            contentScale = ContentScale.Crop
+                .padding(top = screenHeight * 0.05f) // Give a bit more space from top
+                .size(160.dp), // Consistent logo size
+            contentScale = ContentScale.Fit
         )
-        // Card principal
+
+        // Main content card, positioned from the bottom
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .fillMaxWidth(0.98f)
-                .fillMaxHeight(0.72f),
-            shape = RoundedCornerShape(30.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {}
-        // Tabs de Inicio/Registro
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.32f)
-                .fillMaxWidth(0.82f)
-                .height(screenHeight * 0.11f)
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxSize(),
-                shape = RoundedCornerShape(100.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xffdbbba6).copy(alpha = 0.86f))
-            ) {}
-            // Botón "Inicio" con Card de fondo
-            Card(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = screenWidth * 0.09f, top = screenHeight * 0.015f)
-                    .width(screenWidth * 0.32f)
-                    .height(screenHeight * 0.08f),
-                shape = RoundedCornerShape(100.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xffb08d73))
-            ) {}
-            Button(
-                onClick = { /* Acción para ir a Login */ },
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = screenWidth * 0.16f, top = screenHeight * 0.03f)
-                    .height(screenHeight * 0.06f),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Transparent,
-                    contentColor = Color.Black
-                ),
-                elevation = null,
-                shape = RoundedCornerShape(100.dp),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = "Inicio",
-                    lineHeight = 4.24.em,
-                    style = TextStyle(fontSize = (screenWidth.value * 0.08).sp),
-                    color = Color.Black
-                )
-            }
-            // Botón "Registro"
-            TextButton(
-                onClick = { /* Acción para ir a Registro */ },
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = screenWidth * 0.08f, top = screenHeight * 0.03f)
-                    .height(screenHeight * 0.06f),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.White
-                ),
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Text(
-                    text = "Registro",
-                    lineHeight = 4.24.em,
-                    style = TextStyle(fontSize = (screenWidth.value * 0.08).sp),
-                    color = Color.White
-                )
-            }
-        }
-        // Formulario
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(0.84f)
-                .fillMaxHeight(0.48f)
+                .fillMaxWidth()
+                .fillMaxHeight(0.72f), // Overlaps with top image and "tab selector"
+            shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp), // Only top corners rounded
+            colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 16.dp), // Symmetrical horizontal padding
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Spacer to account for the "Login/Register Selector" that will be placed on top of this card.
+                Spacer(Modifier.height(52.dp + 24.dp)) // Space for selector + some breathing room
+
                 Text(
                     text = "SATORI SPA TE DA LA BIENVENIDA",
-                    color = Color(0xff71390c).copy(alpha = 0.79f),
+                    color = textOnSecondaryPlatform.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center,
-                    style = TextStyle(fontSize = (screenWidth.value * 0.055).sp),
-                    modifier = Modifier.padding(top = screenHeight * 0.025f)
+                    style = MaterialTheme.typography.headlineSmall, // More prominent title
+                    modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                Spacer(Modifier.height(screenHeight * 0.035f))
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text(text = label1901, color = Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(0.92f),
-
+                    label = { Text(text = label1901, color = subtleTextColor) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
                     shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xff995d2d),
-                        unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        focusedBorderColor = primaryBrandColor,
+                        unfocusedBorderColor = secondaryBrandColor,
+                        focusedTextColor = textOnSecondaryPlatform, // Updated text color
+                        unfocusedTextColor = textOnSecondaryPlatform, // Updated text color
+                        cursorColor = primaryBrandColor
+                    ),
+                    singleLine = true
                 )
-
-                Spacer(Modifier.height(screenHeight * 0.02f))
 
                 OutlinedTextField(
                     value = contrasena,
                     onValueChange = { contrasena = it },
-                    label = { Text(text = "Contraseña", color = Color.Gray) },
-                    modifier = Modifier.fillMaxWidth(0.92f),
+                    label = { Text(text = "Contraseña", color = subtleTextColor) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
                     shape = RoundedCornerShape(16.dp),
                     visualTransformation = PasswordVisualTransformation(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xff995d2d),
-                        unfocusedBorderColor = Color(0xffdbbba6),
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black
-                    )
+                        focusedBorderColor = primaryBrandColor,
+                        unfocusedBorderColor = secondaryBrandColor,
+                        focusedTextColor = textOnSecondaryPlatform, // Updated text color
+                        unfocusedTextColor = textOnSecondaryPlatform, // Updated text color
+                        cursorColor = primaryBrandColor
+                    ),
+                    singleLine = true
                 )
-
-                Spacer(Modifier.height(screenHeight * 0.02f))
 
                 Button(
                     onClick = { onLogin(correo, contrasena) },
                     modifier = Modifier
-                        .fillMaxWidth(0.92f)
-                        .height(screenHeight * 0.08f),
-                    shape = RoundedCornerShape(30.dp),
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape = RoundedCornerShape(25.dp), // Pill shape
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xffdbbba6),
-                        contentColor = Color(0xff995d2d)
+                        containerColor = primaryBrandColor, // Stronger call to action
+                        contentColor = textOnPrimaryBrand   // Ensure contrast
                     )
                 ) {
                     Text(
-                        text = "Iniciar",
-                        style = TextStyle(fontSize = (screenWidth.value * 0.06).sp)
+                        text = "Iniciar Sesión",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium)
                     )
                 }
 
-                Spacer(Modifier.height(screenHeight * 0.015f)) // Reducido de 0.025f
+                Spacer(Modifier.height(16.dp))
 
                 TextButton(
-                    onClick = { /* Acción para olvidar contraseña */ },
-                    modifier = Modifier
-                        .fillMaxWidth(0.92f) // Más ancho
-                        .height(screenHeight * 0.07f) // Más alto
+                    onClick = { /* TODO: Implement forgot password */ },
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Olvide contraseña?",
-                        color = Color(0xff995d2d),
+                        text = "¿Olvidaste tu contraseña?",
+                        color = primaryBrandColor,
                         textDecoration = TextDecoration.Underline,
-                        style = TextStyle(fontSize = (screenWidth.value * 0.05).sp), // Texto más grande
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                Spacer(Modifier.weight(1f)) // Este spacer debería ayudar a empujar el contenido hacia arriba si hay espacio, o permitir que se encoja.
+                Spacer(Modifier.weight(1f)) // Pushes content up, useful if keyboard appears
+            }
+        }
+
+        // "Login" / "Register" Selector - Positioned like the original "tabs"
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter) // Align in the parent BoxWithConstraints
+                .padding(top = screenHeight * 0.32f) // Original positioning
+                .fillMaxWidth(0.82f) // Original width
+                .height(52.dp)
+                .clip(RoundedCornerShape(26.dp)) // pill shape for the row
+                .background(secondaryBrandColor.copy(alpha = 0.9f)), // Background for the whole selector
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Login Button (Active)
+            TextButton(
+                onClick = { /* Already on Login */ },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(4.dp) // Padding to create inner selection effect
+                    .background(tertiaryBrandColor, RoundedCornerShape(22.dp)), // Selected background with rounding
+                shape = RoundedCornerShape(22.dp),
+                colors = ButtonDefaults.textButtonColors(contentColor = Color.Black) // Dark text on selected tab
+            ) {
+                Text("Inicio", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+            }
+
+            // Register Button
+            TextButton(
+                onClick = { navController.navigate("register") },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(4.dp), // Consistent padding
+                shape = RoundedCornerShape(22.dp), // Consistent rounding
+                colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand) // Ensure this contrasts with secondaryBrandColor
+            ) {
+                Text("Registro", style = MaterialTheme.typography.titleSmall)
             }
         }
     }

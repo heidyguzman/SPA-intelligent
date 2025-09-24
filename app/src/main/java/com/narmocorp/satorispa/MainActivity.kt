@@ -63,7 +63,8 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
 
-                            }
+                            },
+                            navController = navController // Se pasa el navController
                         )
                     }
                     composable("inicio") {
