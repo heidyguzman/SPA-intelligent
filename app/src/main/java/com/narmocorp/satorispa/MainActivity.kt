@@ -35,6 +35,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SATORISPATheme {
                 val navController = rememberAnimatedNavController()
+                var usuarioLogueado by remember { mutableStateOf<com.narmocorp.satorispa.models.Usuario?>(null) }
 
                 AnimatedNavHost(
                     navController = navController, 
@@ -53,12 +54,12 @@ class MainActivity : ComponentActivity() {
                     composable("login") {
                         Login(
                             label1901 = "Correo electrónico",
-                            onLogin = {
-                                correo, contrasena ->
+                            onLogin = { correo, contrasena ->
                                 lifecycleScope.launch {
                                     try {
                                         val usuario = LoginController.loginUser(correo, contrasena)
                                         if (usuario != null) {
+                                            usuarioLogueado = usuario // Guardar usuario logueado
                                             Toast.makeText(
                                                 applicationContext,"Login exitoso: ${usuario.nombre}",
                                                 Toast.LENGTH_LONG
@@ -76,13 +77,12 @@ class MainActivity : ComponentActivity() {
                                         println("Excepción durante el login: ${e.message}")
                                     }
                                 }
-
                             },
-                            navController = navController // Se pasa el navController
+                            navController = navController
                         )
                     }
                     composable("inicio") {
-                        Inicio()
+                        Inicio(usuario = usuarioLogueado) // Pasar usuario logueado
                     }
                     composable("register") {
                         com.narmocorp.satorispa.views.Register(navController = navController)

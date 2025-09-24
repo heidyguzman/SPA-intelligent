@@ -24,10 +24,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.models.Usuario
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Inicio(modifier: Modifier = Modifier) {
+fun Inicio(
+    modifier: Modifier = Modifier,
+    usuario: Usuario? = null // Nuevo parámetro
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -132,7 +136,7 @@ fun Inicio(modifier: Modifier = Modifier) {
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "Nombre",
+                text = usuario?.nombre ?: "Nombre",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color(0xff1c1b1f),
@@ -140,14 +144,14 @@ fun Inicio(modifier: Modifier = Modifier) {
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "Apellido",
+                text = usuario?.apellido ?: "Apellido",
                 fontSize = 24.sp,
                 color = Color(0xff1c1b1f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = "Correo",
+                text = usuario?.correo ?: "Correo",
                 fontSize = 18.sp,
                 color = Color(0xff1c1b1f),
                 maxLines = 1,
