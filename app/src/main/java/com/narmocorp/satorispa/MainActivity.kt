@@ -5,10 +5,14 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.navigation.animation.AnimatedNavHost
+import com.google.accompanist.navigation.animation.composable
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.narmocorp.satorispa.ui.theme.SATORISPATheme
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.StartScreen
@@ -23,14 +27,23 @@ import androidx.compose.runtime.*
 import com.narmocorp.satorispa.api.RetrofitClient
 import com.narmocorp.satorispa.models.LoginRequest
 import com.narmocorp.satorispa.controllers.LoginController
+
+@OptIn(ExperimentalAnimationApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             SATORISPATheme {
-                val navController = rememberNavController()
+                val navController = rememberAnimatedNavController()
 
-                NavHost(navController = navController, startDestination = "start") {
+                AnimatedNavHost(
+                    navController = navController, 
+                    startDestination = "start",
+                    enterTransition = { fadeIn(animationSpec = tween(500)) },
+                    exitTransition = { fadeOut(animationSpec = tween(500)) },
+                    popEnterTransition = { fadeIn(animationSpec = tween(500)) },
+                    popExitTransition = { fadeOut(animationSpec = tween(500)) }
+                ) {
                     composable("start") {
                         StartScreen(
                             onLoginClick = { navController.navigate("login") },
@@ -40,7 +53,8 @@ class MainActivity : ComponentActivity() {
                     composable("login") {
                         Login(
                             label1901 = "Correo electrónico",
-                            onLogin = { correo, contrasena ->
+                            onLogin = {
+                                correo, contrasena ->
                                 lifecycleScope.launch {
                                     try {
                                         val usuario = LoginController.loginUser(correo, contrasena)
