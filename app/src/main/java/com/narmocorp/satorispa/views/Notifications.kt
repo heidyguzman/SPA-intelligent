@@ -2,240 +2,252 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.requiredSize
-import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ContentScale.Crop
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import com.narmocorp.satorispa.R
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.style.TextOverflow
+import com.narmocorp.satorispa.R
+
+// Colores del tema
+object AppColors {
+    val color_Light_Theme_On_Surface_20 = Color(0xFF1C1B1F)
+    val color_Light_Theme_On_Surface_60 = Color(0xFF49454F)
+    val primary = Color(0xFF995D2D)
+    val primaryContainer = Color(0xFFDBBBA6)
+    val surface = Color(0xFFF8F9FA)
+    val onSurface = Color(0xFF1C1B1F)
+}
+
+data class NotificationData(
+    val title: String,
+    val description: String,
+    val time: String,
+    val isNew: Boolean = false,
+    val newCount: Int = 0
+)
 
 class Notifications {
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun Notificaciones(modifier: Modifier = Modifier) {
+    fun Notificaciones(
+        modifier: Modifier = Modifier,
+        onBackClick: (() -> Unit)? = null
+    ) {
+        val notifications = listOf(
+            NotificationData(
+                "Nueva cita programada",
+                "Su cita ha sido confirmada para mañana",
+                "3:58 PM",
+                isNew = false
+            ),
+            NotificationData(
+                "Recordatorio de cita",
+                "No olvide su cita de hoy a las 3:00 PM",
+                "3:58 PM",
+                isNew = false
+            ),
+            NotificationData(
+                "Promoción especial",
+                "Disfrute 20% de descuento en tratamientos faciales",
+                "3:58 PM",
+                isNew = true,
+                newCount = 2
+            ),
+            NotificationData(
+                "Bienvenido al spa",
+                "Gracias por elegir nuestros servicios",
+                "3:58 PM",
+                isNew = true,
+                newCount = 1
+            )
+        )
+
         Box(
             modifier = modifier
-                .requiredWidth(width = 412.dp)
-                .requiredHeight(height = 917.dp)
-                .background(color = Color.White)
+                .fillMaxSize()
+                .background(AppColors.surface)
         ) {
+            // Header ovalado personalizado
             Box(
                 modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 37.dp,
-                        y = 57.dp)
-                    .requiredWidth(width = 341.dp)
-                    .requiredHeight(height = 62.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(AppColors.primaryContainer)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
-                        .requiredWidth(width = 341.dp)
-                        .requiredHeight(height = 62.dp)
-                        .clip(shape = RoundedCornerShape(50.dp))
-                        .background(color = Color(0xffdbbba6)))
-                Box(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 11.dp,
-                            y = 8.dp)
-                        .requiredWidth(width = 48.dp)
-                        .requiredHeight(height = 45.dp)
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .requiredWidth(width = 48.dp)
-                            .requiredHeight(height = 45.dp)
-                            .background(color = Color(0xff995d2d)))
-                    Image(
-                        painter = painterResource(id = R.drawable.arrow_back),
-                        contentDescription = "arrow_back",
-                        colorFilter = ColorFilter.tint(Color(0xff1c1b1f)),
-                        modifier = Modifier
-                            .align(alignment = Alignment.TopStart)
-                            .offset(x = 9.41.dp,
-                                y = 7.58.dp)
-                            .requiredSize(size = 29.dp))
+                    IconButton(
+                        onClick = { onBackClick?.invoke() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Regresar",
+                            tint = AppColors.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        "Notificaciones",
+                        color = AppColors.onSurface,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
-                Text(
-                    text = "Notificaciones",
-                    color = Color(0xff1c1b1f),
-                    lineHeight = 5.83.em,
-                    style = MaterialTheme.typography.headlineSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 83.dp,
-                            y = 12.dp))
             }
-            Box(
+
+            // Lista de notificaciones
+            LazyColumn(
                 modifier = Modifier
-                    .align(alignment = Alignment.TopStart)
-                    .offset(x = 20.dp,
-                        y = 173.dp)
-                    .requiredWidth(width = 372.dp)
-                    .requiredHeight(height = 703.dp)
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 88.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(vertical = 16.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 22.dp,
-                            y = 0.dp)
-                        .requiredWidth(width = 327.dp)
-                        .requiredHeight(height = 703.dp)
-                        .clip(shape = RoundedCornerShape(20.dp))
-                        .background(color = Color(0xffdbbba6)))
-                Column(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 71.dp)
-                        .fillMaxWidth()
-                        .requiredHeight(height = 77.dp)
-                        .clip(shape = RoundedCornerShape(25.dp))
-                ) {
-                    TableRowChatDarkModeNo()
+                items(notifications) { notification ->
+                    NotificationCard(
+                        title = notification.title,
+                        description = notification.description,
+                        time = notification.time,
+                        isNew = notification.isNew,
+                        newCount = notification.newCount
+                    )
                 }
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 85.dp)
-                        .requiredWidth(width = 63.dp)
-                        .requiredHeight(height = 50.dp))
-                TableRowChatDarkModeNo(
-                    modifier = Modifier
-                        .align(alignment = Alignment.Center)
-                        .offset(x = 36.dp,
-                            y = (-156.5).dp))
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 171.dp)
-                        .requiredWidth(width = 63.dp)
-                        .requiredHeight(height = 50.dp))
-                TableRowChatDarkModeNo(
-                    modifier = Modifier
-                        .align(alignment = Alignment.Center)
-                        .offset(x = 33.dp,
-                            y = (-52).dp))
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 275.dp)
-                        .requiredWidth(width = 63.dp)
-                        .requiredHeight(height = 50.dp))
-                TableRowChatDarkModeNo(
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 67.dp,
-                            y = 360.dp))
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "logo",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .align(alignment = Alignment.TopStart)
-                        .offset(x = 0.dp,
-                            y = 371.dp)
-                        .requiredWidth(width = 63.dp)
-                        .requiredHeight(height = 50.dp))
             }
         }
     }
 
     @Composable
-    fun TableRowChatDarkModeNo(modifier: Modifier = Modifier, title18968: String, description1960: String) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.Start),
-            modifier = modifier
-                .requiredWidth(width = 304.dp)
-                .requiredHeight(height = 77.dp)
-                .clip(shape = RoundedCornerShape(25.dp))
-                .background(color = Color(0xffd9d9d9))
-                .padding(horizontal = 16.dp,
-                    vertical = 20.dp)
+    private fun NotificationCard(
+        title: String,
+        description: String,
+        time: String,
+        isNew: Boolean = false,
+        newCount: Int = 0
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { /* Acción al hacer clic */ },
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 2.dp
+            ),
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
+            Row(
                 modifier = Modifier
-                    .requiredHeight(height = 56.dp)
-                    .weight(weight = 1f)
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = title18968,
-                    color = AppColors.color_Light_Theme_On_Surface_20,
-                    lineHeight = 1.5.em,
-                    style = TextStyle(
+                // Icono del spa
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(AppColors.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.logo),
+                        contentDescription = "Icono spa",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                    )
+                }
+
+                // Contenido de la notificación
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = title,
+                        color = AppColors.color_Light_Theme_On_Surface_20,
                         fontSize = 16.sp,
-                        letterSpacing = 0.15.sp),
-                    modifier = Modifier
-                        .wrapContentHeight(align = Alignment.CenterVertically))
-                Text(
-                    text = description1960,
-                    color = AppColors.color_Light_Theme_On_Surface_60,
-                    lineHeight = 1.43.em,
-                    style = TextStyle(
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = description,
+                        color = AppColors.color_Light_Theme_On_Surface_60,
                         fontSize = 14.sp,
-                        letterSpacing = 0.25.sp),
-                    modifier = Modifier
-                        .wrapContentHeight(align = Alignment.CenterVertically))
-            }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
-                horizontalAlignment = Alignment.End
-            ) {
-                Text(
-                    text = "3:58 PM",
-                    color = AppColors.color_Light_Theme_On_Surface_60,
-                    textAlign = TextAlign.End,
-                    lineHeight = 1.33.em,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .wrapContentHeight(align = Alignment.CenterVertically))
+                        lineHeight = 20.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Hora y punto de notificación nueva
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = time,
+                        color = AppColors.color_Light_Theme_On_Surface_60,
+                        fontSize = 12.sp
+                    )
+
+                    // Punto azul para notificaciones nuevas
+                    if (isNew && newCount > 0) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF2196F3)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = newCount.toString(),
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
             }
         }
     }
 
-    @Preview(widthDp = 412, heightDp = 917)
+    @Preview(showBackground = true)
     @Composable
     private fun NotificacionesPreview() {
-        Notificaciones(Modifier)
+        MaterialTheme {
+            Notificaciones()
+        }
     }
 }

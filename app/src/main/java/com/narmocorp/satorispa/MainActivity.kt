@@ -17,6 +17,7 @@ import com.narmocorp.satorispa.ui.theme.SATORISPATheme
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.StartScreen
 import com.narmocorp.satorispa.views.Inicio
+import com.narmocorp.satorispa.views.Notifications
 import com.narmocorp.satorispa.api.ApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberAnimatedNavController()
 
                 AnimatedNavHost(
-                    navController = navController, 
+                    navController = navController,
                     startDestination = "start",
                     enterTransition = { fadeIn(animationSpec = tween(500)) },
                     exitTransition = { fadeOut(animationSpec = tween(500)) },
@@ -52,9 +53,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("login") {
                         Login(
-                            label1901 = "Correo electrónico",
+                            label1901 = "Correo electronico",
                             onLogin = {
-                                correo, contrasena ->
+                                    correo, contrasena ->
                                 lifecycleScope.launch {
                                     try {
                                         val usuario = LoginController.loginUser(correo, contrasena)
@@ -73,7 +74,7 @@ class MainActivity : ComponentActivity() {
                                             Log.d("MainActivity", "Error en el login")
                                         }
                                     } catch (e: Exception) {
-                                        println("Excepción durante el login: ${e.message}")
+                                        println("ExcepciÃ³n durante el login: ${e.message}")
                                     }
                                 }
 
@@ -82,7 +83,19 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable("inicio") {
-                        Inicio()
+                        Inicio(
+                            onNavigateToNotifications = {
+                                navController.navigate("notifications")
+                            }
+                        )
+                    }
+                    composable("notifications") {
+                        val notifications = Notifications()
+                        notifications.Notificaciones(
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
                     }
                     composable("register") {
                         com.narmocorp.satorispa.views.Register(navController = navController)
