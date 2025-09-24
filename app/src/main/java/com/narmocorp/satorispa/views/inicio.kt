@@ -45,6 +45,7 @@ fun Inicio(
                             contentDescription = "logo",
                             modifier = Modifier.size(60.dp)
                         )
+
                     }
                 },
                 navigationIcon = {
