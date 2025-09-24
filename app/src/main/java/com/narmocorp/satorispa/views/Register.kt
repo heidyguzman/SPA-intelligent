@@ -289,13 +289,13 @@ fun Register(
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),git
                     singleLine = true,
                     isError = confirmarContrasenaError != null,
                     supportingText = { if (confirmarContrasenaError != null) Text(confirmarContrasenaError!!) }
                 )
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(10.dp))
 
                 Button(
                     onClick = {
