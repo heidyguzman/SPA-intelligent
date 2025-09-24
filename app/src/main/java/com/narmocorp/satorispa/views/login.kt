@@ -3,12 +3,19 @@ package com.narmocorp.satorispa.views
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 // It's good practice to import Material 3 components specifically
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -23,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -39,6 +47,7 @@ fun Login(
 ) {
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     // Consider defining these in your MaterialTheme.colorScheme
     val primaryBrandColor = Color(0xff995d2d)
@@ -53,6 +62,7 @@ fun Login(
         modifier = modifier
             .fillMaxSize()
             .background(pageBackgroundColor)
+            .imePadding() // Adjusts for the keyboard
     ) {
         val screenHeight = maxHeight
         // val screenWidth = maxWidth // Not directly used in this version, relying more on fillMaxWidth and fixed dp
@@ -88,9 +98,11 @@ fun Login(
             colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .verticalScroll(scrollState)
                     .padding(horizontal = 24.dp, vertical = 16.dp), // Symmetrical horizontal padding
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -131,7 +143,18 @@ fun Login(
                         .fillMaxWidth()
                         .padding(bottom = 24.dp),
                     shape = RoundedCornerShape(16.dp),
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val image = if (passwordVisible)
+                            Icons.Filled.Visibility
+                        else Icons.Filled.VisibilityOff
+
+                        val description = if (passwordVisible) "Hide password" else "Show password"
+
+                        IconButton(onClick = {passwordVisible = !passwordVisible}){
+                            Icon(imageVector  = image, contentDescription = description, tint = primaryBrandColor)
+                        }
+                    },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = primaryBrandColor,
                         unfocusedBorderColor = secondaryBrandColor,
@@ -172,7 +195,6 @@ fun Login(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                Spacer(Modifier.weight(1f)) // Pushes content up, useful if keyboard appears
             }
         }
 
