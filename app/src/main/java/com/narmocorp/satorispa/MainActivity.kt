@@ -1,91 +1,200 @@
 package com.narmocorp.satorispa
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.runtime.*
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
+import androidx.core.content.edit
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.navigation.animation.AnimatedNavHost
-import com.google.accompanist.navigation.animation.composable
-import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.google.gson.Gson
+import com.narmocorp.satorispa.controllers.LoginController
+import com.narmocorp.satorispa.models.Usuario
 import com.narmocorp.satorispa.ui.theme.SATORISPATheme
+import com.narmocorp.satorispa.views.Inicio
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.StartScreen
-import com.narmocorp.satorispa.views.Inicio
-import com.narmocorp.satorispa.api.ApiService
-import kotlinx.coroutines.Dispatchers
+import com.narmocorp.satorispa.views.Notifications
+import com.narmocorp.satorispa.views.Register
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import androidx.compose.runtime.*
-import com.narmocorp.satorispa.api.RetrofitClient
-import com.narmocorp.satorispa.models.LoginRequest
-import com.narmocorp.satorispa.controllers.LoginController
+import java.util.concurrent.Executor
 
-@OptIn(ExperimentalAnimationApi::class)
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+
+    private lateinit var executor: Executor
+
+    private fun showBiometricPrompt(
+        onSuccess: (BiometricPrompt.AuthenticationResult) -> Unit,
+        onError: (Int, CharSequence) -> Unit,
+        onFailed: () -> Unit
+    ) {
+        val biometricManager = BiometricManager.from(this)
+        if (biometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL) != BiometricManager.BIOMETRIC_SUCCESS) {
+            onError(-1, "No hay hardware de biometría disponible")
+            return
+        }
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Inicio de sesión biométrico")
+            .setSubtitle("Inicia sesión con tu huella digital")
+            .setNegativeButtonText("Usar contraseña")
+            .build()
+
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    onError(errorCode, errString)
+                }
+
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    onSuccess(result)
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    onFailed()
+                }
+            })
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        executor = ContextCompat.getMainExecutor(this)
+
+        val sharedPreferences = getSharedPreferences("SatoriSPA_prefs", Context.MODE_PRIVATE)
+        val gson = Gson()
+        val userJson = sharedPreferences.getString("usuario", null)
+        val savedUser = userJson?.let { gson.fromJson(it, Usuario::class.java) }
+
         setContent {
             SATORISPATheme {
-                val navController = rememberAnimatedNavController()
-                var usuarioLogueado by remember { mutableStateOf<com.narmocorp.satorispa.models.Usuario?>(null) }
+                val navController = rememberNavController()
+                var usuarioLogueado by remember { mutableStateOf(savedUser) }
 
-                AnimatedNavHost(
-                    navController = navController, 
+                NavHost(
+                    navController = navController,
                     startDestination = "start",
-                    enterTransition = { fadeIn(animationSpec = tween(500)) },
-                    exitTransition = { fadeOut(animationSpec = tween(500)) },
-                    popEnterTransition = { fadeIn(animationSpec = tween(500)) },
-                    popExitTransition = { fadeOut(animationSpec = tween(500)) }
                 ) {
                     composable("start") {
                         StartScreen(
-                            onLoginClick = { navController.navigate("login") },
+                            onLoginClick = {
+                                // FUNCIONALIDAD DE TU COMPAÑERO: Biometría si ya hay usuario guardado
+                                if (usuarioLogueado != null) {
+                                    showBiometricPrompt(
+                                        onSuccess = { _ ->
+                                            navController.navigate("inicio") {
+                                                popUpTo("start") { inclusive = true }
+                                            }
+                                        },
+                                        onError = { errorCode, errString ->
+                                            Log.d("BiometricError", "Code: $errorCode, Msg: $errString")
+                                            navController.navigate("login")
+                                        },
+                                        onFailed = {
+                                            Toast.makeText(
+                                                this@MainActivity,
+                                                "Huella no reconocida",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    )
+                                } else {
+                                    navController.navigate("login")
+                                }
+                            },
                             onRegisterClick = { navController.navigate("register") }
                         )
                     }
+
                     composable("login") {
                         Login(
                             label1901 = "Correo electrónico",
-                            onLogin = { correo, contrasena ->
+                            // FUNCIONALIDAD DE TU COMPAÑERO: Login con keepSession
+                            onLogin = { correo, contrasena, keepSession ->
                                 lifecycleScope.launch {
                                     try {
                                         val usuario = LoginController.loginUser(correo, contrasena)
                                         if (usuario != null) {
-                                            usuarioLogueado = usuario // Guardar usuario logueado
+                                            usuarioLogueado = usuario
+
+                                            // FUNCIONALIDAD DE TU COMPAÑERO: Guardar sesión
+                                            if (keepSession) {
+                                                val userJsonToSave = gson.toJson(usuario)
+                                                sharedPreferences.edit {
+                                                    putString("usuario", userJsonToSave)
+                                                }
+                                            } else {
+                                                sharedPreferences.edit { remove("usuario") }
+                                            }
+
                                             Toast.makeText(
-                                                applicationContext,"Login exitoso: ${usuario.nombre}",
+                                                this@MainActivity,
+                                                "Login exitoso: ${usuario.nombre}",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                             Log.d("MainActivity", "Usuario: $usuario")
-                                            navController.navigate("inicio")
+                                            navController.navigate("inicio") {
+                                                popUpTo("start") { inclusive = true }
+                                            }
                                         } else {
                                             Toast.makeText(
-                                                applicationContext, "Error en el login",
+                                                this@MainActivity,
+                                                "Error en el login",
                                                 Toast.LENGTH_LONG
                                             ).show()
                                             Log.d("MainActivity", "Error en el login")
                                         }
                                     } catch (e: Exception) {
-                                        println("Excepción durante el login: ${e.message}")
+                                        Log.e("LoginError", "Excepción durante el login: ${e.message}")
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            "Error de conexión",
+                                            Toast.LENGTH_LONG
+                                        ).show()
                                     }
                                 }
                             },
                             navController = navController
                         )
                     }
+
                     composable("inicio") {
-                        Inicio(usuario = usuarioLogueado) // Pasar usuario logueado
+                        Inicio(
+                            usuario = usuarioLogueado, // FUNCIONALIDAD DE TU COMPAÑERO
+                            // TU FUNCIONALIDAD: Navegación a notificaciones
+                            onNavigateToNotifications = {
+                                navController.navigate("notifications")
+                            }
+                        )
                     }
+
+                    // TU FUNCIONALIDAD: Sistema de notificaciones
+                    composable("notifications") {
+                        val notifications = Notifications()
+                        notifications.Notificaciones(
+                            onBackClick = {
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                     composable("register") {
-                        com.narmocorp.satorispa.views.Register(navController = navController)
+                        Register(navController = navController)
                     }
                 }
             }

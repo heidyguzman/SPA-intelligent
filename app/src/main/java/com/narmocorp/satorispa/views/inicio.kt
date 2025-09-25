@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Build // Alternativa a RoomService
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,39 +33,42 @@ import com.narmocorp.satorispa.models.Usuario
 fun Inicio(
     modifier: Modifier = Modifier,
     usuario: Usuario? = null // Nuevo parámetro
+    , onNavigateToNotifications: (() -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Spacer(Modifier.weight(1f))
-                        // Cambiado Icon por Image para el logo
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         Image(
                             painter = painterResource(id = R.drawable.logo),
                             contentDescription = "logo",
                             modifier = Modifier.size(60.dp)
                         )
-                        Spacer(Modifier.weight(1f))
+
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onNavigateToNotifications?.invoke() }) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = "Notificaciones",
+                            tint = Color(0xff995d2d)
+                        )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Notificaciones */ }) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notificaciones"
-                        )
-                    }
                     IconButton(onClick = { /* TODO: Ajustes */ }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Ajustes"
+                            contentDescription = "Ajustes",
+                            tint = Color(0xff995d2d)
                         )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White
+                )
             )
         },
         bottomBar = {
@@ -78,7 +83,7 @@ fun Inicio(
                             tint = Color(0xff995d2d)
                         )
                     },
-                    label = { Text("Home") },
+                    label = { Text("Home", color = Color(0xff995d2d)) },
                     selected = true,
                     onClick = { /* TODO: Home */ }
                 )
@@ -90,7 +95,7 @@ fun Inicio(
                             tint = Color(0xff995d2d)
                         )
                     },
-                    label = { Text("Servicios") },
+                    label = { Text("Servicios", color = Color(0xff995d2d)) },
                     selected = false,
                     onClick = { /* TODO: Servicios */ }
                 )
@@ -102,13 +107,13 @@ fun Inicio(
                             tint = Color(0xff976826)
                         )
                     },
-                    label = { Text("Mis citas") },
+                    label = { Text("Mis citas", color = Color(0xff976826)) },
                     selected = false,
                     onClick = { /* TODO: Mis citas */ }
                 )
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = Color.White,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -137,62 +142,64 @@ fun Inicio(
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = usuario?.nombre ?: "Nombre",
-                fontSize = 28.sp,
+                style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xff1c1b1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = Color(0xff1c1b1f)
             )
             Text(
                 text = usuario?.apellido ?: "Apellido",
-                fontSize = 24.sp,
-                color = Color(0xff1c1b1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                style = MaterialTheme.typography.titleLarge,
+                color = Color(0xff1c1b1f)
             )
             Text(
                 text = usuario?.correo ?: "Correo",
-                fontSize = 18.sp,
-                color = Color(0xff1c1b1f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xff1c1b1f).copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(32.dp))
             // Card NFC
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
-                shape = RoundedCornerShape(20.dp),
+                    .height(200.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xff995d2d).copy(alpha = 0.79f)
-                )
+                    containerColor = Color(0xff995d2d)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Text(
+                        text = "Paga con tu móvil",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
                     Box(
                         modifier = Modifier
-                            .size(68.dp)
+                            .size(72.dp)
                             .clip(CircleShape)
                             .background(Color(0xffdbbba6)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo), // Cambiado contactless por logo temporalmente
-                            contentDescription = "contactless",
-                            modifier = Modifier.size(39.dp)
+                        Icon(
+                            imageVector = Icons.Default.Nfc,
+                            contentDescription = "NFC Icon",
+                            modifier = Modifier.size(42.dp),
+                            tint = Color(0xff1c1b1f)
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Acerque el dispositivo",
-                        fontSize = 16.sp,
-                        color = Color(0xff1c1b1f)
+                        text = "Acerque su dispositivo al lector para realizar el pago",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.White.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

@@ -19,6 +19,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -42,12 +44,13 @@ import com.narmocorp.satorispa.R
 fun Login(
     modifier: Modifier = Modifier,
     label1901: String, // Suggest renaming to something like "emailLabel"
-    onLogin: (String, String) -> Unit,
+    onLogin: (String, String, Boolean) -> Unit,
     navController: NavController
 ) {
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var keepSession by remember { mutableStateOf(false) }
 
     // Consider defining these in your MaterialTheme.colorScheme
     val primaryBrandColor = Color(0xff995d2d)
@@ -165,8 +168,32 @@ fun Login(
                     singleLine = true
                 )
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Mantener sesión iniciada",
+                        color = subtleTextColor,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Switch(
+                        checked = keepSession,
+                        onCheckedChange = { keepSession = it },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = primaryBrandColor,
+                            checkedTrackColor = tertiaryBrandColor,
+                            uncheckedThumbColor = subtleTextColor,
+                            uncheckedTrackColor = secondaryBrandColor
+                        )
+                    )
+                }
+
                 Button(
-                    onClick = { onLogin(correo, contrasena) },
+                    onClick = { onLogin(correo, contrasena, keepSession) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
