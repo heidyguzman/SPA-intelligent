@@ -289,7 +289,7 @@ fun Register(
                         }
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),git
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
                     singleLine = true,
                     isError = confirmarContrasenaError != null,
                     supportingText = { if (confirmarContrasenaError != null) Text(confirmarContrasenaError!!) }
