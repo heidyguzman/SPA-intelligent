@@ -161,6 +161,7 @@ fun Register(
                     unfocusedBorderColor = secondaryBrandColor,
                     focusedTextColor = textOnSecondaryPlatform,
                     unfocusedTextColor = textOnSecondaryPlatform,
+                    errorTextColor = textOnSecondaryPlatform,
                     cursorColor = primaryBrandColor,
                     focusedLabelColor = primaryBrandColor,
                     unfocusedLabelColor = subtleTextColor,
@@ -222,7 +223,10 @@ fun Register(
                     label = { Text("Correo Electrónico") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = textFieldColors,
+                    colors = textFieldColors.copy(
+                        focusedTextColor = textOnSecondaryPlatform,
+                        unfocusedTextColor = textOnSecondaryPlatform
+                    ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                     singleLine = true,
@@ -248,7 +252,10 @@ fun Register(
                     label = { Text("Contraseña") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = textFieldColors,
+                    colors = textFieldColors.copy(
+                        focusedTextColor = textOnSecondaryPlatform,
+                        unfocusedTextColor = textOnSecondaryPlatform
+                    ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
@@ -277,7 +284,10 @@ fun Register(
                     label = { Text("Confirmar Contraseña") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    colors = textFieldColors,
+                    colors = textFieldColors.copy(
+                        focusedTextColor = textOnSecondaryPlatform,
+                        unfocusedTextColor = textOnSecondaryPlatform
+                    ),
                     visualTransformation = if (confirmarPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { confirmarPasswordVisible = !confirmarPasswordVisible }) {
