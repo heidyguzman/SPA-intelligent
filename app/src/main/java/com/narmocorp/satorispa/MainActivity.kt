@@ -179,6 +179,9 @@ class MainActivity : FragmentActivity() {
                             // TU FUNCIONALIDAD: Navegación a notificaciones
                             onNavigateToNotifications = {
                                 navController.navigate("notifications")
+                            },
+                            onNavigateToConfig = {
+                                navController.navigate("configuracion")
                             }
                         )
                     }
@@ -195,6 +198,13 @@ class MainActivity : FragmentActivity() {
 
                     composable("register") {
                         Register(navController = navController)
+                    }
+
+                    composable("configuracion") {
+                        com.narmocorp.satorispa.views.Configuracion(
+                            usuario = usuarioLogueado
+                            // Puedes agregar otros callbacks si los usas
+                        )
                     }
                 }
             }

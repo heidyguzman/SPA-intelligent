@@ -12,7 +12,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Build // Alternativa a RoomService
+import androidx.compose.material.icons.filled.RoomService
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,6 +23,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
@@ -32,8 +33,9 @@ import com.narmocorp.satorispa.models.Usuario
 @Composable
 fun Inicio(
     modifier: Modifier = Modifier,
-    usuario: Usuario? = null // Nuevo parámetro
-    , onNavigateToNotifications: (() -> Unit)? = null
+    usuario: Usuario? = null, // Nuevo parámetro
+    onNavigateToNotifications: (() -> Unit)? = null,
+    onNavigateToConfig: (() -> Unit)? = null // Nuevo parámetro para ajustes
 ) {
     Scaffold(
         topBar = {
@@ -43,7 +45,7 @@ fun Inicio(
                         Image(
                             painter = painterResource(id = R.drawable.logo),
                             contentDescription = "logo",
-                            modifier = Modifier.size(60.dp)
+                            modifier = Modifier.size(80.dp)
                         )
 
                     }
@@ -53,12 +55,12 @@ fun Inicio(
                         Icon(
                             imageVector = Icons.Default.Notifications,
                             contentDescription = "Notificaciones",
-                            tint = Color(0xff995d2d)
+                            tint = Color(0xff995d2d),
                         )
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: Ajustes */ }) {
+                    IconButton(onClick = { onNavigateToConfig?.invoke() }) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Ajustes",
@@ -90,7 +92,7 @@ fun Inicio(
                 NavigationBarItem(
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.Build, // Usar Build como alternativo a RoomService
+                            imageVector = Icons.Default.RoomService,
                             contentDescription = "Servicios",
                             tint = Color(0xff995d2d)
                         )
@@ -103,7 +105,7 @@ fun Inicio(
                     icon = {
                         Icon(
                             imageVector = Icons.Default.DateRange, // Usar DateRange como alternativo a Event
-                            contentDescription = "Mis citas",
+                            contentDescription = "Citas",
                             tint = Color(0xff976826)
                         )
                     },
@@ -156,7 +158,7 @@ fun Inicio(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xff1c1b1f).copy(alpha = 0.7f)
             )
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(100.dp)) // Espacio aumentado para bajar el cuadro NFC
             // Card NFC
             Card(
                 modifier = Modifier
@@ -176,7 +178,7 @@ fun Inicio(
                     verticalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "Paga con tu móvil",
+                        text = "Registra tu entrada",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -196,7 +198,7 @@ fun Inicio(
                         )
                     }
                     Text(
-                        text = "Acerque su dispositivo al lector para realizar el pago",
+                        text = "Acerque su dispositivo al lector para realizar el registro de entrada",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.White.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center
@@ -206,4 +208,18 @@ fun Inicio(
             Spacer(modifier = Modifier.weight(1f))
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun InicioPreview() {
+    Inicio(
+        usuario = Usuario(
+            id = 1,
+            nombre = "Juan",
+            apellido = "Pérez",
+            correo = "s@ucol.mx",
+            contrasena = "password123"
+        )
+    )
 }

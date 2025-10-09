@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 // It's good practice to import Material 3 components specifically
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -124,6 +126,13 @@ fun Login(
                     value = correo,
                     onValueChange = { correo = it },
                     label = { Text(text = label1901, color = subtleTextColor) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Email,
+                            contentDescription = "Icono de Correo",
+                            tint = primaryBrandColor
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
@@ -142,6 +151,13 @@ fun Login(
                     value = contrasena,
                     onValueChange = { contrasena = it },
                     label = { Text(text = "Contraseña", color = subtleTextColor) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = "Icono de Contraseña",
+                            tint = primaryBrandColor
+                        )
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 24.dp),

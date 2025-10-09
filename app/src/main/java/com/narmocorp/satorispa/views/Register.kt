@@ -10,6 +10,9 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -181,6 +184,7 @@ fun Register(
                             nombreError = if (it.isBlank()) "El nombre no puede estar vacío" else null
                         },
                         label = { Text("Nombre") },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Nombre", tint = primaryBrandColor) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         colors = textFieldColors,
@@ -197,6 +201,7 @@ fun Register(
                             apellidoError = if (it.isBlank()) "El apellido no puede estar vacío" else null
                         },
                         label = { Text("Apellido") },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Apellido", tint = primaryBrandColor) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         colors = textFieldColors,
@@ -221,6 +226,7 @@ fun Register(
                         }
                     },
                     label = { Text("Correo Electrónico") },
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo Electrónico", tint = primaryBrandColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
@@ -250,6 +256,7 @@ fun Register(
                         }
                     },
                     label = { Text("Contraseña") },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña", tint = primaryBrandColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
@@ -282,6 +289,7 @@ fun Register(
                         confirmarContrasenaError = if (it != contrasena) "Las contraseñas no coinciden" else null
                     },
                     label = { Text("Confirmar Contraseña") },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar Contraseña", tint = primaryBrandColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
@@ -333,16 +341,21 @@ fun Register(
                             })
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = primaryBrandColor,
                         contentColor = textOnPrimaryBrand
-                    )
+                    ),
+                    enabled = nombre.isNotBlank() && apellido.isNotBlank() && correo.isNotBlank() && contrasena.isNotBlank() && confirmarContrasena.isNotBlank()
                 ) {
-                    Text("Registrar", style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium))
+                    Text(
+                        text = "Registrarme",
+                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                    )
                 }
-                Spacer(Modifier.height(16.dp))
             }
         }
 
@@ -358,8 +371,15 @@ fun Register(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(
-                onClick = { navController.navigate("login") { popUpTo("register") { inclusive = true } } },
-                modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp),
+                onClick = {
+                    navController.navigate("login") {
+                        popUpTo("register") { inclusive = true }
+                    }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(4.dp),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand)
             ) {
@@ -367,7 +387,11 @@ fun Register(
             }
             TextButton(
                 onClick = { /* Already on Register */ },
-                modifier = Modifier.weight(1f).fillMaxHeight().padding(4.dp).background(tertiaryBrandColor, RoundedCornerShape(22.dp)),
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .padding(4.dp)
+                    .background(tertiaryBrandColor, RoundedCornerShape(22.dp)),
                 shape = RoundedCornerShape(22.dp),
                 colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
             ) {
@@ -375,9 +399,12 @@ fun Register(
             }
         }
 
+        // Snackbar for showing messages
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp)
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
         )
     }
 }
