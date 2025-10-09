@@ -27,6 +27,7 @@ import com.narmocorp.satorispa.views.StartScreen
 import com.narmocorp.satorispa.views.Notifications
 import com.narmocorp.satorispa.views.Register
 import com.narmocorp.satorispa.views.Servicios
+import com.narmocorp.satorispa.views.EditarPerfilScreen
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
@@ -239,6 +240,9 @@ class MainActivity : FragmentActivity() {
                                     popUpTo("configuracion") { inclusive = true }
                                 }
                             },
+                            onEditProfile = {  // <-- AGREGAR ESTA LÍNEA
+                                navController.navigate("EditionPerfil")
+                            },
                             onLogout = {
                                 // 1️⃣ Eliminar datos de sesión guardados
                                 sharedPreferences.edit { remove("usuario") }
@@ -262,6 +266,39 @@ class MainActivity : FragmentActivity() {
                             }
                         )
                     }
+                    composable("EditionPerfil") {
+                        EditarPerfilScreen(
+                            usuario = usuarioLogueado,
+                            onNavigateBack = {
+                                navController.popBackStack()
+                            },
+                            onSaveChanges = { nuevoNombre, nuevoApellido, nuevoCorreo, nuevaContrasena ->
+                                // Aquí puedes llamar a tu controlador para actualizar el usuario
+                                // Por ahora solo actualizamos localmente
+                                usuarioLogueado = usuarioLogueado?.copy(
+                                    nombre = nuevoNombre,
+                                    apellido = nuevoApellido,
+                                    correo = nuevoCorreo
+                                    // La contraseña se actualizaría en el backend
+                                )
+
+                                // Guardar en SharedPreferences
+                                val userJsonToSave = gson.toJson(usuarioLogueado)
+                                sharedPreferences.edit {
+                                    putString("usuario", userJsonToSave)
+                                }
+
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Perfil actualizado correctamente",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+
+                                navController.popBackStack()
+                            }
+                        )
+                    }
+
                 }
             }
         }
