@@ -33,87 +33,23 @@ import com.narmocorp.satorispa.models.Usuario
 @Composable
 fun Inicio(
     modifier: Modifier = Modifier,
-    usuario: Usuario? = null, // Nuevo parámetro
+    usuario: Usuario? = null,
     onNavigateToNotifications: (() -> Unit)? = null,
-    onNavigateToConfig: (() -> Unit)? = null // Nuevo parámetro para ajustes
+    onNavigateToConfig: (() -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "logo",
-                            modifier = Modifier.size(80.dp)
-                        )
-
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onNavigateToNotifications?.invoke() }) {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notificaciones",
-                            tint = Color(0xff995d2d),
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { onNavigateToConfig?.invoke() }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = "Ajustes",
-                            tint = Color(0xff995d2d)
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+            TopBar(
+                onNavigateToNotifications = onNavigateToNotifications,
+                onNavigateToConfig = onNavigateToConfig
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xffdfbaa2)
-            ) {
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = "Home",
-                            tint = Color(0xff995d2d)
-                        )
-                    },
-                    label = { Text("Home", color = Color(0xff995d2d)) },
-                    selected = true,
-                    onClick = { /* TODO: Home */ }
-                )
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.RoomService,
-                            contentDescription = "Servicios",
-                            tint = Color(0xff995d2d)
-                        )
-                    },
-                    label = { Text("Servicios", color = Color(0xff995d2d)) },
-                    selected = false,
-                    onClick = { /* TODO: Servicios */ }
-                )
-                NavigationBarItem(
-                    icon = {
-                        Icon(
-                            imageVector = Icons.Default.DateRange, // Usar DateRange como alternativo a Event
-                            contentDescription = "Citas",
-                            tint = Color(0xff976826)
-                        )
-                    },
-                    label = { Text("Mis citas", color = Color(0xff976826)) },
-                    selected = false,
-                    onClick = { /* TODO: Mis citas */ }
-                )
-            }
+            NavBar(
+                onHomeClick = { /* TODO: Home */ },
+                onServiciosClick = { /* TODO: Servicios */ },
+                onCitasClick = { /* TODO: Mis citas */ }
+            )
         },
         containerColor = Color.White,
         modifier = modifier.fillMaxSize()
