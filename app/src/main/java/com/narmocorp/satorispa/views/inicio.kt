@@ -34,8 +34,12 @@ import com.narmocorp.satorispa.models.Usuario
 fun Inicio(
     modifier: Modifier = Modifier,
     usuario: Usuario? = null,
+    selectedRoute: String = "inicio",
     onNavigateToNotifications: (() -> Unit)? = null,
-    onNavigateToConfig: (() -> Unit)? = null
+    onNavigateToConfig: (() -> Unit)? = null,
+    onHomeClick: (() -> Unit)? = null,
+    onServiciosClick: (() -> Unit)? = null,
+    onCitasClick: (() -> Unit)? = null
 ) {
     Scaffold(
         topBar = {
@@ -46,9 +50,10 @@ fun Inicio(
         },
         bottomBar = {
             NavBar(
-                onHomeClick = { /* TODO: Home */ },
-                onServiciosClick = { /* TODO: Servicios */ },
-                onCitasClick = { /* TODO: Mis citas */ }
+                selectedRoute = selectedRoute,
+                onHomeClick = onHomeClick,
+                onServiciosClick = onServiciosClick,
+                onCitasClick = onCitasClick
             )
         },
         containerColor = Color.White,

@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun NavBar(
+    selectedRoute: String,
     onHomeClick: (() -> Unit)? = null,
     onServiciosClick: (() -> Unit)? = null,
     onCitasClick: (() -> Unit)? = null
@@ -26,7 +27,7 @@ fun NavBar(
                 )
             },
             label = { Text("Home", color = Color(0xff995d2d)) },
-            selected = true,
+            selected = selectedRoute == "inicio",
             onClick = { onHomeClick?.invoke() }
         )
         NavigationBarItem(
@@ -38,7 +39,7 @@ fun NavBar(
                 )
             },
             label = { Text("Servicios", color = Color(0xff995d2d)) },
-            selected = false,
+            selected = selectedRoute == "servicios",
             onClick = { onServiciosClick?.invoke() }
         )
         NavigationBarItem(
@@ -50,7 +51,7 @@ fun NavBar(
                 )
             },
             label = { Text("Mis citas", color = Color(0xff976826)) },
-            selected = false,
+            selected = selectedRoute == "citas",
             onClick = { onCitasClick?.invoke() }
         )
     }

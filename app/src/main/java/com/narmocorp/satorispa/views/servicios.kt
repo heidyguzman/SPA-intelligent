@@ -41,6 +41,7 @@ val serviciosList = listOf(
 @Composable
 fun Servicios(
     modifier: Modifier = Modifier,
+    selectedRoute: String = "servicios",
     onHomeClick: (() -> Unit)? = null,
     onServiciosClick: (() -> Unit)? = null,
     onCitasClick: (() -> Unit)? = null,
@@ -56,6 +57,7 @@ fun Servicios(
         },
         bottomBar = {
             NavBar(
+                selectedRoute = selectedRoute,
                 onHomeClick = onHomeClick,
                 onServiciosClick = onServiciosClick,
                 onCitasClick = onCitasClick

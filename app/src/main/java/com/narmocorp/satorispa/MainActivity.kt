@@ -26,6 +26,7 @@ import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.StartScreen
 import com.narmocorp.satorispa.views.Notifications
 import com.narmocorp.satorispa.views.Register
+import com.narmocorp.satorispa.views.Servicios
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executor
 
@@ -175,8 +176,38 @@ class MainActivity : FragmentActivity() {
 
                     composable("inicio") {
                         Inicio(
-                            usuario = usuarioLogueado, // FUNCIONALIDAD DE TU COMPAÑERO
-                            // TU FUNCIONALIDAD: Navegación a notificaciones
+                            usuario = usuarioLogueado,
+                            selectedRoute = "inicio",
+                            onNavigateToNotifications = {
+                                navController.navigate("notifications")
+                            },
+                            onNavigateToConfig = {
+                                navController.navigate("configuracion")
+                            },
+                            onHomeClick = {
+                                navController.navigate("inicio")
+                            },
+                            onServiciosClick = {
+                                navController.navigate("servicios")
+                            },
+                            onCitasClick = {
+                                navController.navigate("citas")
+                            }
+                        )
+                    }
+
+                    composable("servicios") {
+                        Servicios(
+                            selectedRoute = "servicios",
+                            onHomeClick = {
+                                navController.navigate("inicio")
+                            },
+                            onServiciosClick = {
+                                navController.navigate("servicios")
+                            },
+                            onCitasClick = {
+                                navController.navigate("citas")
+                            },
                             onNavigateToNotifications = {
                                 navController.navigate("notifications")
                             },
