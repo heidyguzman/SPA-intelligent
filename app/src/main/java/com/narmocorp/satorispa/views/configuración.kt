@@ -33,23 +33,46 @@ fun Configuracion(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text("Configuración", color = Color(0xff1c1b1f), fontWeight = FontWeight.Bold)
-                },
-                navigationIcon = {
-                    IconButton(onClick = { onBack?.invoke() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color(0xff1c1b1f)
-                        )
+            Surface(
+                color = Color(0xffdbbba6),
+                shadowElevation = 0.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+                    .padding(horizontal = 8.dp, vertical = 12.dp), // Más padding vertical para evitar ovalado
+                shape = RoundedCornerShape(32.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color(0xffb77a4c), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        IconButton(
+                            onClick = { onBack?.invoke() },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = Color.Black,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xffdbbba6)
-                )
-            )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Configuración",
+                        color = Color(0xff1c1b1f),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+            }
         },
         containerColor = Color.White,
         modifier = modifier.fillMaxSize()
