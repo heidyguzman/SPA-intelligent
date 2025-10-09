@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +66,7 @@ fun Register(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
 
     // Consistent color palette
     val primaryBrandColor = Color(0xff995d2d)
@@ -322,6 +324,7 @@ fun Register(
                             RetrofitClient.instance.registerUser(newUser).enqueue(object : Callback<Usuario> {
                                 override fun onResponse(call: Call<Usuario>, response: Response<Usuario>) {
                                     if (response.isSuccessful) {
+                                        android.widget.Toast.makeText(context, "Usuario registrado correctamente", android.widget.Toast.LENGTH_LONG).show()
                                         showMessage("¡Registro exitoso!")
                                         navController.navigate("login") {
                                             popUpTo("register") { inclusive = true }

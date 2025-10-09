@@ -207,6 +207,27 @@ class MainActivity : FragmentActivity() {
                                 navController.navigate("inicio") {
                                     popUpTo("configuracion") { inclusive = true }
                                 }
+                            },
+                            onLogout = {
+                                // 1️⃣ Eliminar datos de sesión guardados
+                                sharedPreferences.edit { remove("usuario") }
+
+                                // 2️⃣ Borrar variable local
+                                usuarioLogueado = null
+
+                                // 3️⃣ Redirigir al login y limpiar historial de navegación
+                                navController.navigate("login") {
+                                    // Elimina todo lo anterior en el stack
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+
+                                // 4️⃣ Mostrar mensaje
+                                Toast.makeText(
+                                    this@MainActivity,
+                                    "Sesión cerrada correctamente",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         )
                     }

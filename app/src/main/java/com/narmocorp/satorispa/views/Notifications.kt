@@ -89,11 +89,11 @@ class Notifications {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .padding(horizontal = 16.dp, vertical = 16.dp)
+                    .padding(top = 32.dp) // Más espacio arriba
                     .fillMaxWidth()
                     .height(56.dp)
                     .clip(RoundedCornerShape(28.dp))
-                    .background(AppColors.primaryContainer)
+                    .background(Color(0xFFD8B49C)) // Color más claro, similar al de la imagen
             ) {
                 Row(
                     modifier = Modifier
@@ -101,21 +101,27 @@ class Notifications {
                         .padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = { onBackClick?.invoke() }
+                    // Botón circular separado
+                    Box(
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(AppColors.primary)
+                            .clickable { onBackClick?.invoke() },
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Regresar",
-                            tint = AppColors.onSurface
+                            tint = Color.Black // Ícono negro
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        "Notificaciones",
-                        color = AppColors.onSurface,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
+                        "Notificaciones", // Texto cambiado
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold // Negrita
                     )
                 }
             }
