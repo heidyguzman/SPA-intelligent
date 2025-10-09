@@ -52,7 +52,7 @@ fun NavBar(
             },
             label = { Text("Mis citas", color = Color(0xff976826)) },
             selected = selectedRoute == "citas",
-            onClick = { onCitasClick?.invoke() }
+            onClick = { }
         )
     }
 }
