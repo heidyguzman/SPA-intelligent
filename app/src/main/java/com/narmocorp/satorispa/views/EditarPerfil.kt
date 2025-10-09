@@ -250,7 +250,7 @@ fun CustomPasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
-    mostrarPassword: Boolean,GIT
+    mostrarPassword: Boolean,
     onTogglePassword: () -> Unit,
     modifier: Modifier = Modifier
 ) {
