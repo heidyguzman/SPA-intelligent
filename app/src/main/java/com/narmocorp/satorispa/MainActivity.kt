@@ -202,8 +202,12 @@ class MainActivity : FragmentActivity() {
 
                     composable("configuracion") {
                         com.narmocorp.satorispa.views.Configuracion(
-                            usuario = usuarioLogueado
-                            // Puedes agregar otros callbacks si los usas
+                            usuario = usuarioLogueado,
+                            onBack = {
+                                navController.navigate("inicio") {
+                                    popUpTo("configuracion") { inclusive = true }
+                                }
+                            }
                         )
                     }
                 }
