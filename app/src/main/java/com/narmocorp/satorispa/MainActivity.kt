@@ -11,37 +11,25 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.google.firebase.Firebase
+import com.google.firebase.firestore.firestore
 import com.narmocorp.satorispa.ui.theme.SatoriSPATheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            SatoriSPATheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+        val db = Firebase.firestore
+
+        db.collection("usuarios")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    println("${document.id} => ${document.data}")
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SatoriSPATheme {
-        Greeting("Android")
+            .addOnFailureListener { exception ->
+                println("Error getting documents: $exception")
+            }
     }
 }
