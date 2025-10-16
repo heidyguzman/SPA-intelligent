@@ -2,14 +2,17 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.narmocorp.satorispa"
-    compileSdk = 36
+    namespace = "com.example.satorispa"
+    compileSdk {
+        version = release(36)
+    }
 
     defaultConfig {
-        applicationId = "com.narmocorp.satorispa"
+        applicationId = "com.example.satorispa"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -40,7 +43,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -49,8 +51,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.navigation.compose)
-    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -59,12 +60,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    //Conexion a retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("androidx.compose.material:material-icons-extended:1.6.8")
-    implementation("com.squareup.okhttp3:okhttp:4.10.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+    implementation(platform("com.google.firebase:firebase-bom:34.4.0"))
 }
