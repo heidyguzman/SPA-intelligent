@@ -2,16 +2,11 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CalendarToday
@@ -89,7 +84,6 @@ fun ServicesScreen(isGuest: Boolean = true) {
                 .padding(paddingValues)
                 .fillMaxSize()
                 .background(Color.White)
-                .verticalScroll(rememberScrollState())
         ) {
             Text(
                 text = "Servicios",
@@ -123,74 +117,77 @@ fun ServicesScreen(isGuest: Boolean = true) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Lo más popular",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
+                    Text(
+                        text = "Lo más popular",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(popularServices) { service ->
-                    PopularServiceItem(service = service) {
-                        if (isGuest) {
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Inicia sesión para agendar una cita",
-                                    actionLabel = "Login"
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    // TODO: Navigate to Login Screen
+                    LazyRow(
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(popularServices) { service ->
+                            PopularServiceItem(service = service) {
+                                if (isGuest) {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(
+                                            message = "Inicia sesión para agendar una cita",
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                } else {
+                                    // TODO: Handle booking for logged-in user
                                 }
                             }
-                        } else {
-                            // TODO: Handle booking for logged-in user
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Todos los servicios",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = "Todos los servicios",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.height(600.dp) // Added height to avoid nested scrolling issues
-            ) {
-                items(filteredServices) { service ->
-                    ServiceItem(service = service) {
-                        if (isGuest) {
-                            scope.launch {
-                                val result = snackbarHostState.showSnackbar(
-                                    message = "Inicia sesión para agendar una cita",
-                                    actionLabel = "Login"
-                                )
-                                if (result == SnackbarResult.ActionPerformed) {
-                                    // TODO: Navigate to Login Screen
+                items(filteredServices.chunked(2)) { rowItems ->
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        rowItems.forEach { service ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                ServiceItem(service = service) {
+                                    if (isGuest) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "Inicia sesión para agendar una cita",
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    } else {
+                                        // TODO: Handle booking for logged-in user
+                                    }
                                 }
                             }
-                        } else {
-                            // TODO: Handle booking for logged-in user
+                        }
+                        if (rowItems.size < 2) {
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
         }
@@ -201,8 +198,7 @@ fun ServicesScreen(isGuest: Boolean = true) {
 fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
     Card(
         modifier = Modifier
-            .width(160.dp)
-            .clickable(onClick = onBookClick),
+            .width(160.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -218,19 +214,28 @@ fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
             Column(
                 modifier = Modifier
                     .padding(8.dp)
-                    .height(60.dp),
-                verticalArrangement = Arrangement.Center
+                    .height(80.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
                     text = service.name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
-                Text(
-                    text = service.price,
-                    color = Color.Gray,
-                    fontSize = 12.sp
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = service.price,
+                        color = Color.Gray,
+                        fontSize = 12.sp
+                    )
+                    IconButton(onClick = onBookClick) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
+                    }
+                }
             }
         }
     }
