@@ -1,21 +1,16 @@
 package com.narmocorp.satorispa
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -27,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
 
 @Composable
-fun StartScreen(onLoginClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
+fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -44,48 +39,66 @@ fun StartScreen(onLoginClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 32.dp),
-            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(100.dp))
+
             // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo Satori Spa",
                 modifier = Modifier
-                    .width(239.dp)
-                    .height(190.dp)
+                    .width(200.dp)
+                    .height(150.dp)
             )
 
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Controles de inicio de sesión y registro
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+            // Mensaje de bienvenida
+            Text(
+                text = "Bienvenido a Satori Spa",
+                color = Color(0xFF986A48),
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+
+            // Este spacer empuja el contenido debajo de él hacia la parte inferior de la pantalla
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Botón principal de servicios
+            Button(
+                onClick = onServicesClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(30.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF986A48))
             ) {
-                Button(
-                    onClick = onLoginClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(30.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF986A48))
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Iniciar sesión",
-                        tint = Color.Black
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Satori Spa te da la bienvenida",
-                        color = Color.Black,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-
+                Text(
+                    text = "Explorar servicios",
+                    color = Color.White, // Texto blanco para mejor contraste
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Botón para registrarse (usa onRegisterClick para evitar advertencia de parámetro no usado)
+            OutlinedButton(
+                onClick = onRegisterClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(30.dp),
+                border = BorderStroke(1.dp, Color(0xFF986A48)),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF986A48))
+            ) {
+                Text(text = "Registrarse", fontSize = 18.sp, fontWeight = FontWeight.Medium)
+            }
+
+            Spacer(modifier = Modifier.height(150.dp))
         }
     }
 }
@@ -93,5 +106,5 @@ fun StartScreen(onLoginClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
 @Preview(showBackground = true)
 @Composable
 fun StartScreenPreview() {
-    StartScreen(onLoginClick = {}, onRegisterClick = {})
+    StartScreen(onServicesClick = {}, onRegisterClick = {})
 }

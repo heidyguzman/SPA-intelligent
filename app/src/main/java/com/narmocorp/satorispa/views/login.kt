@@ -26,6 +26,8 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,6 +39,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -45,7 +48,7 @@ import com.narmocorp.satorispa.R
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
-    label1901: String, // Suggest renaming to something like "emailLabel"
+    emailLabel: String,
     onLogin: (String, String, Boolean) -> Unit,
     navController: NavController
 ) {
@@ -69,7 +72,7 @@ fun Login(
             .background(pageBackgroundColor)
             .imePadding() // Adjusts for the keyboard
     ) {
-        val screenHeight = maxHeight
+        val screenHeight = this.maxHeight
         // val screenWidth = maxWidth // Not directly used in this version, relying more on fillMaxWidth and fixed dp
 
         // Background Image
@@ -125,7 +128,7 @@ fun Login(
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text(text = label1901, color = subtleTextColor) },
+                    label = { Text(text = emailLabel, color = subtleTextColor) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Email,
