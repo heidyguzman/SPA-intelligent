@@ -33,12 +33,14 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.narmocorp.satorispa.R
 
 @Composable
 fun Register(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    navController: NavController
 ) {
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
@@ -347,7 +349,7 @@ fun Register(
             verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(
-                onClick = { showMessage("Diseño: sin navegación") },
+                onClick = { navController.navigate("login") },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()

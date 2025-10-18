@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.navigation.runtime.ktx)
     // Navigation for Jetpack Compose
     implementation("androidx.navigation:navigation-compose:2.6.0")
+    implementation(libs.firebase.auth)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

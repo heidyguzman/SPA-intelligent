@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.narmocorp.satorispa.R
 import kotlinx.coroutines.launch
 
@@ -29,7 +31,7 @@ data class Service(val name: String, val price: String, val imageRes: Int, val c
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServicesScreen(isGuest: Boolean = true) {
+fun ServicesScreen(navController: NavController, isGuest: Boolean = true) {
     val services = listOf(
         Service("Masaje relajante", "$150.00", R.drawable.fondo, "Masajes"),
         Service("Masaje con piedras calientes", "$180.00", R.drawable.fondo, "Masajes"),
@@ -66,7 +68,7 @@ fun ServicesScreen(isGuest: Boolean = true) {
                 },
                 actions = {
                     if (isGuest) {
-                        IconButton(onClick = { /* TODO: Handle login navigation */ }) {
+                        IconButton(onClick = { navController.navigate("login") }) {
                             Icon(Icons.Default.AccountCircle, contentDescription = "Login", modifier = Modifier.size(36.dp))
                         }
                     } else {
@@ -283,5 +285,5 @@ fun ServiceItem(service: Service, onBookClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun ServicesScreenPreview() {
-    ServicesScreen(isGuest = true)
+    ServicesScreen(navController = rememberNavController(), isGuest = true)
 }

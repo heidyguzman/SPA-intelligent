@@ -49,7 +49,7 @@ import com.narmocorp.satorispa.R
 fun Login(
     modifier: Modifier = Modifier,
     emailLabel: String,
-    onLogin: (String, String, Boolean) -> Unit,
+    onLogin: (String, String) -> Unit,
     navController: NavController
 ) {
     var correo by remember { mutableStateOf("") }
@@ -212,7 +212,7 @@ fun Login(
                 }
 
                 Button(
-                    onClick = { onLogin(correo, contrasena, keepSession) },
+                    onClick = { onLogin(correo, contrasena) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
