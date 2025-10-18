@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.controller.RegistroController
 
 @Composable
 fun Register(
@@ -49,6 +50,7 @@ fun Register(
     var confirmarContrasena by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmarPasswordVisible by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
 
     // State for validation errors
     var nombreError by remember { mutableStateOf<String?>(null) }
@@ -313,8 +315,24 @@ fun Register(
                 Button(
                     onClick = {
                         if (validateFields()) {
-                            // Diseño solamente: no hay lógica de red ni navegación
-                            showMessage("Acción deshabilitada (solo diseño)")
+                            // call real registration
+                            isLoading = true
+                            RegistroController.registerUser(nombre, apellido, correo, contrasena) { success, message ->
+                                isLoading = false
+                                if (success) {
+                                    showMessage("Registro correcto")
+                                    // navigate to login screen after a short delay so the user can see the snackbar
+                                    scope.launch {
+                                        // small pause to let user read snackbar
+                                        kotlinx.coroutines.delay(800)
+                                        navController.navigate("login") {
+                                            popUpTo("register") { inclusive = true }
+                                        }
+                                    }
+                                } else {
+                                    showMessage(message)
+                                }
+                            }
                         } else {
                             showMessage("Completa los campos correctamente")
                         }
@@ -327,12 +345,25 @@ fun Register(
                         containerColor = primaryBrandColor,
                         contentColor = textOnPrimaryBrand
                     ),
-                    enabled = true
+                    enabled = !isLoading
                 ) {
-                    Text(
-                        text = "Registrarme",
-                        style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    )
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            color = textOnPrimaryBrand,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Registrando...",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        )
+                    } else {
+                        Text(
+                            text = "Registrarme",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                        )
+                    }
                 }
             }
         }

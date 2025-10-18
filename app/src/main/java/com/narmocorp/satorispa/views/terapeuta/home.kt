@@ -100,53 +100,7 @@ fun TerapeutaHomeScreen(
                 color = Color(0xff1c1b1f).copy(alpha = 0.7f)
             )
             Spacer(modifier = Modifier.height(100.dp)) // Espacio aumentado para bajar el cuadro NFC
-            // Card NFC
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
-                shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xff995d2d)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Registra tu entrada",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                    Box(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xffdbbba6)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Nfc,
-                            contentDescription = "NFC Icon",
-                            modifier = Modifier.size(42.dp),
-                            tint = Color(0xff1c1b1f)
-                        )
-                    }
-                    Text(
-                        text = "Acerque su dispositivo al lector para realizar el registro de entrada",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.weight(1f))
+
         }
     }
 }
