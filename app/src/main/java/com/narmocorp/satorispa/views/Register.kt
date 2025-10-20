@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views
 
+import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,9 +36,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.google.firebase.auth.FirebaseAuth // Importar FirebaseAuth
 import kotlinx.coroutines.launch
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.controller.RegistroController
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun Register(
@@ -315,16 +319,43 @@ fun Register(
                 Button(
                     onClick = {
                         if (validateFields()) {
-                            // call real registration
                             isLoading = true
                             RegistroController.registerUser(nombre, apellido, correo, contrasena) { success, message ->
                                 isLoading = false
                                 if (success) {
                                     showMessage("Registro correcto")
-                                    // navigate to login screen after a short delay so the user can see the snackbar
+
+                                    val usuarioId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+
+                                    if (usuarioId != null) {
+                                        scope.launch {
+                                            try {
+                                                val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                                val notificacion = mapOf(
+                                                    "titulo" to "¡Bienvenido a Satori SPA!",
+                                                    "mensaje" to "Nos alegra tenerte aquí. Descubre nuestros servicios",
+                                                    "tipo" to "bienvenida",
+                                                    "fecha" to com.google.firebase.firestore.FieldValue.serverTimestamp(),
+                                                    "leida" to false
+                                                )
+
+                                                db.collection("usuarios").document(usuarioId)
+                                                    .collection("notificaciones")
+                                                    .add(notificacion)
+                                                    .addOnSuccessListener {
+                                                        Log.d("Registro", "Notificación de bienvenida guardada")
+                                                    }
+                                                    .addOnFailureListener { e ->
+                                                        Log.e("Registro", "Error guardando notificación", e)
+                                                    }
+                                            } catch (e: Exception) {
+                                                Log.e("Registro", "Exception", e)
+                                            }
+                                        }
+                                    }
+
                                     scope.launch {
-                                        // small pause to let user read snackbar
-                                        kotlinx.coroutines.delay(800)
+                                        kotlinx.coroutines.delay(1600)
                                         navController.navigate("login") {
                                             popUpTo("register") { inclusive = true }
                                         }
