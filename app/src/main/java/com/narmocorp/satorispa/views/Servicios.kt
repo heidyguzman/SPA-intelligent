@@ -2,7 +2,7 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.* 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -22,34 +22,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.model.Servicio
+import com.narmocorp.satorispa.viewmodel.ServiciosViewModel
 import kotlinx.coroutines.launch
-
-data class Service(val name: String, val price: String, val imageRes: Int, val category: String)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServicesScreen(navController: NavController, isGuest: Boolean = true) {
-    val services = listOf(
-        Service("Masaje relajante", "$150.00", R.drawable.fondo, "Masajes"),
-        Service("Masaje con piedras calientes", "$180.00", R.drawable.fondo, "Masajes"),
-        Service("Masaje aromaterapéutico", "$200.00", R.drawable.fondo, "Masajes"),
-        Service("Masaje de tejido profundo", "$240.00", R.drawable.fondo, "Masajes"),
-        Service("Limpieza facial profunda", "$120.00", R.drawable.fondo, "Faciales"),
-        Service("Tratamiento hidratante", "$180.00", R.drawable.fondo, "Faciales")
-    )
-    val categories = listOf("Todos") + services.map { it.category }.distinct()
-    var selectedCategory by remember { mutableStateOf(categories.first()) }
+fun ServicesScreen(
+    navController: NavController,
+    isGuest: Boolean = true,
+    serviciosViewModel: ServiciosViewModel = viewModel()
+) {
+    val services by serviciosViewModel.servicios.collectAsState()
+    val categories = listOf("Todos") + services.map { it.categoria }.distinct()
+    var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Todos") }
 
     var searchQuery by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     val filteredServices = services.filter { service ->
-        (selectedCategory == "Todos" || service.category == selectedCategory) &&
-                (searchQuery.isEmpty() || service.name.contains(searchQuery, ignoreCase = true))
+        (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
+                (searchQuery.isEmpty() || service.nombre.contains(searchQuery, ignoreCase = true))
     }
 
     val popularServices = services.shuffled().take(4)
@@ -197,7 +196,7 @@ fun ServicesScreen(navController: NavController, isGuest: Boolean = true) {
 }
 
 @Composable
-fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
+fun PopularServiceItem(service: Servicio, onBookClick: () -> Unit) {
     Card(
         modifier = Modifier
             .width(160.dp),
@@ -206,8 +205,8 @@ fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
     ) {
         Column {
             Image(
-                painter = painterResource(id = service.imageRes),
-                contentDescription = service.name,
+                painter = rememberAsyncImagePainter(service.imagen),
+                contentDescription = service.nombre,
                 modifier = Modifier
                     .height(100.dp)
                     .fillMaxWidth(),
@@ -220,7 +219,7 @@ fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = service.name,
+                    text = service.nombre,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp
                 )
@@ -230,7 +229,7 @@ fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = service.price,
+                        text = "$${service.precio}",
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
@@ -244,7 +243,7 @@ fun PopularServiceItem(service: Service, onBookClick: () -> Unit) {
 }
 
 @Composable
-fun ServiceItem(service: Service, onBookClick: () -> Unit) {
+fun ServiceItem(service: Servicio, onBookClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -252,8 +251,8 @@ fun ServiceItem(service: Service, onBookClick: () -> Unit) {
     ) {
         Column {
             Image(
-                painter = painterResource(id = service.imageRes),
-                contentDescription = service.name,
+                painter = rememberAsyncImagePainter(service.imagen),
+                contentDescription = service.nombre,
                 modifier = Modifier
                     .height(120.dp)
                     .fillMaxWidth(),
@@ -265,13 +264,13 @@ fun ServiceItem(service: Service, onBookClick: () -> Unit) {
                     .height(100.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = service.name, fontWeight = FontWeight.Bold)
+                Text(text = service.nombre, fontWeight = FontWeight.Bold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = service.price, color = Color.Gray)
+                    Text(text = "$${service.precio}", color = Color.Gray)
                     IconButton(onClick = onBookClick) {
                         Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
                     }
