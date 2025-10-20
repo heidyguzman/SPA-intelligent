@@ -43,7 +43,7 @@ object RegistroController {
                         .set(userData)
                         .addOnSuccessListener {
                             // Sign out so the app is not left authenticated after registration.
-                            auth.signOut()
+                            //auth.signOut()
                             onResult(true, "Registro exitoso")
                         }
                         .addOnFailureListener { e ->

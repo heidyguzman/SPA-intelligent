@@ -1,6 +1,7 @@
 package com.narmocorp.satorispa
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,50 +18,61 @@ import com.narmocorp.satorispa.views.ServicesScreen
 import com.narmocorp.satorispa.StartScreen
 import com.narmocorp.satorispa.views.cliente.ClientHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
+import com.narmocorp.satorispa.views.NotificacionesScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
-            SatoriSPATheme {
-                val navController = rememberNavController()
-                val context = LocalContext.current
+            enableEdgeToEdge()
+            setContent {
+                SatoriSPATheme {
+                    val navController = rememberNavController()
+                    val context = LocalContext.current
 
-                NavHost(navController = navController, startDestination = "start") {
-                    composable("start") {
-                        StartScreen(
-                            onServicesClick = { navController.navigate("services") },
-                            onRegisterClick = { navController.navigate("register") }
-                        )
-                    }
+                    NavHost(navController = navController, startDestination = "start") {
+                        composable("start") {
+                            StartScreen(
+                                onServicesClick = { navController.navigate("services") },
+                                onRegisterClick = { navController.navigate("register") }
+                            )
+                        }
 
-                    composable("services") {
-                        ServicesScreen(navController = navController)
-                    }
+                        composable("services") {
+                            ServicesScreen(navController = navController)
+                        }
 
-                    composable("login") {
-                        Login(
-                            emailLabel = "Correo electrónico",
-                            onLogin = { email, password ->
-                                loginUser(email, password, navController) { errorMessage ->
-                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            navController = navController
-                        )
-                    }
-                    composable("register") {
-                        Register(navController = navController)
-                    }
-                    composable("cliente_home") {
-                        ClientHomeScreen()
-                    }
-                    composable("terapeuta_home") {
-                        TerapeutaHomeScreen()
+                        composable("login") {
+                            Login(
+                                emailLabel = "Correo electrónico",
+                                onLogin = { email, password ->
+                                    loginUser(email, password, navController) { errorMessage ->
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT)
+                                            .show()
+                                    }
+                                },
+                                navController = navController
+                            )
+                        }
+                        composable("register") {
+                            Register(navController = navController)
+                        }
+                        composable("cliente_home") {
+                            ClientHomeScreen(onNavigateToNotifications = { navController.navigate("notificaciones") }
+                            )
+                        }
+                        composable("terapeuta_home") {
+                            TerapeutaHomeScreen()
+                        }
+                        composable("notificaciones") {
+                            NotificacionesScreen(navController = navController)
+                        }
                     }
                 }
             }
         }
     }
 }
+
