@@ -32,6 +32,7 @@ import com.narmocorp.satorispa.R
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.material.icons.filled.Notifications
 
 data class Notificacion(
     val id: String = "",
@@ -432,4 +433,65 @@ fun formatearFecha(timestamp: Long): String {
     val fecha = Date(timestamp * 1000)
     val formato = SimpleDateFormat("dd/MMM/yy - HH:mm", Locale("es", "ES"))
     return formato.format(fecha)
+}
+// Función para contar notificaciones no leídas con listener en tiempo real
+fun contarNotificacionesNoLeidas(callback: (Int) -> Unit) {
+    val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+    val db = FirebaseFirestore.getInstance()
+
+    db.collection("usuarios")
+        .document(usuarioId)
+        .collection("notificaciones")
+        .whereEqualTo("leida", false)
+        .addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                callback(0)
+                return@addSnapshotListener
+            }
+            val count = snapshot?.size() ?: 0
+            callback(count)
+        }
+}
+
+// Composable para el ícono de campanita con badge
+@Composable
+fun IconoCampanaConBadge(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Black
+) {
+    var notificacionesCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        contarNotificacionesNoLeidas { count ->
+            notificacionesCount = count
+        }
+    }
+
+    Box(modifier = modifier) {
+        IconButton(onClick = onClick) {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = "Notificaciones",
+                tint = tint,
+                modifier = Modifier.size(28.dp)
+            )
+        }
+
+        if (notificacionesCount > 0) {
+            Badge(
+                containerColor = Color(0xffE53935),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .offset(x = (-4).dp, y = 8.dp)
+            ) {
+                Text(
+                    text = if (notificacionesCount > 99) "99+" else notificacionesCount.toString(),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
 }
