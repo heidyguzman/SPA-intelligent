@@ -71,4 +71,10 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-functions-ktx")
+
+    // ViewModel Compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.6.0")
 }

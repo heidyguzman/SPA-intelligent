@@ -231,7 +231,7 @@ fun Login(
                 Spacer(Modifier.height(16.dp))
 
                 TextButton(
-                    onClick = { /* TODO: Implement forgot password */ },
+                    onClick = { navController.navigate("forgot_password") },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(

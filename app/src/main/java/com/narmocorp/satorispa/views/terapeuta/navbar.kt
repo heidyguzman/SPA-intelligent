@@ -33,18 +33,6 @@ fun NavBar(
         NavigationBarItem(
             icon = {
                 Icon(
-                    imageVector = Icons.Default.RoomService,
-                    contentDescription = "Servicios",
-                    tint = Color(0xff995d2d)
-                )
-            },
-            label = { Text("Servicios", color = Color(0xff995d2d)) },
-            selected = selectedRoute == "servicios",
-            onClick = { onServiciosClick?.invoke() }
-        )
-        NavigationBarItem(
-            icon = {
-                Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Citas",
                     tint = Color(0xff976826)

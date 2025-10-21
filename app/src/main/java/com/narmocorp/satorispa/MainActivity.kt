@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.narmocorp.satorispa.controller.loginUser
 import com.narmocorp.satorispa.ui.theme.SatoriSPATheme
+import com.narmocorp.satorispa.views.ForgotPasswordFlow
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.Register
 import com.narmocorp.satorispa.views.ServicesScreen
@@ -59,6 +60,9 @@ class MainActivity : ComponentActivity() {
                         composable("register") {
                             Register(navController = navController)
                         }
+                        composable("forgot_password") {
+                            ForgotPasswordFlow(navController = navController)
+                        }
                         composable("cliente_home") {
                             ClientHomeScreen(onNavigateToNotifications = { navController.navigate("notificaciones") }
                             )
@@ -75,4 +79,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

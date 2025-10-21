@@ -1,39 +1,33 @@
 package com.narmocorp.satorispa.views.terapeuta
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.RoomService
-import androidx.compose.material.icons.filled.Nfc
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx   .compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.narmocorp.satorispa.R
-import com.narmocorp.satorispa.views.cliente.NavBar
-import com.narmocorp.satorispa.views.cliente.TopBar
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.narmocorp.satorispa.viewmodel.TerapeutaHomeViewModel
+import com.narmocorp.satorispa.viewmodel.UserState
+import com.narmocorp.satorispa.views.terapeuta.NavBar
+import com.narmocorp.satorispa.views.terapeuta.TopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TerapeutaHomeScreen(
     modifier: Modifier = Modifier,
+    viewModel: TerapeutaHomeViewModel = viewModel(),
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToConfig: () -> Unit = {},
     selectedRoute: String = "",
@@ -41,6 +35,8 @@ fun TerapeutaHomeScreen(
     onServiciosClick: () -> Unit = {},
     onCitasClick: () -> Unit = {}
 ) {
+    val userState by viewModel.userState.collectAsState()
+
     Scaffold(
         topBar = {
             TopBar(
@@ -67,6 +63,7 @@ fun TerapeutaHomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
+
             // Avatar
             Box(
                 modifier = Modifier
@@ -82,25 +79,71 @@ fun TerapeutaHomeScreen(
                     modifier = Modifier.size(100.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Nombre",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xff1c1b1f)
-            )
-            Text(
-                text = "Apellido",
-                style = MaterialTheme.typography.titleLarge,
-                color = Color(0xff1c1b1f)
-            )
-            Text(
-                text = "Correo",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xff1c1b1f).copy(alpha = 0.7f)
-            )
-            Spacer(modifier = Modifier.height(100.dp)) // Espacio aumentado para bajar el cuadro NFC
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Contenido dinámico según el estado
+            when (userState) {
+                is UserState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        color = Color(0xff995d2d)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Cargando...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                    )
+                }
+
+                is UserState.Success -> {
+                    val user = (userState as UserState.Success).user
+                    Text(
+                        text = user.nombre,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xff1c1b1f)
+                    )
+                    Text(
+                        text = user.apellido,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color(0xff1c1b1f)
+                    )
+                    Text(
+                        text = user.correo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                    )
+                }
+
+                is UserState.Error -> {
+                    val errorMessage = (userState as UserState.Error).message
+                    Text(
+                        text = "Error al cargar datos",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Red
+                    )
+                    Text(
+                        text = errorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Red.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = { viewModel.loadUserData() },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xff995d2d)
+                        )
+                    ) {
+                        Text("Reintentar")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
         }
     }
 }
