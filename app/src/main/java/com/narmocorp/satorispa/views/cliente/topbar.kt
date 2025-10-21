@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.views.IconoCampanaConBadge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +34,11 @@ fun TopBar(
             }
         },
         navigationIcon = {
-            IconButton(onClick = { onNavigateToNotifications?.invoke() }) {
-                Icon(
-                    imageVector = Icons.Default.Notifications,
-                    contentDescription = "Notificaciones",
-                    tint = Color(0xff995d2d),
-                )
-            }
+            // Campanita con contador de notificaciones
+            IconoCampanaConBadge(
+                onClick = { onNavigateToNotifications?.invoke() },
+                tint = Color(0xff995d2d)
+            )
         },
         actions = {
             IconButton(onClick = { onNavigateToConfig?.invoke() }) {
