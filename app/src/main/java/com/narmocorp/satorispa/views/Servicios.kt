@@ -300,7 +300,7 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(text = "Precio: $${service.precio}", fontSize = 18.sp)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Aquí iría una descripción detallada del servicio.", fontSize = 16.sp, color = Color.Gray)
+                Text(text = service.descripcion, fontSize = 16.sp, color = Color.Gray)
 
             }
         },
