@@ -2,7 +2,8 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.* 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -41,6 +42,7 @@ fun ServicesScreen(
     val services by serviciosViewModel.servicios.collectAsState()
     val categories = listOf("Todos") + services.map { it.categoria }.distinct()
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Todos") }
+    var selectedService by remember { mutableStateOf<Servicio?>(null) }
 
     var searchQuery by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -137,16 +139,7 @@ fun ServicesScreen(
                     ) {
                         items(popularServices) { service ->
                             PopularServiceItem(service = service) {
-                                if (isGuest) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            message = "Inicia sesión para agendar una cita",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                    }
-                                } else {
-                                    // TODO: Handle booking for logged-in user
-                                }
+                                selectedService = it
                             }
                         }
                     }
@@ -171,16 +164,7 @@ fun ServicesScreen(
                         rowItems.forEach { service ->
                             Box(modifier = Modifier.weight(1f)) {
                                 ServiceItem(service = service) {
-                                    if (isGuest) {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Inicia sesión para agendar una cita",
-                                                duration = SnackbarDuration.Short
-                                            )
-                                        }
-                                    } else {
-                                        // TODO: Handle booking for logged-in user
-                                    }
+                                    selectedService = it
                                 }
                             }
                         }
@@ -193,13 +177,33 @@ fun ServicesScreen(
             }
         }
     }
+
+    selectedService?.let { service ->
+        ServiceDetailsModal(
+            service = service,
+            onDismiss = { selectedService = null },
+            onBookClick = {
+                if (isGuest) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Inicia sesión para agendar una cita",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                } else {
+                    // TODO: Handle booking for logged-in user
+                }
+            }
+        )
+    }
 }
 
 @Composable
-fun PopularServiceItem(service: Servicio, onBookClick: () -> Unit) {
+fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
     Card(
         modifier = Modifier
-            .width(160.dp),
+            .width(160.dp)
+            .clickable { onItemClick(service) },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -233,9 +237,7 @@ fun PopularServiceItem(service: Servicio, onBookClick: () -> Unit) {
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
-                    IconButton(onClick = onBookClick) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
-                    }
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
                 }
             }
         }
@@ -243,9 +245,11 @@ fun PopularServiceItem(service: Servicio, onBookClick: () -> Unit) {
 }
 
 @Composable
-fun ServiceItem(service: Servicio, onBookClick: () -> Unit) {
+fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onItemClick(service) },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -271,13 +275,49 @@ fun ServiceItem(service: Servicio, onBookClick: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "$${service.precio}", color = Color.Gray)
-                    IconButton(onClick = onBookClick) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
-                    }
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
                 }
             }
         }
     }
+}
+
+@Composable
+fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(service.nombre, fontWeight = FontWeight.Bold, fontSize = 24.sp) },
+        text = {
+            Column {
+                Image(
+                    painter = rememberAsyncImagePainter(service.imagen),
+                    contentDescription = service.nombre,
+                    modifier = Modifier
+                        .height(200.dp)
+                        .fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(text = "Precio: $${service.precio}", fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(text = "Aquí iría una descripción detallada del servicio.", fontSize = 16.sp, color = Color.Gray)
+
+            }
+        },
+        confirmButton = {
+            Button(onClick = {
+                onBookClick()
+                onDismiss()
+            }) {
+                Text("Agendar Cita")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
