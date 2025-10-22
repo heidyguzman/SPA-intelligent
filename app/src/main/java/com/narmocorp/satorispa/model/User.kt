@@ -7,5 +7,6 @@ data class User(
     val apellido: String = "",
     val correo: String = "",
     val rol: String = "",
+    val imagenUrl: String = "", // URL de la imagen de perfil
     val createdAt: Timestamp? = null
 )

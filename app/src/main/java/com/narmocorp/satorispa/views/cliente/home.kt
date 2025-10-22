@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views.cliente
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -15,11 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
 import com.narmocorp.satorispa.viewmodel.UserState
 
@@ -30,7 +33,7 @@ fun ClientHomeScreen(
     viewModel: ClientHomeViewModel = viewModel(),
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToConfig: () -> Unit = {},
-    selectedRoute: String = "",
+    selectedRoute: String = "inicio",
     onHomeClick: () -> Unit = {},
     onServiciosClick: () -> Unit = {},
     onCitasClick: () -> Unit = {}
@@ -64,7 +67,7 @@ fun ClientHomeScreen(
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Avatar
+            // Avatar con soporte para imagen
             Box(
                 modifier = Modifier
                     .size(120.dp)
@@ -72,12 +75,40 @@ fun ClientHomeScreen(
                     .background(Color(0xffdbbba6)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Perfil",
-                    tint = Color(0xff1c1b1f),
-                    modifier = Modifier.size(100.dp)
-                )
+                when (userState) {
+                    is UserState.Success -> {
+                        val user = (userState as UserState.Success).user
+
+                        // Si el usuario tiene imagen, mostrarla
+                        if (user.imagenUrl.isNotEmpty()) {
+                            Image(
+                                painter = rememberAsyncImagePainter(user.imagenUrl),
+                                contentDescription = "Foto de perfil",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            // Si no tiene imagen, mostrar icono por defecto
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Perfil",
+                                tint = Color(0xff1c1b1f),
+                                modifier = Modifier.size(100.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        // Mientras carga o hay error, mostrar icono por defecto
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Perfil",
+                            tint = Color(0xff1c1b1f),
+                            modifier = Modifier.size(100.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

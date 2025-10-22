@@ -34,7 +34,6 @@ fun TopBar(
             }
         },
         navigationIcon = {
-            // Campanita con contador de notificaciones
             IconoCampanaConBadge(
                 onClick = { onNavigateToNotifications?.invoke() },
                 tint = Color(0xff995d2d)
