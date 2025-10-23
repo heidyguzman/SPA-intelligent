@@ -53,7 +53,7 @@ fun ServicesScreen(
                 (searchQuery.isEmpty() || service.nombre.contains(searchQuery, ignoreCase = true))
     }
 
-    val popularServices = services.shuffled().take(4)
+    val recentServices = services.sortedByDescending { it.createdAt }.take(4)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -125,7 +125,7 @@ fun ServicesScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Lo más popular",
+                        text = "Lo más reciente",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 16.dp)
@@ -137,7 +137,7 @@ fun ServicesScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(popularServices) { service ->
+                        items(recentServices) { service ->
                             PopularServiceItem(service = service) {
                                 selectedService = it
                             }
@@ -308,6 +308,8 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
             Button(onClick = {
                 onBookClick()
                 onDismiss()
+
+                
             }) {
                 Text("Agendar Cita")
             }

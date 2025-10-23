@@ -5,6 +5,7 @@ import com.google.firebase.firestore.PropertyName
 data class Servicio(
     val id: String = "",
     val categoria: String = "",
+    val createdAt: String = "",
     val descripcion: String = "",
     val estado: String = "",
     val imagen: String = "",
