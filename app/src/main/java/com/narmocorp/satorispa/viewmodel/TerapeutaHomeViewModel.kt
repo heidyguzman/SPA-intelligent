@@ -43,6 +43,7 @@ class TerapeutaHomeViewModel : ViewModel() {
                     val apellido = document.getString("apellido") ?: ""
                     val correo = document.getString("correo") ?: ""
                     val rol = document.getString("rol") ?: ""
+                    val imagenUrl = document.getString("imagenUrl") ?: "" // ← NUEVO CAMPO
 
                     val createdAt = when (val ts = document.get("createdAt")) {
                         is Timestamp -> ts
@@ -60,7 +61,8 @@ class TerapeutaHomeViewModel : ViewModel() {
                         else -> Timestamp.now() // Si no es ni fecha ni texto, usa la fecha actual
                     }
 
-                    val user = User(nombre, apellido, correo, rol, createdAt)
+                    // ← ACTUALIZADO: Ahora incluye imagenUrl
+                    val user = User(nombre, apellido, correo, rol, imagenUrl, createdAt)
                     _userState.value = UserState.Success(user)
 
                 } else {
