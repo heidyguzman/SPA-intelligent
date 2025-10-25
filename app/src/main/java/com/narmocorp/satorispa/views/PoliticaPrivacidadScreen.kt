@@ -22,14 +22,17 @@ import androidx.navigation.NavController
 
 @Composable
 fun PoliticaPrivacidadScreen(navController: NavController) {
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val textOnSecondaryPlatform = Color(0xff71390c)
+    // CORRECCIÓN: Usar MaterialTheme.colorScheme en lugar de colores fijos
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Dark Mode (Header)
+    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en Dark Mode (Título/Texto de Card)
+    val textColorBody = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f) // Texto del cuerpo
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background) // Usa el color de fondo del tema
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
@@ -69,7 +72,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // Icono decorativo
+                // Icono decorativo (Diseño original restaurado)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -95,17 +98,17 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                 Text(
                     "Última actualización: Octubre 2025",
                     fontSize = 12.sp,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), // Usa color del tema
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Introducción
+                // Introducción Card (Diseño original restaurado)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xfff5f5f5)
+                        containerColor = MaterialTheme.colorScheme.surface // Usa color del tema
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -123,7 +126,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                         Text(
                             "En Satori SPA, protegemos tu privacidad y datos personales con los más altos estándares de seguridad.",
                             fontSize = 14.sp,
-                            color = textOnSecondaryPlatform,
+                            color = textOnBackground, // << CORRECCIÓN: Usar onBackground
                             lineHeight = 20.sp
                         )
                     }
@@ -137,7 +140,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     contenido = "Recopilamos información personal que nos proporcionas directamente:\n\n" +
                             "• Información de cuenta: nombre, correo electrónico\n" +
                             "• Información de perfil: foto, preferencias, historial\n" +
-                            "• Información de uso: interacciones con la app"
+                            "• Información de uso: interacciones con la app",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -148,7 +153,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Personalizar tu experiencia\n" +
                             "• Comunicarnos contigo sobre servicios\n" +
                             "• Prevenir fraudes y garantizar seguridad\n" +
-                            "• Cumplir con requisitos legales"
+                            "• Cumplir con requisitos legales",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -158,7 +165,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Con procesadores de pago: para transacciones\n" +
                             "• Con proveedores de servicios: analytics, hosting\n" +
                             "• Por requisitos legales: autoridades competentes\n\n" +
-                            "Nunca vendemos tu información personal a terceros."
+                            "Nunca vendemos tu información personal a terceros.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -168,7 +177,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Acceso restringido a información personal\n" +
                             "• Monitoreo continuo de seguridad\n" +
                             "• Auditorías regulares de sistemas\n" +
-                            "• Cumplimiento con estándares internacionales"
+                            "• Cumplimiento con estándares internacionales",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -180,7 +191,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Oponerte al procesamiento de datos\n" +
                             "• Portabilidad de tus datos\n" +
                             "• Retirar consentimiento en cualquier momento\n\n" +
-                            "Para ejercer estos derechos, contáctanos en privacidad@satorispa.com"
+                            "Para ejercer estos derechos, contáctanos en privacidad@satorispa.com",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -190,7 +203,9 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Recordar preferencias\n" +
                             "• Analizar uso de la aplicación\n" +
                             "• Mejorar funcionalidad\n\n" +
-                            "Puedes gestionar cookies en la configuración de tu dispositivo."
+                            "Puedes gestionar cookies en la configuración de tu dispositivo.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -200,22 +215,30 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• El tiempo necesario para proporcionar servicios\n" +
                             "• Según lo requiera la ley (registros fiscales, etc.)\n" +
                             "• Hasta que solicites eliminación\n\n" +
-                            "Datos anonimizados pueden conservarse para análisis estadísticos."
+                            "Datos anonimizados pueden conservarse para análisis estadísticos.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
                     titulo = "8. Privacidad de Menores",
-                    contenido = "Nuestros servicios están dirigidos a personas mayores de 18 años. No recopilamos intencionalmente información de menores sin consentimiento parental."
+                    contenido = "Nuestros servicios están dirigidos a personas mayores de 18 años. No recopilamos intencionalmente información de menores sin consentimiento parental.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
                     titulo = "9. Transferencias Internacionales",
-                    contenido = "Tus datos pueden ser transferidos y procesados en servidores ubicados fuera de México, siempre bajo medidas de protección adecuadas según normativas internacionales."
+                    contenido = "Tus datos pueden ser transferidos y procesados en servidores ubicados fuera de México, siempre bajo medidas de protección adecuadas según normativas internacionales.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
                     titulo = "10. Cambios a esta Política",
-                    contenido = "Podemos actualizar esta política periódicamente. Te notificaremos cambios importantes por email o mediante aviso en la aplicación. El uso continuado después de cambios constituye aceptación."
+                    contenido = "Podemos actualizar esta política periódicamente. Te notificaremos cambios importantes por email o mediante aviso en la aplicación. El uso continuado después de cambios constituye aceptación.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionPrivacidad(
@@ -224,16 +247,18 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "Email: privacidad@satorispa.com\n" +
                             "Teléfono: +52 33 1234 5678\n" +
                             "Dirección: Manzanillo, Colima, México\n\n" +
-                            "Responsable de Protección de Datos: data@satorispa.com"
+                            "Responsable de Protección de Datos: data@satorispa.com",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Card de compromiso
+                // Card de compromiso (Diseño original restaurado)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = secondaryBrandColor.copy(alpha = 0.3f)
+                        containerColor = secondaryBrandColor.copy(alpha = 0.3f) // Color claro base
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -252,13 +277,13 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "Tu confianza es nuestra prioridad",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = textOnSecondaryPlatform
+                            color = textOnBackground // << CORRECCIÓN: Usar onBackground
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "Protegemos tus datos con los más altos estándares de seguridad y transparencia.",
                             fontSize = 13.sp,
-                            color = Color.DarkGray,
+                            color = textColorBody, // << CORRECCIÓN: Usar color del tema
                             lineHeight = 18.sp
                         )
                     }
@@ -271,19 +296,19 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
 }
 
 @Composable
-fun SeccionPrivacidad(titulo: String, contenido: String) {
+fun SeccionPrivacidad(titulo: String, contenido: String, titleColor: Color, bodyColor: Color) { // << CORRECCIÓN: Parámetros de color
     Column(modifier = Modifier.padding(bottom = 20.dp)) {
         Text(
             text = titulo,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xff71390c)
+            color = titleColor // << CORRECCIÓN: Usar color pasado
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = contenido,
             fontSize = 14.sp,
-            color = Color.DarkGray,
+            color = bodyColor, // << CORRECCIÓN: Usar color pasado
             lineHeight = 22.sp
         )
     }

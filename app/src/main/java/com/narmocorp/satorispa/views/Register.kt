@@ -93,7 +93,7 @@ fun Register(
         }
         contrasenaError = when {
             contrasena.isBlank() -> "La contraseña no puede estar vacía"
-            contrasena.length < 6 -> "La contraseña debe tener al menos 6 caracteres"
+            contrasena.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
             else -> null
         }
         confirmarContrasenaError = when {
@@ -128,7 +128,7 @@ fun Register(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = screenHeight * 0.05f)
-                .size(160.dp),
+                .size(150.dp),
             contentScale = ContentScale.Fit
         )
 
@@ -136,8 +136,9 @@ fun Register(
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                // CORRECCIÓN 1: Reducir altura para que el botón entre antes de abrir el teclado
                 .fillMaxWidth()
-                .fillMaxHeight(0.72f),
+                .fillMaxHeight(0.72f), // Reducido de 0.72f a 0.65f
             shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
             colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -150,7 +151,44 @@ fun Register(
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(52.dp + 48.dp)) // Space for selector
+                // CORRECCIÓN 2: Eliminar el Spacer grande y añadir el selector dentro del scroll
+
+                Spacer(Modifier.height(8.dp)) // Espacio de inicio
+
+                // Selector "Inicio/Registro" (Ahora dentro del Scroll)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(0.9f)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(secondaryBrandColor.copy(alpha = 0.9f)),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(
+                        onClick = { navController.navigate("login") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(4.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand)
+                    ) {
+                        Text("Inicio", style = MaterialTheme.typography.titleSmall)
+                    }
+                    TextButton(
+                        onClick = { /* Already on Register */ },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(4.dp)
+                            .background(tertiaryBrandColor, RoundedCornerShape(22.dp)),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                    ) {
+                        Text("Registro", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
 
                 Text(
                     text = "CREA TU CUENTA",
@@ -181,8 +219,9 @@ fun Register(
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = {
-                            nombre = it
-                            nombreError = if (it.isBlank()) "El nombre no puede estar vacío" else null
+                            // CORRECCIÓN 3: Filtrar solo letras y espacios
+                            nombre = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            nombreError = if (nombre.isBlank()) "El nombre no puede estar vacío" else null
                         },
                         label = { Text("Nombre") },
                         leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Nombre", tint = primaryBrandColor) },
@@ -192,14 +231,15 @@ fun Register(
                         singleLine = true,
                         isError = nombreError != null,
                         supportingText = { if (nombreError != null) Text(nombreError!!) },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next), // Forzar teclado de texto
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Right) })
                     )
                     OutlinedTextField(
                         value = apellido,
                         onValueChange = {
-                            apellido = it
-                            apellidoError = if (it.isBlank()) "El apellido no puede estar vacío" else null
+                            // CORRECCIÓN 3: Filtrar solo letras y espacios
+                            apellido = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            apellidoError = if (apellido.isBlank()) "El apellido no puede estar vacío" else null
                         },
                         label = { Text("Apellido") },
                         leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Apellido", tint = primaryBrandColor) },
@@ -209,7 +249,7 @@ fun Register(
                         singleLine = true,
                         isError = apellidoError != null,
                         supportingText = { if (apellidoError != null) Text(apellidoError!!) },
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next), // Forzar teclado de texto
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                     )
                 }
@@ -249,7 +289,7 @@ fun Register(
                         contrasena = it
                         contrasenaError = when {
                             it.isBlank() -> "La contraseña no puede estar vacía"
-                            it.length < 6 -> "Debe tener al menos 6 caracteres"
+                            it.length < 8 -> "Debe tener al menos 8 caracteres"
                             else -> null
                         }
                         if (confirmarContrasena.isNotBlank()) {
@@ -396,44 +436,14 @@ fun Register(
                         )
                     }
                 }
+
+                // CORRECCIÓN 1: Añadir un Spacer grande DENTRO del scroll para asegurar que el botón suba sobre el teclado
+                Spacer(Modifier.height(100.dp))
             }
         }
 
-        // Login/Register Selector
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.32f)
-                .fillMaxWidth(0.82f)
-                .height(52.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(secondaryBrandColor.copy(alpha = 0.9f)),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TextButton(
-                onClick = { navController.navigate("login") },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand)
-            ) {
-                Text("Inicio", style = MaterialTheme.typography.titleSmall)
-            }
-            TextButton(
-                onClick = { /* Already on Register */ },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(tertiaryBrandColor, RoundedCornerShape(22.dp)),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
-            ) {
-                Text("Registro", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
-            }
-        }
+        // CORRECCIÓN 2: Eliminar el Spacer que estaba fuera del scroll y causaba problemas
+        // Spacer(Modifier.height(150.dp)) // ELIMINADO
 
         // Snackbar for showing messages
         SnackbarHost(

@@ -12,8 +12,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material3.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,10 +47,11 @@ fun NotificacionesScreen(navController: NavController) {
     var cargando by remember { mutableStateOf(true) }
     val scope = rememberCoroutineScope()
 
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val tertiaryBrandColor = Color(0xffb08d73)
-    val textOnSecondaryPlatform = Color(0xff71390c)
+    // Colores del tema
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
+    val backgroundColor = MaterialTheme.colorScheme.background
 
     // Cargar notificaciones al iniciar
     LaunchedEffect(Unit) {
@@ -67,7 +66,7 @@ fun NotificacionesScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(backgroundColor)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header con esquinas redondeadas (tipo card compacto)
@@ -104,7 +103,7 @@ fun NotificacionesScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White),
+                        .background(backgroundColor),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = primaryBrandColor)
@@ -113,14 +112,25 @@ fun NotificacionesScreen(navController: NavController) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White),
+                        .background(backgroundColor),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        "No hay notificaciones",
-                        fontSize = 16.sp,
-                        color = Color.Gray
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = Color.LightGray
+                        )
+                        Text(
+                            "No hay notificaciones",
+                            fontSize = 16.sp,
+                            color = Color.Gray
+                        )
+                    }
                 }
             } else {
                 val notificacionesAgrupadas = agruparPorSemana(notificaciones)
@@ -135,7 +145,9 @@ fun NotificacionesScreen(navController: NavController) {
                     if (notificacionesAgrupadas["estaSemana"]?.isNotEmpty() == true) {
                         item {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -151,7 +163,6 @@ fun NotificacionesScreen(navController: NavController) {
                         items(notificacionesAgrupadas["estaSemana"] ?: emptyList()) { notif ->
                             TarjetaNotificacion(
                                 notif,
-                                primaryBrandColor,
                                 onMarcarLeida = {
                                     scope.launch {
                                         marcarComoLeida(notif.id)
@@ -179,14 +190,14 @@ fun NotificacionesScreen(navController: NavController) {
                                 "Anteriores",
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = textOnSecondaryPlatform
+                                color = textOnSecondaryPlatform,
+                                modifier = Modifier.padding(top = 8.dp)
                             )
                         }
 
                         items(notificacionesAgrupadas["anteriores"] ?: emptyList()) { notif ->
                             TarjetaNotificacion(
                                 notif,
-                                primaryBrandColor,
                                 onMarcarLeida = {
                                     scope.launch {
                                         marcarComoLeida(notif.id)
@@ -206,6 +217,11 @@ fun NotificacionesScreen(navController: NavController) {
                             )
                         }
                     }
+
+                    // Espacio al final
+                    item {
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
                 }
             }
         }
@@ -215,10 +231,15 @@ fun NotificacionesScreen(navController: NavController) {
 @Composable
 fun TarjetaNotificacion(
     notificacion: Notificacion,
-    brandColor: Color,
     onMarcarLeida: () -> Unit,
     onEliminar: () -> Unit
 ) {
+    // Colores del tema
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val textColor = MaterialTheme.colorScheme.onSecondary
+    val errorColor = MaterialTheme.colorScheme.error
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -241,14 +262,14 @@ fun TarjetaNotificacion(
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Ícono - Reemplaza R.drawable.tu_logo con el nombre de tu imagen
+                // Icono
                 Surface(
                     modifier = Modifier.size(48.dp),
-                    color = Color(0xffdbbba6),
+                    color = secondaryColor,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Image(
-                        painter = painterResource(id = R.drawable.logo), // Cambia "logo_satori" por el nombre de tu imagen
+                        painter = painterResource(id = R.drawable.logo),
                         contentDescription = "Logo",
                         modifier = Modifier
                             .fillMaxSize()
@@ -267,7 +288,7 @@ fun TarjetaNotificacion(
                         notificacion.titulo,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = textColor
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
@@ -318,21 +339,20 @@ fun TarjetaNotificacion(
                             .weight(1f)
                             .fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff995d2d)
+                            containerColor = primaryColor,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Icon(
                             Icons.Filled.DoneAll,
                             contentDescription = "Marcar como leída",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color.White
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             "Leída",
-                            fontSize = 12.sp,
-                            color = Color.White
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -344,21 +364,20 @@ fun TarjetaNotificacion(
                         .weight(1f)
                         .fillMaxHeight(),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xffE53935)
+                        containerColor = errorColor,
+                        contentColor = Color.White
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Icon(
                         Icons.Filled.Close,
                         contentDescription = "Eliminar",
-                        modifier = Modifier.size(16.dp),
-                        tint = Color.White
+                        modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         "Eliminar",
-                        fontSize = 12.sp,
-                        color = Color.White
+                        fontSize = 12.sp
                     )
                 }
             }
@@ -434,6 +453,7 @@ fun formatearFecha(timestamp: Long): String {
     val formato = SimpleDateFormat("dd/MMM/yy - HH:mm", Locale("es", "ES"))
     return formato.format(fecha)
 }
+
 // Función para contar notificaciones no leídas con listener en tiempo real
 fun contarNotificacionesNoLeidas(callback: (Int) -> Unit) {
     val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
@@ -458,7 +478,7 @@ fun contarNotificacionesNoLeidas(callback: (Int) -> Unit) {
 fun IconoCampanaConBadge(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tint: Color = Color.Black
+    tint: Color = MaterialTheme.colorScheme.primary
 ) {
     var notificacionesCount by remember { mutableStateOf(0) }
 
@@ -480,7 +500,7 @@ fun IconoCampanaConBadge(
 
         if (notificacionesCount > 0) {
             Badge(
-                containerColor = Color(0xffE53935),
+                containerColor = MaterialTheme.colorScheme.error,
                 contentColor = Color.White,
                 modifier = Modifier
                     .align(Alignment.TopEnd)

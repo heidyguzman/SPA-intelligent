@@ -79,13 +79,27 @@ class MainActivity : ComponentActivity() {
 
                     // Cliente Home - con navegación integrada
                     composable("cliente_home") {
+                        // Detectar si venimos de editar perfil
+                        val shouldRefresh = navController.currentBackStackEntry
+                            ?.savedStateHandle
+                            ?.getLiveData<Boolean>("profile_updated")
+                            ?.value ?: false
+
+                        // Limpiar el flag después de leerlo
+                        if (shouldRefresh) {
+                            navController.currentBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("profile_updated", false)
+                        }
+
                         ClientHomeScreen(
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
                             onNavigateToConfig = { navController.navigate("configuracion") },
                             selectedRoute = "inicio",
                             onHomeClick = { navController.navigate("cliente_home") },
                             onServiciosClick = { navController.navigate("cliente_servicios") },
-                            onCitasClick = { /* TODO: navegar a citas */ }
+                            onCitasClick = { /* TODO: navegar a citas */ },
+                            shouldRefresh = shouldRefresh
                         )
                     }
 
@@ -125,9 +139,11 @@ class MainActivity : ComponentActivity() {
                     composable("cambiar_contrasena") {
                         CambiarContrasenaScreen(navController = navController)
                     }
+
                     composable("terminos_condiciones") {
                         TerminosCondicionesScreen(navController = navController)
                     }
+
                     composable("politica_privacidad") {
                         PoliticaPrivacidadScreen(navController = navController)
                     }

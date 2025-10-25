@@ -25,6 +25,10 @@ class ClientHomeViewModel : ViewModel() {
         loadUserData()
     }
 
+    /**
+     * Carga o recarga los datos del usuario desde Firebase
+     * Esta función puede ser llamada desde cualquier pantalla para refrescar los datos
+     */
     fun loadUserData() {
         viewModelScope.launch {
             try {
@@ -48,7 +52,7 @@ class ClientHomeViewModel : ViewModel() {
                     val user = document.toObject(User::class.java)
                     if (user != null) {
                         _userState.value = UserState.Success(user)
-                        Log.d(TAG, "Datos cargados: ${user.nombre} ${user.apellido}")
+                        Log.d(TAG, "Datos cargados exitosamente: ${user.nombre} ${user.apellido}")
                     } else {
                         _userState.value = UserState.Error("Error al parsear datos del usuario")
                     }
@@ -58,6 +62,38 @@ class ClientHomeViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e(TAG, "Error al cargar datos del usuario", e)
                 _userState.value = UserState.Error(e.message ?: "Error desconocido")
+            }
+        }
+    }
+
+    /**
+     * Recarga los datos sin mostrar el estado de Loading
+     * Útil para actualizaciones en segundo plano
+     */
+    fun refreshUserDataSilently() {
+        viewModelScope.launch {
+            try {
+                val currentUser = auth.currentUser
+                if (currentUser == null) return@launch
+
+                val uid = currentUser.uid
+                Log.d(TAG, "Refrescando datos silenciosamente: $uid")
+
+                val document = firestore.collection("usuarios")
+                    .document(uid)
+                    .get(com.google.firebase.firestore.Source.SERVER)
+                    .await()
+
+                if (document.exists()) {
+                    val user = document.toObject(User::class.java)
+                    if (user != null) {
+                        _userState.value = UserState.Success(user)
+                        Log.d(TAG, "Datos refrescados: ${user.nombre} ${user.apellido}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error al refrescar datos", e)
+                // No cambiamos el estado en caso de error para mantener los datos actuales
             }
         }
     }

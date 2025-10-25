@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,9 +37,17 @@ fun ClientHomeScreen(
     selectedRoute: String = "inicio",
     onHomeClick: () -> Unit = {},
     onServiciosClick: () -> Unit = {},
-    onCitasClick: () -> Unit = {}
+    onCitasClick: () -> Unit = {},
+    shouldRefresh: Boolean = false // Nuevo parámetro para forzar refresh
 ) {
     val userState by viewModel.userState.collectAsState()
+
+    // Refrescar datos cuando shouldRefresh cambie a true
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.refreshUserDataSilently()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -52,10 +61,10 @@ fun ClientHomeScreen(
                 selectedRoute = selectedRoute,
                 onHomeClick = onHomeClick,
                 onServiciosClick = onServiciosClick,
-                onCitasClick = onCitasClick
+                onCitasClick = onCitasClick,
             )
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -63,6 +72,7 @@ fun ClientHomeScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .padding(horizontal = 24.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
@@ -72,7 +82,7 @@ fun ClientHomeScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(Color(0xffdbbba6)),
+                    .background(MaterialTheme.colorScheme.secondary),
                 contentAlignment = Alignment.Center
             ) {
                 when (userState) {
@@ -94,7 +104,7 @@ fun ClientHomeScreen(
                             Icon(
                                 imageVector = Icons.Default.AccountCircle,
                                 contentDescription = "Perfil",
-                                tint = Color(0xff1c1b1f),
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(100.dp)
                             )
                         }
@@ -104,7 +114,7 @@ fun ClientHomeScreen(
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Perfil",
-                            tint = Color(0xff1c1b1f),
+                            tint = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(100.dp)
                         )
                     }
@@ -118,13 +128,13 @@ fun ClientHomeScreen(
                 is UserState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.size(40.dp),
-                        color = Color(0xff995d2d)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Cargando...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
 
@@ -134,17 +144,17 @@ fun ClientHomeScreen(
                         text = user.nombre,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xff1c1b1f)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = user.apellido,
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color(0xff1c1b1f)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = user.correo,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
 
@@ -154,19 +164,19 @@ fun ClientHomeScreen(
                         text = "Error al cargar datos",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.error
                     )
                     Text(
                         text = errorMessage,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Red.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = { viewModel.loadUserData() },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff995d2d)
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Text("Reintentar")
@@ -183,7 +193,7 @@ fun ClientHomeScreen(
                     .height(200.dp),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xff995d2d)
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
@@ -198,26 +208,26 @@ fun ClientHomeScreen(
                         text = "Registra tu entrada",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
                     Box(
                         modifier = Modifier
                             .size(72.dp)
                             .clip(CircleShape)
-                            .background(Color(0xffdbbba6)),
+                            .background(MaterialTheme.colorScheme.secondary),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Nfc,
                             contentDescription = "NFC Icon",
                             modifier = Modifier.size(42.dp),
-                            tint = Color(0xff1c1b1f)
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                     Text(
                         text = "Acerque su dispositivo al lector para realizar el registro de entrada",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center
                     )
                 }
