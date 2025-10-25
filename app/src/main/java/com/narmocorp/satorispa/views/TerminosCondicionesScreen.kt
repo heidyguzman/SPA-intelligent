@@ -24,14 +24,17 @@ import androidx.navigation.NavController
 
 @Composable
 fun TerminosCondicionesScreen(navController: NavController) {
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val textOnSecondaryPlatform = Color(0xff71390c)
+    // CORRECCIÓN: Usar MaterialTheme.colorScheme en lugar de colores fijos
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Dark Mode (Header)
+    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en Dark Mode (Título/Texto de Card)
+    val textColorBody = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f) // Texto del cuerpo
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background) // Usa el color de fondo del tema
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
@@ -71,7 +74,7 @@ fun TerminosCondicionesScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // Icono decorativo
+                // Icono decorativo (Diseño original restaurado)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -97,7 +100,7 @@ fun TerminosCondicionesScreen(navController: NavController) {
                 Text(
                     "Última actualización: Octubre 2025",
                     fontSize = 12.sp,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), // Usa color del tema
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
@@ -106,7 +109,9 @@ fun TerminosCondicionesScreen(navController: NavController) {
                 // Contenido de términos
                 SeccionTerminos(
                     titulo = "1. Aceptación de los Términos",
-                    contenido = "Al acceder y utilizar la aplicación Satori SPA, usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar nuestra aplicación."
+                    contenido = "Al acceder y utilizar la aplicación Satori SPA, usted acepta estar sujeto a estos Términos y Condiciones. Si no está de acuerdo con alguna parte de estos términos, no debe utilizar nuestra aplicación.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -115,7 +120,9 @@ fun TerminosCondicionesScreen(navController: NavController) {
                             "• Proporcionar información precisa y actualizada\n" +
                             "• Mantener la confidencialidad de su cuenta\n" +
                             "• No utilizar la aplicación para fines ilegales\n" +
-                            "• Respetar a otros usuarios y terapeutas"
+                            "• Respetar a otros usuarios y terapeutas",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -123,7 +130,9 @@ fun TerminosCondicionesScreen(navController: NavController) {
                     contenido = "Para utilizar ciertos servicios, debe crear una cuenta. Usted es responsable de:\n\n" +
                             "• Mantener su contraseña segura\n" +
                             "• Todas las actividades realizadas bajo su cuenta\n" +
-                            "• Notificar inmediatamente cualquier uso no autorizado"
+                            "• Notificar inmediatamente cualquier uso no autorizado",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -131,7 +140,9 @@ fun TerminosCondicionesScreen(navController: NavController) {
                     contenido = "Las reservas de servicios están sujetas a:\n\n" +
                             "• Disponibilidad del terapeuta\n" +
                             "• Políticas de cancelación específicas\n" +
-                            "• Confirmación previa a la cita"
+                            "• Confirmación previa a la cita",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -140,7 +151,9 @@ fun TerminosCondicionesScreen(navController: NavController) {
                             "• Pago anticipado para confirmar reservas\n" +
                             "• Reembolsos según política de cancelación\n" +
                             "• Cargos por cancelaciones tardías\n" +
-                            "• No show: sin reembolso"
+                            "• No show: sin reembolso",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -149,17 +162,23 @@ fun TerminosCondicionesScreen(navController: NavController) {
                             "• La calidad de los servicios proporcionados\n" +
                             "• Lesiones o daños durante el tratamiento\n" +
                             "• Cancelaciones por parte del terapeuta\n" +
-                            "• Resultados específicos de los tratamientos"
+                            "• Resultados específicos de los tratamientos",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
                     titulo = "8. Propiedad Intelectual",
-                    contenido = "Todo el contenido de la aplicación, incluyendo textos, gráficos, logos e imágenes, es propiedad de Satori SPA y está protegido por leyes de propiedad intelectual."
+                    contenido = "Todo el contenido de la aplicación, incluyendo textos, gráficos, logos e imágenes, es propiedad de Satori SPA y está protegido por leyes de propiedad intelectual.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
                     titulo = "9. Modificaciones",
-                    contenido = "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigencia inmediatamente después de su publicación en la aplicación."
+                    contenido = "Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios entrarán en vigencia inmediatamente después de su publicación en la aplicación.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -168,12 +187,16 @@ fun TerminosCondicionesScreen(navController: NavController) {
                             "• Violación de estos términos\n" +
                             "• Comportamiento inapropiado\n" +
                             "• Fraude o actividades sospechosas\n" +
-                            "• A nuestra discreción"
+                            "• A nuestra discreción",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
                     titulo = "11. Ley Aplicable",
-                    contenido = "Estos términos se rigen por las leyes de México. Cualquier disputa será resuelta en los tribunales de Jalisco, México."
+                    contenido = "Estos términos se rigen por las leyes de México. Cualquier disputa será resuelta en los tribunales de Jalisco, México.",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 SeccionTerminos(
@@ -181,16 +204,18 @@ fun TerminosCondicionesScreen(navController: NavController) {
                     contenido = "Si tiene preguntas sobre estos términos, puede contactarnos a:\n\n" +
                             "Email: soporte@satorispa.com\n" +
                             "Teléfono: +52 33 1234 5678\n" +
-                            "Dirección: Manzanillo, Colima, México"
+                            "Dirección: Manzanillo, Colima, México",
+                    titleColor = textOnBackground,
+                    bodyColor = textColorBody
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Card de aceptación
+                // Card de aceptación (Diseño original restaurado)
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = Color(0xfff5f5f5)
+                        containerColor = MaterialTheme.colorScheme.surface // Usa color del tema
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -208,7 +233,7 @@ fun TerminosCondicionesScreen(navController: NavController) {
                         Text(
                             "Al usar Satori SPA, aceptas estos términos y condiciones.",
                             fontSize = 13.sp,
-                            color = textOnSecondaryPlatform,
+                            color = textOnBackground, // << CORRECCIÓN: Usar onBackground
                             fontWeight = FontWeight.Medium
                         )
                     }
@@ -221,19 +246,19 @@ fun TerminosCondicionesScreen(navController: NavController) {
 }
 
 @Composable
-fun SeccionTerminos(titulo: String, contenido: String) {
+fun SeccionTerminos(titulo: String, contenido: String, titleColor: Color, bodyColor: Color) { // << CORRECCIÓN: Parámetros de color
     Column(modifier = Modifier.padding(bottom = 20.dp)) {
         Text(
             text = titulo,
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = Color(0xff71390c)
+            color = titleColor // << CORRECCIÓN: Usar color pasado
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = contenido,
             fontSize = 14.sp,
-            color = Color.DarkGray,
+            color = bodyColor, // << CORRECCIÓN: Usar color pasado
             lineHeight = 22.sp
         )
     }

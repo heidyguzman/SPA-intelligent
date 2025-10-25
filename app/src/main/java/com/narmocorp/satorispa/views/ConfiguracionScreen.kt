@@ -22,18 +22,19 @@ import androidx.navigation.NavController
 
 @Composable
 fun ConfiguracionScreen(navController: NavController) {
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val tertiaryBrandColor = Color(0xffb08d73)
-    val textOnSecondaryPlatform = Color(0xff71390c)
-
-    var notificacionesActivas by remember { mutableStateOf(true) }
     var modoOscuro by remember { mutableStateOf(false) }
+
+    // Definir colores del tema para facilitar la corrección
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Dark Mode (Header)
+    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en Dark Mode (Texto principal)
+    val textOnSurface = MaterialTheme.colorScheme.onSurface             // Usado como base para subtítulos (Dark/Light)
+
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header con esquinas redondeadas
@@ -53,7 +54,7 @@ fun ConfiguracionScreen(navController: NavController) {
                     Icon(
                         Icons.Filled.ArrowBack,
                         contentDescription = "Atrás",
-                        tint = textOnSecondaryPlatform,
+                        tint = textOnSecondaryPlatform, // Corregido
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -62,7 +63,7 @@ fun ConfiguracionScreen(navController: NavController) {
                     "Configuración",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textOnSecondaryPlatform
+                    color = textOnSecondaryPlatform // Corregido
                 )
             }
 
@@ -74,21 +75,25 @@ fun ConfiguracionScreen(navController: NavController) {
                     .padding(16.dp)
             ) {
                 // Sección: Cuenta
-                SeccionTitulo("Cuenta")
+                SeccionTitulo("Cuenta", color = textOnBackground) // << CORRECCIÓN DE COLOR
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
                     icono = Icons.Default.Person,
                     titulo = "Perfil",
                     subtitulo = "Editar información personal",
-                    onClick = { navController.navigate("editar_perfil") }
+                    onClick = { navController.navigate("editar_perfil") },
+                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
+                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
                 )
 
                 OpcionConfiguracion(
                     icono = Icons.Default.Lock,
                     titulo = "Cambiar contraseña",
                     subtitulo = "Actualizar credenciales de acceso",
-                    onClick = { navController.navigate("cambiar_contrasena") }
+                    onClick = { navController.navigate("cambiar_contrasena") },
+                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
+                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -116,21 +121,25 @@ fun ConfiguracionScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Sección: Información
-                SeccionTitulo("Información")
+                SeccionTitulo("Información", color = textOnBackground) // << CORRECCIÓN DE COLOR
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
                     icono = Icons.Default.Description,
                     titulo = "Términos y condiciones",
                     subtitulo = "Políticas de uso",
-                    onClick = { navController.navigate("terminos_condiciones") }
+                    onClick = { navController.navigate("terminos_condiciones") },
+                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
+                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
                 )
 
                 OpcionConfiguracion(
                     icono = Icons.Default.PrivacyTip,
                     titulo = "Política de privacidad",
                     subtitulo = "Cómo usamos tus datos",
-                    onClick = { navController.navigate("politica_privacidad") }
+                    onClick = { navController.navigate("politica_privacidad") },
+                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
+                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -147,7 +156,8 @@ fun ConfiguracionScreen(navController: NavController) {
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = primaryBrandColor
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -167,12 +177,12 @@ fun ConfiguracionScreen(navController: NavController) {
 }
 
 @Composable
-fun SeccionTitulo(texto: String) {
+fun SeccionTitulo(texto: String, color: Color) { // << FIRMA DE FUNCIÓN MODIFICADA
     Text(
         text = texto,
         fontSize = 14.sp,
         fontWeight = FontWeight.SemiBold,
-        color = Color(0xff71390c),
+        color = color, // << CORRECCIÓN APLICADA
         modifier = Modifier.padding(start = 4.dp)
     )
 }
@@ -182,13 +192,15 @@ fun OpcionConfiguracion(
     icono: ImageVector,
     titulo: String,
     subtitulo: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    textOnBackground: Color, // << PARÁMETRO DE COLOR AÑADIDO
+    textOnSurface: Color     // << PARÁMETRO DE COLOR AÑADIDO
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xfff5f5f5))
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -196,7 +208,7 @@ fun OpcionConfiguracion(
         Icon(
             imageVector = icono,
             contentDescription = null,
-            tint = Color(0xff995d2d),
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
@@ -205,18 +217,18 @@ fun OpcionConfiguracion(
                 text = titulo,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = Color(0xff71390c)
+                color = textOnBackground // << CORRECCIÓN APLICADA
             )
             Text(
                 text = subtitulo,
                 fontSize = 13.sp,
-                color = Color.Gray
+                color = textOnSurface.copy(alpha = 0.6f) // Subtítulo en gris (visible en ambos)
             )
         }
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = Color.Gray,
+            tint = textOnSurface.copy(alpha = 0.6f),
             modifier = Modifier.size(20.dp)
         )
     }
@@ -224,51 +236,5 @@ fun OpcionConfiguracion(
 }
 /*
 @Composable
-fun OpcionConSwitch(
-    icono: ImageVector,
-    titulo: String,
-    subtitulo: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xfff5f5f5))
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = null,
-            tint = Color(0xff995d2d),
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = titulo,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color(0xff71390c)
-            )
-            Text(
-                text = subtitulo,
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
-        }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = Color.White,
-                checkedTrackColor = Color(0xff995d2d),
-                uncheckedThumbColor = Color.White,
-                uncheckedTrackColor = Color.LightGray
-            )
-        )
-    }
-    Spacer(modifier = Modifier.height(8.dp))
-}*/
+// ... (OpcionConSwitch y el resto del código)
+*/

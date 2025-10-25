@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.narmocorp.satorispa.R
@@ -36,7 +35,7 @@ fun TopBar(
         navigationIcon = {
             IconoCampanaConBadge(
                 onClick = { onNavigateToNotifications?.invoke() },
-                tint = Color(0xff995d2d)
+                tint = MaterialTheme.colorScheme.primary // Usa el color primary del tema
             )
         },
         actions = {
@@ -44,12 +43,12 @@ fun TopBar(
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Ajustes",
-                    tint = Color(0xff995d2d)
+                    tint = MaterialTheme.colorScheme.primary // Usa el color primary del tema
                 )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background // Usa el color de fondo del tema
         )
     )
 }

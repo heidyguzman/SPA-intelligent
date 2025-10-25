@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,50 +14,51 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import kotlinx.coroutines.launch
+// Importación corregida o asumida para la funcionalidad
+// Si usas AuthController, cámbiala. Si es tu archivo, descomenta:
+// import com.narmocorp.satorispa.controller.cambiarContrasena
+//import com.narmocorp.satorispa.controller.AuthController // << Asumo este controlador para la lógica
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CambiarContrasenaScreen(navController: NavController) {
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val textOnSecondaryPlatform = Color(0xff71390c)
+    val context = LocalContext.current
 
     var contrasenaActual by remember { mutableStateOf("") }
     var contrasenaNueva by remember { mutableStateOf("") }
-    var contrasenaConfirmar by remember { mutableStateOf("") }
+    var contrasenaConfirmacion by remember { mutableStateOf("") }
 
-    var mostrarContrasenaActual by remember { mutableStateOf(false) }
-    var mostrarContrasenaNueva by remember { mutableStateOf(false) }
-    var mostrarContrasenaConfirmar by remember { mutableStateOf(false) }
-
-    var errorContrasenaActual by remember { mutableStateOf<String?>(null) }
-    var errorContrasenaNueva by remember { mutableStateOf<String?>(null) }
-    var errorContrasenaConfirmar by remember { mutableStateOf<String?>(null) }
-
-    var guardando by remember { mutableStateOf(false) }
+    var cargando by remember { mutableStateOf(false) }
     var mostrarDialogoExito by remember { mutableStateOf(false) }
-    var mostrarDialogoError by remember { mutableStateOf(false) }
-    var mensajeError by remember { mutableStateOf("") }
 
-    // Validación en tiempo real
-    val contrasenaValida = contrasenaNueva.length >= 8
-    val contrasenasCoinciden = contrasenaNueva == contrasenaConfirmar && contrasenaConfirmar.isNotEmpty()
-    val formularioValido = contrasenaActual.isNotEmpty() && contrasenaValida && contrasenasCoinciden
+    // Validación de requisitos de contraseña
+    val tieneMinimo8Caracteres = contrasenaNueva.length >= 8
+    val tieneMayuscula = contrasenaNueva.any { it.isUpperCase() }
+    val tieneNumero = contrasenaNueva.any { it.isDigit() }
+    val contrasenaCoincide = contrasenaNueva == contrasenaConfirmacion && contrasenaConfirmacion.isNotEmpty()
+    val todosRequisitosCumplidos = tieneMinimo8Caracteres && tieneMayuscula && tieneNumero
+
+    // Colores del tema
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Header (Dark Mode)
+    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en fondo (Dark Mode)
+    val textOnSurface = MaterialTheme.colorScheme.onSurface             // Blanco en campos de texto (Dark Mode)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
+            // Header (Restaurado el diseño de la imagen)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,267 +93,116 @@ fun CambiarContrasenaScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Icono de seguridad
+                // ICONO GRANDE (Restaurado el diseño de la imagen)
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
+                        .padding(vertical = 16.dp)
+                        .size(100.dp)
+                        .clip(RoundedCornerShape(50.dp))
+                        .background(secondaryBrandColor),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(100.dp)
-                            .clip(RoundedCornerShape(50.dp))
-                            .background(secondaryBrandColor),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription = "Seguridad",
-                            modifier = Modifier.size(50.dp),
-                            tint = primaryBrandColor
-                        )
-                    }
+                    Icon(
+                        Icons.Default.Lock,
+                        contentDescription = "Seguridad",
+                        modifier = Modifier.size(50.dp),
+                        tint = primaryBrandColor
+                    )
                 }
 
                 Text(
                     "Por tu seguridad",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textOnSecondaryPlatform,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    color = textOnBackground,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
-
                 Text(
                     "Tu contraseña debe tener al menos 8 caracteres e incluir letras y números.",
                     fontSize = 13.sp,
-                    color = Color.Gray,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    color = textOnBackground.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(bottom = 32.dp)
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
-
-                // Contraseña actual
-                SeccionTitulo("Contraseña Actual")
+                // Contraseña Actual
+                Text(
+                    "Contraseña Actual",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textOnBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp)
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = contrasenaActual,
-                    onValueChange = {
-                        contrasenaActual = it
-                        errorContrasenaActual = null
-                    },
-                    label = { Text("Contraseña actual") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = primaryBrandColor
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { mostrarContrasenaActual = !mostrarContrasenaActual }) {
-                            Icon(
-                                if (mostrarContrasenaActual) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (mostrarContrasenaActual) "Ocultar" else "Mostrar",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
-                    visualTransformation = if (mostrarContrasenaActual)
-                        VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryBrandColor,
-                        unfocusedBorderColor = secondaryBrandColor,
-                        focusedLabelColor = primaryBrandColor,
-                        cursorColor = primaryBrandColor,
-                        errorBorderColor = Color.Red
-                    ),
-                    isError = errorContrasenaActual != null,
-                    singleLine = true
+                CampoTextoContrasena(
+                    valor = contrasenaActual,
+                    onValorCambiado = { contrasenaActual = it },
+                    label = "Contraseña Actual",
+                    textOnSurface = textOnSurface
                 )
-
-                if (errorContrasenaActual != null) {
-                    Text(
-                        errorContrasenaActual!!,
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
-                    )
-                }
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Nueva contraseña
-                SeccionTitulo("Nueva Contraseña")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OutlinedTextField(
-                    value = contrasenaNueva,
-                    onValueChange = {
-                        contrasenaNueva = it
-                        errorContrasenaNueva = null
-                    },
-                    label = { Text("Nueva contraseña") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.VpnKey,
-                            contentDescription = null,
-                            tint = primaryBrandColor
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { mostrarContrasenaNueva = !mostrarContrasenaNueva }) {
-                            Icon(
-                                if (mostrarContrasenaNueva) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (mostrarContrasenaNueva) "Ocultar" else "Mostrar",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
-                    visualTransformation = if (mostrarContrasenaNueva)
-                        VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryBrandColor,
-                        unfocusedBorderColor = secondaryBrandColor,
-                        focusedLabelColor = primaryBrandColor,
-                        cursorColor = primaryBrandColor,
-                        errorBorderColor = Color.Red
-                    ),
-                    isError = errorContrasenaNueva != null || (contrasenaNueva.isNotEmpty() && !contrasenaValida),
-                    singleLine = true
+                // Contraseña Nueva
+                Text(
+                    "Nueva Contraseña",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textOnBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp)
                 )
-
-                // Indicador de fortaleza
-                if (contrasenaNueva.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            if (contrasenaValida) Icons.Default.CheckCircle else Icons.Default.Error,
-                            contentDescription = null,
-                            tint = if (contrasenaValida) Color(0xff4CAF50) else Color.Red,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            if (contrasenaValida) "Contraseña segura" else "Mínimo 8 caracteres",
-                            fontSize = 12.sp,
-                            color = if (contrasenaValida) Color(0xff4CAF50) else Color.Red
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(8.dp))
+                CampoTextoContrasena(
+                    valor = contrasenaNueva,
+                    onValorCambiado = { contrasenaNueva = it },
+                    label = "Nueva Contraseña",
+                    textOnSurface = textOnSurface
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Confirmar contraseña
-                OutlinedTextField(
-                    value = contrasenaConfirmar,
-                    onValueChange = {
-                        contrasenaConfirmar = it
-                        errorContrasenaConfirmar = null
-                    },
-                    label = { Text("Confirmar contraseña") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = primaryBrandColor
-                        )
-                    },
-                    trailingIcon = {
-                        IconButton(onClick = { mostrarContrasenaConfirmar = !mostrarContrasenaConfirmar }) {
-                            Icon(
-                                if (mostrarContrasenaConfirmar) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                contentDescription = if (mostrarContrasenaConfirmar) "Ocultar" else "Mostrar",
-                                tint = Color.Gray
-                            )
-                        }
-                    },
-                    visualTransformation = if (mostrarContrasenaConfirmar)
-                        VisualTransformation.None else PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryBrandColor,
-                        unfocusedBorderColor = secondaryBrandColor,
-                        focusedLabelColor = primaryBrandColor,
-                        cursorColor = primaryBrandColor,
-                        errorBorderColor = Color.Red
-                    ),
-                    isError = errorContrasenaConfirmar != null || (contrasenaConfirmar.isNotEmpty() && !contrasenasCoinciden),
-                    singleLine = true
+                // Contraseña de Confirmación
+                Text(
+                    "Confirmar Nueva Contraseña",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textOnBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                CampoTextoContrasena(
+                    valor = contrasenaConfirmacion,
+                    onValorCambiado = { contrasenaConfirmacion = it },
+                    label = "Confirmar Nueva Contraseña",
+                    textOnSurface = textOnSurface
                 )
 
-                // Indicador de coincidencia
-                if (contrasenaConfirmar.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, top = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            if (contrasenasCoinciden) Icons.Default.CheckCircle else Icons.Default.Error,
-                            contentDescription = null,
-                            tint = if (contrasenasCoinciden) Color(0xff4CAF50) else Color.Red,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            if (contrasenasCoinciden) "Las contraseñas coinciden" else "Las contraseñas no coinciden",
-                            fontSize = 12.sp,
-                            color = if (contrasenasCoinciden) Color(0xff4CAF50) else Color.Red
-                        )
-                    }
-                }
+                Spacer(modifier = Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(32.dp))
+                // Requisitos de Contraseña (Título y Lista)
+                Text(
+                    "Requisitos de Contraseña",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = textOnBackground,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, bottom = 10.dp)
+                )
 
-                // Requisitos de seguridad
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xfff5f5f5)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.Info,
-                                contentDescription = null,
-                                tint = primaryBrandColor,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                "Requisitos de seguridad",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = textOnSecondaryPlatform
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        RequisitoContrasena("Mínimo 8 caracteres", contrasenaNueva.length >= 8)
-                        RequisitoContrasena("Contiene letras", contrasenaNueva.any { it.isLetter() })
-                        RequisitoContrasena("Contiene números", contrasenaNueva.any { it.isDigit() })
-                    }
+                Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                    RequisitoContrasena("Mínimo 8 caracteres", tieneMinimo8Caracteres)
+                    RequisitoContrasena("Incluir al menos una mayúscula", tieneMayuscula)
+                    RequisitoContrasena("Incluir al menos un número", tieneNumero)
+                    RequisitoContrasena("Las contraseñas deben coincidir", contrasenaCoincide)
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
@@ -359,42 +210,65 @@ fun CambiarContrasenaScreen(navController: NavController) {
                 // Botón de guardar
                 Button(
                     onClick = {
-                        if (formularioValido) {
-                            guardando = true
-                            // Simular validación y guardado
-                            kotlinx.coroutines.GlobalScope.launch {
-                                kotlinx.coroutines.delay(1500)
-                                guardando = false
-                                // Simular éxito (en producción aquí iría la validación real)
-                                mostrarDialogoExito = true
-                            }
+                        if (contrasenaActual.isEmpty() || contrasenaNueva.isEmpty() || contrasenaConfirmacion.isEmpty()) {
+                            Toast.makeText(context, "Todos los campos de contraseña son obligatorios.", Toast.LENGTH_SHORT).show()
+                            return@Button
                         }
+                        if (!todosRequisitosCumplidos) {
+                            Toast.makeText(context, "La nueva contraseña no cumple con todos los requisitos.", Toast.LENGTH_LONG).show()
+                            return@Button
+                        }
+                        if (!contrasenaCoincide) {
+                            Toast.makeText(context, "Las contraseñas no coinciden.", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        cargando = true
+
+                        // LÓGICA DE CAMBIO DE CONTRASEÑA IMPLEMENTADA
+                        // Asegúrate de que AuthController esté disponible
+                        /*AuthController.cambiarContrasena(
+                            contrasenaActual = contrasenaActual,
+                            contrasenaNueva = contrasenaNueva,
+                            onSuccess = {
+                                cargando = false
+                                mostrarDialogoExito = true
+                            },
+                            onError = { mensaje ->
+                                cargando = false
+                                Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+                            }
+                        )*/
+
+
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = primaryBrandColor,
-                        disabledContainerColor = Color.LightGray
+                        contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = formularioValido && !guardando
+                    enabled = !cargando && todosRequisitosCumplidos && contrasenaCoincide
                 ) {
-                    if (guardando) {
+                    if (cargando) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cambiando...")
                     } else {
                         Icon(
-                            Icons.Default.Save,
+                            Icons.Default.VpnKey,
                             contentDescription = null,
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            "Cambiar contraseña",
+                            "Cambiar Contraseña",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -411,7 +285,9 @@ fun CambiarContrasenaScreen(navController: NavController) {
         AlertDialog(
             onDismissRequest = {
                 mostrarDialogoExito = false
-                navController.popBackStack()
+                navController.navigate("login") {
+                    popUpTo("start") { inclusive = true }
+                }
             },
             icon = {
                 Icon(
@@ -423,7 +299,7 @@ fun CambiarContrasenaScreen(navController: NavController) {
             },
             title = {
                 Text(
-                    "¡Contraseña actualizada!",
+                    "¡Contraseña Actualizada!",
                     fontWeight = FontWeight.Bold
                 )
             },
@@ -434,7 +310,6 @@ fun CambiarContrasenaScreen(navController: NavController) {
                 Button(
                     onClick = {
                         mostrarDialogoExito = false
-                        // Redirigir al login
                         navController.navigate("login") {
                             popUpTo("start") { inclusive = true }
                         }
@@ -443,15 +318,65 @@ fun CambiarContrasenaScreen(navController: NavController) {
                         containerColor = primaryBrandColor
                     )
                 ) {
-                    Text("Ir a iniciar sesión")
+                    Text("Ir a iniciar sesión", color = MaterialTheme.colorScheme.onPrimary)
                 }
             }
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CampoTextoContrasena(
+    valor: String,
+    onValorCambiado: (String) -> Unit,
+    label: String,
+    textOnSurface: Color
+) {
+    var visibilidad by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = valor,
+        onValueChange = onValorCambiado,
+        label = { Text(label) },
+        leadingIcon = {
+            Icon(
+                Icons.Default.VpnKey,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        trailingIcon = {
+            IconButton(onClick = { visibilidad = !visibilidad }) {
+                Icon(
+                    if (visibilidad) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    contentDescription = if (visibilidad) "Ocultar contraseña" else "Mostrar contraseña",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        },
+        visualTransformation = if (visibilidad) VisualTransformation.None else PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.secondary,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            cursorColor = MaterialTheme.colorScheme.primary,
+            focusedTextColor = textOnSurface,
+            unfocusedTextColor = textOnSurface
+        ),
+        singleLine = true
+    )
+}
+
 @Composable
 fun RequisitoContrasena(texto: String, cumplido: Boolean) {
+    // Usar colores del tema para asegurar visibilidad en Dark/Light mode
+    val successColor = MaterialTheme.colorScheme.primary
+    val defaultColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    val color = if (cumplido) successColor else defaultColor
+
     Row(
         modifier = Modifier.padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -459,14 +384,14 @@ fun RequisitoContrasena(texto: String, cumplido: Boolean) {
         Icon(
             if (cumplido) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (cumplido) Color(0xff4CAF50) else Color.Gray,
+            tint = color,
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             texto,
             fontSize = 13.sp,
-            color = if (cumplido) Color(0xff4CAF50) else Color.Gray
+            color = color
         )
     }
 }

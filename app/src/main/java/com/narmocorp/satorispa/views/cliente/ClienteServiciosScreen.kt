@@ -46,6 +46,11 @@ fun ClienteServiciosScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    // Colores del tema
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
+
     val filteredServices = services.filter { service ->
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
                 (searchQuery.isEmpty() || service.nombre.contains(searchQuery, ignoreCase = true))
@@ -63,22 +68,23 @@ fun ClienteServiciosScreen(
                 onCitasClick = { /* TODO: navegar a citas */ }
             )
         },
-        containerColor = Color.White,
+        containerColor = backgroundColor,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .background(Color.White)
+                .background(backgroundColor)
         ) {
             // Título
             Text(
                 text = "Servicios",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xff995d2d),
-                modifier = Modifier.padding(16.dp)
+                color = primaryColor,
+                modifier = Modifier
+                    .padding(16.dp)
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -87,11 +93,25 @@ fun ClienteServiciosScreen(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text("Buscar") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search Icon",
+                        tint = primaryColor
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(30.dp)
+                shape = RoundedCornerShape(30.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary,
+                    focusedLabelColor = primaryColor,
+                    cursorColor = primaryColor,
+                    focusedTextColor = onSecondaryColor,
+                    unfocusedTextColor = onSecondaryColor
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -110,7 +130,13 @@ fun ClienteServiciosScreen(
                         FilterChip(
                             selected = category == selectedCategory,
                             onClick = { selectedCategory = category },
-                            label = { Text(category) }
+                            label = { Text(category) },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = primaryColor,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                containerColor = MaterialTheme.colorScheme.surface,
+                                labelColor = onSecondaryColor
+                            )
                         )
                     }
                 }
@@ -126,6 +152,7 @@ fun ClienteServiciosScreen(
                         text = "Lo más popular",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
+                        color = onSecondaryColor,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
 
@@ -149,6 +176,7 @@ fun ClienteServiciosScreen(
                         text = "Todos los servicios",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
+                        color = onSecondaryColor,
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
 
@@ -199,6 +227,9 @@ fun ClienteServiciosScreen(
 
 @Composable
 private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
+
     Card(
         modifier = Modifier
             .width(160.dp)
@@ -224,7 +255,8 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
                 Text(
                     text = service.nombre,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = onSecondaryColor
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -239,7 +271,7 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = Color(0xff995d2d),
+                        tint = primaryColor,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -250,6 +282,9 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
 
 @Composable
 private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -274,7 +309,8 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
             ) {
                 Text(
                     text = service.nombre,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = onSecondaryColor
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -288,7 +324,7 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = Color(0xff995d2d)
+                        tint = primaryColor
                     )
                 }
             }
@@ -302,13 +338,17 @@ private fun ServiceDetailsDialog(
     onDismiss: () -> Unit,
     onBookClick: () -> Unit
 ) {
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 service.nombre,
                 fontWeight = FontWeight.Bold,
-                fontSize = 24.sp
+                fontSize = 24.sp,
+                color = onSecondaryColor
             )
         },
         text = {
@@ -325,7 +365,8 @@ private fun ServiceDetailsDialog(
                 Text(
                     text = "Precio: $${service.precio}",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = onSecondaryColor
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -339,14 +380,20 @@ private fun ServiceDetailsDialog(
             Button(
                 onClick = onBookClick,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xff995d2d)
+                    containerColor = primaryColor,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Text("Agendar Cita")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = primaryColor
+                )
+            ) {
                 Text("Cerrar")
             }
         }

@@ -101,7 +101,7 @@ fun Login(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .fillMaxHeight(0.72f), // Overlaps with top image and "tab selector"
+                .fillMaxHeight(0.65f), // Overlaps with top image and "tab selector"
             shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp), // Only top corners rounded
             colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
