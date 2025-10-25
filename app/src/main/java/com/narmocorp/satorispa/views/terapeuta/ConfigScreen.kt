@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views.terapeuta
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,20 +36,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun ConfigScreen(navController: NavController) {
+    val context = LocalContext.current
     Scaffold(
         topBar = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF0E2D8), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                    .background(Color(0xFFD3B8A5), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
                     .padding(16.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -56,23 +61,24 @@ fun ConfigScreen(navController: NavController) {
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.align(Alignment.CenterStart)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color(0xFF8A5429))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color(0xFF6D4C41))
                 }
                 Text(
                     text = "Configuración",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF8A5429),
-                    textAlign = TextAlign.Center
+                    color = Color(0xFF6D4C41),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         },
         containerColor = Color(0xFFFFFFFF)
-    ) {
+    ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(it)
+                .padding(paddingValues)
                 .padding(16.dp)
         ) {
             Text("Cuenta", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
@@ -84,13 +90,22 @@ fun ConfigScreen(navController: NavController) {
 
             Text("Información", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
 
-            ConfigItem(icon = Icons.Default.Description, title = "Términos y condiciones", subtitle = "Políticas de uso") { /* TODO */ }
-            ConfigItem(icon = Icons.Default.Info, title = "Política de privacidad", subtitle = "Cómo usamos tus datos") { /* TODO */ }
+            ConfigItem(icon = Icons.Default.Description, title = "Términos y condiciones", subtitle = "Políticas de uso") { navController.navigate("terminos_condiciones") }
+            ConfigItem(icon = Icons.Default.Info, title = "Política de privacidad", subtitle = "Cómo usamos tus datos") { navController.navigate("politica_privacidad") }
 
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
-                onClick = { /* TODO */ },
+                onClick = {
+                    FirebaseAuth.getInstance().signOut()
+                    Toast.makeText(context, "Sesión cerrada exitosamente", Toast.LENGTH_SHORT).show()
+                    navController.navigate("login") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A5429)),
                 modifier = Modifier.fillMaxWidth()
