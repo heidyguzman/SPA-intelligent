@@ -2,20 +2,46 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PrivacyTip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -107,15 +133,13 @@ fun ConfiguracionScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 12.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(secondaryBrandColor)
-                    .padding(vertical = 12.dp, horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .background(Color(0xFFD3B8A5), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
             ) {
                 IconButton(
                     onClick = { navController.popBackStack() },
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.align(Alignment.CenterStart)
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
@@ -124,15 +148,40 @@ fun ConfiguracionScreen(navController: NavController) {
                         modifier = Modifier.size(24.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "Configuración",
-                    fontSize = 20.sp,
+                    text = "Configuración",
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = textOnSecondaryPlatform
                 )
             }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        var modoOscuro by remember { mutableStateOf(false) }
 
+        val textOnBackground = MaterialTheme.colorScheme.onBackground
+        val textOnSurface = MaterialTheme.colorScheme.onSurface
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            // Sección: Cuenta
+            SeccionTitulo("Cuenta", color = textOnBackground)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OpcionConfiguracion(
+                icono = Icons.Default.Person,
+                titulo = "Perfil",
+                subtitulo = "Editar información personal",
+                onClick = { navController.navigate("editar_perfil") },
+                textOnBackground = textOnBackground,
+                textOnSurface = textOnSurface
+            )
             // Contenido scrolleable
             Column(
                 modifier = Modifier
@@ -215,6 +264,8 @@ fun ConfiguracionScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 

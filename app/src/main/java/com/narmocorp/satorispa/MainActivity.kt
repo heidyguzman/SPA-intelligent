@@ -27,7 +27,10 @@ import com.narmocorp.satorispa.views.TerminosCondicionesScreen
 import com.narmocorp.satorispa.views.PoliticaPrivacidadScreen
 import com.narmocorp.satorispa.views.cliente.ClientHomeScreen
 import com.narmocorp.satorispa.views.cliente.ClienteServiciosScreen
+import com.narmocorp.satorispa.views.terapeuta.ConfigScreen
+import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
+import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 import com.narmocorp.satorispa.views.NotificacionesScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -125,7 +128,19 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("terapeuta_home") {
-                        TerapeutaHomeScreen()
+                        TerapeutaHomeScreen(onNavigateToConfig = { navController.navigate("terapeuta_config") })
+                    }
+
+                    composable("terapeuta_config") {
+                        ConfigScreen(navController = navController)
+                    }
+
+                    composable("terapeuta_perfil") {
+                        TerapeutaPerfilScreen(navController = navController)
+                    }
+
+                    composable("terapeuta_cambiar_contrasena") {
+                        TerapeutaCambiarContrasenaScreen(navController = navController)
                     }
 
                     composable("notificaciones") {
