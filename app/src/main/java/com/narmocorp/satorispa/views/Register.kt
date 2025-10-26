@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,11 +35,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth // Importar FirebaseAuth
 import kotlinx.coroutines.launch
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.controller.RegistroController
-import kotlinx.coroutines.tasks.await
 
 @Composable
 fun Register(
@@ -76,6 +73,9 @@ fun Register(
     val subtleTextColor = Color.Gray
     val pageBackgroundColor = Color.White
     val errorColor = MaterialTheme.colorScheme.error
+    val successColor = Color(0xFF4CAF50)
+
+
 
     fun showMessage(message: String) {
         scope.launch {
@@ -94,6 +94,8 @@ fun Register(
         contrasenaError = when {
             contrasena.isBlank() -> "La contraseña no puede estar vacía"
             contrasena.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
+            !contrasena.any { it.isUpperCase() } -> "Debe incluir al menos una mayúscula" // <--- CAMBIOS AQUÍ
+            !contrasena.any { it.isDigit() } -> "Debe incluir al menos un número" // <--- CAMBIOS AQUÍ
             else -> null
         }
         confirmarContrasenaError = when {
@@ -290,6 +292,8 @@ fun Register(
                         contrasenaError = when {
                             it.isBlank() -> "La contraseña no puede estar vacía"
                             it.length < 8 -> "Debe tener al menos 8 caracteres"
+                            !it.any { char -> char.isUpperCase() } -> "Debe incluir al menos una mayúscula" // <--- CAMBIOS AQUÍ
+                            !it.any { char -> char.isDigit() } -> "Debe incluir al menos un número" //
                             else -> null
                         }
                         if (confirmarContrasena.isNotBlank()) {
@@ -318,7 +322,19 @@ fun Register(
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
                     singleLine = true,
                     isError = contrasenaError != null,
-                    supportingText = { if (contrasenaError != null) Text(contrasenaError!!) }
+                    supportingText = {
+
+                        //Lógica para mostrar el mensaje
+                        if (contrasena.isNotEmpty()) {
+                            if (contrasenaError != null) {
+                                // Muestra el error detallado en rojo
+                                Text(contrasenaError!!, color = errorColor)
+                            } else {
+                                // Muestra el mensaje de éxito en verde
+                                Text("Contraseña segura", color = successColor)
+                            }
+                        }
+                    }
                 )
 
                 Spacer(Modifier.height(4.dp))

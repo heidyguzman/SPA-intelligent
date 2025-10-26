@@ -36,7 +36,9 @@ import kotlinx.coroutines.launch
 fun ClienteServiciosScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
-    serviciosViewModel: ServiciosViewModel = viewModel()
+    serviciosViewModel: ServiciosViewModel = viewModel(),
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToConfig: () -> Unit
 ) {
     val services by serviciosViewModel.servicios.collectAsState()
     val categories = listOf("Todos") + services.map { it.categoria }.distinct()
@@ -60,6 +62,13 @@ fun ClienteServiciosScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        topBar = {
+            // Error corregido: Las funciones ya están en el ámbito
+            TopBar(
+                onNavigateToNotifications = onNavigateToNotifications,
+                onNavigateToConfig = onNavigateToConfig
+            )
+        },
         bottomBar = {
             NavBar(
                 selectedRoute = "servicios",

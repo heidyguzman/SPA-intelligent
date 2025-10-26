@@ -19,6 +19,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +32,14 @@ import androidx.navigation.NavController
 import android.widget.Toast
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.controller.PerfilController
+import com.narmocorp.satorispa.controller.AuthController
+import android.util.Patterns
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardActions
+import android.content.Context
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +55,17 @@ fun EditarPerfilScreen(navController: NavController) {
     var cargando by remember { mutableStateOf(true) }
     var guardando by remember { mutableStateOf(false) }
     var mostrarDialogoExito by remember { mutableStateOf(false) }
+
+    // ************ ESTADOS PARA CAMBIO DE EMAIL ************
+    var mostrarDialogoCambioEmail by remember { mutableStateOf(false) }
+    var nuevoEmailInput by remember { mutableStateOf("") }
+    var contrasenaActualInput by remember { mutableStateOf("") }
+    // *******************************************************
+
+    val showToast: (Context, String) -> Unit = { ctx, msg ->
+        Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
+    }
+
 
     // Launcher para seleccionar imagen
     val imagePickerLauncher = rememberLauncherForActivityResult(
@@ -70,12 +91,12 @@ fun EditarPerfilScreen(navController: NavController) {
         )
     }
 
-    // Colores del tema (CORREGIDOS)
+    // Colores del tema
     val primaryBrandColor = MaterialTheme.colorScheme.primary
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
-    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Para el Header
-    val textOnSurface = MaterialTheme.colorScheme.onSurface             // Para texto dentro de campos (blanco en Dark Mode)
-    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Para el texto principal (blanco en Dark Mode)
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
+    val textOnSurface = MaterialTheme.colorScheme.onSurface
+    val textOnBackground = MaterialTheme.colorScheme.onBackground
 
     Box(
         modifier = Modifier
@@ -83,7 +104,6 @@ fun EditarPerfilScreen(navController: NavController) {
             .background(MaterialTheme.colorScheme.background)
     ) {
         if (cargando) {
-            // Mostrar loading mientras carga los datos
             CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
                 color = MaterialTheme.colorScheme.primary
@@ -146,7 +166,6 @@ fun EditarPerfilScreen(navController: NavController) {
                                     .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                // Mostrar nueva imagen si se seleccionó, sino mostrar la actual
                                 if (nuevaImagenUri != null) {
                                     Image(
                                         painter = rememberAsyncImagePainter(nuevaImagenUri),
@@ -240,7 +259,7 @@ fun EditarPerfilScreen(navController: NavController) {
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Email (solo lectura por ahora, ya que cambiar email requiere re-autenticación)
+                    // CORREO ELECTRÓNICO (SOLO LECTURA + BOTÓN)
                     OutlinedTextField(
                         value = email,
                         onValueChange = { },
@@ -252,23 +271,30 @@ fun EditarPerfilScreen(navController: NavController) {
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         },
+                        // Ícono de editar que abre el diálogo
+                        trailingIcon = {
+                            IconButton(onClick = {
+                                mostrarDialogoCambioEmail = true
+                                nuevoEmailInput = email
+                                contrasenaActualInput = ""
+                            }) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = "Cambiar correo",
+                                    tint = primaryBrandColor
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             disabledBorderColor = MaterialTheme.colorScheme.secondary,
                             disabledLabelColor = Color.Gray,
                             disabledLeadingIconColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                            disabledTextColor = textOnSurface // Uso del color correcto
+                            disabledTextColor = textOnSurface
                         ),
                         singleLine = true,
-                        enabled = false
-                    )
-
-                    Text(
-                        "El correo no se puede modificar",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+                        enabled = false // Siempre deshabilitado para edición directa
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -276,7 +302,6 @@ fun EditarPerfilScreen(navController: NavController) {
                     // Botón de guardar
                     Button(
                         onClick = {
-                            // Validaciones básicas
                             if (nombre.isEmpty() || apellido.isEmpty()) {
                                 Toast.makeText(
                                     context,
@@ -288,6 +313,7 @@ fun EditarPerfilScreen(navController: NavController) {
 
                             guardando = true
 
+                            // Se llama al PerfilController para actualizar nombre/apellido/imagen.
                             PerfilController.actualizarPerfil(
                                 nombre = nombre,
                                 apellido = apellido,
@@ -342,56 +368,226 @@ fun EditarPerfilScreen(navController: NavController) {
         }
     }
 
-    // Diálogo de éxito
+    // ************ DIÁLOGO DE ÉXITO FINAL (PARA CAMBIO DE EMAIL) ************
     if (mostrarDialogoExito) {
-        AlertDialog(
-            onDismissRequest = {
+        CorreoCambiadoExitoDialog(
+            navController = navController,
+            onDismiss = {
                 mostrarDialogoExito = false
-                // Notificar al home que debe refrescar
-                navController.previousBackStackEntry
-                    ?.savedStateHandle
-                    ?.set("profile_updated", true)
-                navController.popBackStack()
-            },
-            icon = {
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = Color(0xff4CAF50),
-                    modifier = Modifier.size(48.dp)
-                )
-            },
-            title = {
-                Text(
-                    "¡Perfil actualizado!",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text("Los cambios en tu perfil se han guardado correctamente.")
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        mostrarDialogoExito = false
-                        // Notificar al home que debe refrescar
-                        navController.previousBackStackEntry
-                            ?.savedStateHandle
-                            ?.set("profile_updated", true)
-                        navController.popBackStack()
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    )
-                ) {
-                    Text("Aceptar")
-                }
             }
+        )
+    }
+
+    // ************ DIÁLOGO DE CAMBIO DE EMAIL ************
+    if (mostrarDialogoCambioEmail) {
+        CambioEmailDialog(
+            onDismiss = {
+                mostrarDialogoCambioEmail = false
+                nuevoEmailInput = ""
+                contrasenaActualInput = ""
+            },
+            onConfirm = { nuevoEmail, contrasena ->
+                guardando = true
+                AuthController.cambiarCorreo(
+                    nuevoCorreo = nuevoEmail,
+                    contrasenaActual = contrasena,
+                    onSuccess = { mensaje ->
+                        mostrarDialogoCambioEmail = false
+                        email = nuevoEmail
+                        guardando = false
+                        mostrarDialogoExito = true
+                    },
+                    onError = { mensaje ->
+                        guardando = false
+                        showToast(context, mensaje)
+                    }
+                )
+            },
+            isLoading = guardando,
+            nuevoEmail = nuevoEmailInput,
+            onNuevoEmailChange = { nuevoEmailInput = it },
+            contrasenaActual = contrasenaActualInput,
+            onContrasenaActualChange = { contrasenaActualInput = it },
         )
     }
 }
 
+
+// ************ COMPOSABLE DEL DIÁLOGO DE CAMBIO DE EMAIL ************
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CambioEmailDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit,
+    isLoading: Boolean,
+    nuevoEmail: String,
+    onNuevoEmailChange: (String) -> Unit,
+    contrasenaActual: String,
+    onContrasenaActualChange: (String) -> Unit,
+) {
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val textOnSurface = MaterialTheme.colorScheme.onSurface
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+
+    // Validación de formato de email
+    val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(nuevoEmail).matches()
+    val isFormValid = isEmailValid && contrasenaActual.isNotEmpty()
+
+    var contrasenaVisible by remember { mutableStateOf(false) }
+    val unfocusedBorderColorVisible = Color.LightGray.copy(alpha = 0.5f)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Email, contentDescription = null, tint = primaryBrandColor) },
+        title = { Text("Cambiar Correo Electrónico") },
+        containerColor = MaterialTheme.colorScheme.surface,
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "Por seguridad, ingresa tu nuevo correo y tu contraseña actual.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Campo Nuevo Correo
+                OutlinedTextField(
+                    value = nuevoEmail,
+                    onValueChange = onNuevoEmailChange,
+                    label = { Text("Nuevo Correo") },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = primaryBrandColor) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+                    isError = nuevoEmail.isNotEmpty() && !isEmailValid,
+                    supportingText = {
+                        if (nuevoEmail.isNotEmpty() && !isEmailValid) {
+                            Text("Formato de correo inválido", color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = primaryBrandColor,
+                        unfocusedBorderColor = unfocusedBorderColorVisible,
+                        focusedTextColor = textOnSurface,
+                        unfocusedTextColor = textOnSurface
+                    )
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Campo Contraseña Actual
+                OutlinedTextField(
+                    value = contrasenaActual,
+                    onValueChange = onContrasenaActualChange,
+                    label = { Text("Contraseña Actual") },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = primaryBrandColor) },
+                    trailingIcon = {
+                        IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
+                            Icon(
+                                imageVector = if (contrasenaVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                contentDescription = if (contrasenaVisible) "Ocultar" else "Mostrar",
+                                tint = primaryBrandColor
+                            )
+                        }
+                    },
+                    visualTransformation = if (contrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = primaryBrandColor,
+                        unfocusedBorderColor = unfocusedBorderColorVisible,
+                        focusedTextColor = textOnSurface,
+                        unfocusedTextColor = textOnSurface
+                    )
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (contrasenaActual.isBlank()) {
+                        Toast.makeText(context, "Debes ingresar tu contraseña actual para confirmar.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    onConfirm(nuevoEmail, contrasenaActual)
+                },
+                enabled = isFormValid && !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = primaryBrandColor)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Cambiar Correo")
+                }
+            }
+        },
+        dismissButton = {
+            OutlinedButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancelar", color = primaryBrandColor)
+            }
+        }
+    )
+}
+
+
+// ************ NUEVO COMPOSABLE: DIÁLOGO DE ÉXITO PARA REQUERIR LOGIN ************
+@Composable
+fun CorreoCambiadoExitoDialog(
+    navController: NavController,
+    onDismiss: () -> Unit
+) {
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
+    val successColor = Color(0xFF4CAF50) // Verde
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.CheckCircle,
+                contentDescription = null,
+                tint = successColor,
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = {
+            Text(
+                "¡Correo Actualizado!",
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text("Tu correo electrónico ha sido cambiado exitosamente. Por seguridad, debes iniciar sesión de nuevo con tu nueva dirección.")
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Cierra la sesión y navega al login
+                    AuthController.cerrarSesion()
+                    onDismiss()
+                    navController.navigate("login") {
+                        popUpTo("start") { inclusive = true }
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = primaryBrandColor
+                )
+            ) {
+                Text("Ir a iniciar sesión", color = MaterialTheme.colorScheme.onPrimary)
+            }
+        }
+    )
+}
+
+// ************ COMPOSABLE DE CAMPO DE TEXTO (ASUMO QUE ES NECESARIO) ************
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampoTextoPersonalizado(
@@ -400,12 +596,11 @@ fun CampoTextoPersonalizado(
     label: String,
     icono: androidx.compose.ui.graphics.vector.ImageVector,
     tipoTeclado: KeyboardType = KeyboardType.Text,
-    textOnSurface: Color // Parámetro añadido para el color del texto
+    textOnSurface: Color
 ) {
     OutlinedTextField(
         value = valor,
         onValueChange = { nuevoValor ->
-            // FILTRO: Permite solo letras, espacios y caracteres acentuados comunes
             val filteredValue = nuevoValor.filter { it.isLetter() || it.isWhitespace() || it.toString().matches("[ñÑáéíóúÁÉÍÓÚüÜ]".toRegex()) }
             onValorCambiado(filteredValue)
         },
@@ -427,6 +622,7 @@ fun CampoTextoPersonalizado(
             focusedTextColor = textOnSurface,
             unfocusedTextColor = textOnSurface
         ),
-        singleLine = true
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado)
     )
 }

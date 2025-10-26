@@ -45,125 +45,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.narmocorp.satorispa.controller.AuthController
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
 
-@Composable
-fun ConfiguracionScreen(navController: NavController) {
-    Scaffold(
-        topBar = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFFD3B8A5), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás", tint = Color(0xFF6D4C41))
-                }
-                Text(
-                    text = "Configuración",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6D4C41),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { paddingValues ->
-        var modoOscuro by remember { mutableStateOf(false) }
-
-        val textOnBackground = MaterialTheme.colorScheme.onBackground
-        val textOnSurface = MaterialTheme.colorScheme.onSurface
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
-        ) {
-            // Sección: Cuenta
-            SeccionTitulo("Cuenta", color = textOnBackground)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OpcionConfiguracion(
-                icono = Icons.Default.Person,
-                titulo = "Perfil",
-                subtitulo = "Editar información personal",
-                onClick = { navController.navigate("editar_perfil") },
-                textOnBackground = textOnBackground,
-                textOnSurface = textOnSurface
-            )
-
-            OpcionConfiguracion(
-                icono = Icons.Default.Lock,
-                titulo = "Cambiar contraseña",
-                subtitulo = "Actualizar credenciales de acceso",
-                onClick = { navController.navigate("cambiar_contrasena") },
-                textOnBackground = textOnBackground,
-                textOnSurface = textOnSurface
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sección: Información
-            SeccionTitulo("Información", color = textOnBackground)
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OpcionConfiguracion(
-                icono = Icons.Default.Description,
-                titulo = "Términos y condiciones",
-                subtitulo = "Políticas de uso",
-                onClick = { navController.navigate("terminos_condiciones") },
-                textOnBackground = textOnBackground,
-                textOnSurface = textOnSurface
-            )
-
-            OpcionConfiguracion(
-                icono = Icons.Default.PrivacyTip,
-                titulo = "Política de privacidad",
-                subtitulo = "Cómo usamos tus datos",
-                onClick = { navController.navigate("politica_privacidad") },
-                textOnBackground = textOnBackground,
-                textOnSurface = textOnSurface
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Botón de cerrar sesión
-            Button(
-                onClick = {
-                    navController.navigate("start") {
-                        popUpTo("start") { inclusive = true }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(
-                    Icons.Default.Logout,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Cerrar sesión", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-    }
-}
+//MOVER ESTAS FUNCIONES AL INICIO PARA RESOLVER LOS UNRESOLVED REFERENCE
 
 @Composable
 fun SeccionTitulo(texto: String, color: Color) {
@@ -222,4 +108,219 @@ fun OpcionConfiguracion(
         )
     }
     Spacer(modifier = Modifier.height(8.dp))
+}
+
+
+@Composable
+fun ConfiguracionScreen(navController: NavController) {
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+
+    // Definir colores del tema para facilitar la corrección
+    val primaryBrandColor = MaterialTheme.colorScheme.primary       // << CORRECCIÓN: Definir primaryBrandColor
+    val secondaryBrandColor = MaterialTheme.colorScheme.secondary
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
+    val textOnBackground = MaterialTheme.colorScheme.onBackground
+    val textOnSurface = MaterialTheme.colorScheme.onSurface
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header con esquinas redondeadas
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFFD3B8A5), shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Atrás",
+                        tint = textOnSecondaryPlatform,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                Text(
+                    text = "Configuración",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textOnSecondaryPlatform
+                )
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        var modoOscuro by remember { mutableStateOf(false) }
+
+        val textOnBackground = MaterialTheme.colorScheme.onBackground
+        val textOnSurface = MaterialTheme.colorScheme.onSurface
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            // Sección: Cuenta
+            SeccionTitulo("Cuenta", color = textOnBackground)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OpcionConfiguracion(
+                icono = Icons.Default.Person,
+                titulo = "Perfil",
+                subtitulo = "Editar información personal",
+                onClick = { navController.navigate("editar_perfil") },
+                textOnBackground = textOnBackground,
+                textOnSurface = textOnSurface
+            )
+            // Contenido scrolleable
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp)
+            ) {
+                // Sección: Cuenta
+                SeccionTitulo("Cuenta", color = textOnBackground) // << AHORA RESUELTO
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.Person,
+                    titulo = "Perfil",
+                    subtitulo = "Editar información personal",
+                    onClick = { navController.navigate("editar_perfil") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.Lock,
+                    titulo = "Cambiar contraseña",
+                    subtitulo = "Actualizar credenciales de acceso",
+                    onClick = { navController.navigate("cambiar_contrasena") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+                // ... (Sección Preferencias Comentada)
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Sección: Información
+                SeccionTitulo("Información", color = textOnBackground) // << AHORA RESUELTO
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.Description,
+                    titulo = "Términos y condiciones",
+                    subtitulo = "Políticas de uso",
+                    onClick = { navController.navigate("terminos_condiciones") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.PrivacyTip,
+                    titulo = "Política de privacidad",
+                    subtitulo = "Cómo usamos tus datos",
+                    onClick = { navController.navigate("politica_privacidad") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Botón de cerrar sesión
+                Button(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = true
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Cerrar sesión", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+
+    // Diálogo de confirmación para cerrar sesión (Colores Corregidos)
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogoCerrarSesion = false
+            },
+            icon = {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error // Usar color error para advertencia
+                )
+            },
+            title = {
+                Text(
+                    "¿Cerrar Sesión?",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface // Se adapta al fondo del diálogo
+                )
+            },
+            text = {
+                Text(
+                    "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Se adapta al fondo del diálogo
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = false
+                        AuthController.cerrarSesion()
+                        navController.navigate("start") {
+                            popUpTo("start") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error // Botón de acción destructiva
+                    )
+                ) {
+                    // Texto sobre el color 'error' para asegurar contraste
+                    Text("Sí, Cerrar Sesión", color = MaterialTheme.colorScheme.onError)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { mostrarDialogoCerrarSesion = false }
+                ) {
+                    // Texto con el color primario del tema
+                    Text("Cancelar", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface // Fondo del diálogo adaptativo
+        )
+    }
 }

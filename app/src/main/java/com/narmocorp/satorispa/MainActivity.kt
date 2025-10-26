@@ -6,6 +6,9 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState // << AGREGADO: Necesario para leer StateFlow
+import androidx.compose.runtime.getValue     // << AGREGADO: Necesario para 'by'
+import androidx.compose.runtime.LaunchedEffect // << AGREGADO: Necesario para manejar el side-effect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -29,10 +32,14 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 import com.narmocorp.satorispa.views.NotificacionesScreen
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.FirebaseApp // Podría ser necesario si no lo tienes
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        initializeAppCheck()
 
         enableEdgeToEdge()
         setContent {
@@ -77,21 +84,18 @@ class MainActivity : ComponentActivity() {
                         ForgotPasswordFlow(navController = navController)
                     }
 
-                    // Cliente Home - con navegación integrada
-                    composable("cliente_home") {
-                        // Detectar si venimos de editar perfil
-                        val shouldRefresh = navController.currentBackStackEntry
-                            ?.savedStateHandle
-                            ?.getLiveData<Boolean>("profile_updated")
-                            ?.value ?: false
+                    // =========================================================
+                    // CLIENTE HOME - LÓGICA DE RECARGA CORREGIDA
+                    // =========================================================
+                    composable("cliente_home") { backStackEntry ->
 
-                        // Limpiar el flag después de leerlo
-                        if (shouldRefresh) {
-                            navController.currentBackStackEntry
-                                ?.savedStateHandle
-                                ?.set("profile_updated", false)
-                        }
+                        // 1. Escuchar la bandera "profile_updated" de forma reactiva
+                        //    Usa getStateFlow y collectAsState
+                        val profileUpdated by backStackEntry.savedStateHandle
+                            .getStateFlow("profile_updated", false)
+                            .collectAsState()
 
+                        // 2. Renderizar la pantalla pasando la bandera
                         ClientHomeScreen(
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
                             onNavigateToConfig = { navController.navigate("configuracion") },
@@ -99,13 +103,28 @@ class MainActivity : ComponentActivity() {
                             onHomeClick = { navController.navigate("cliente_home") },
                             onServiciosClick = { navController.navigate("cliente_servicios") },
                             onCitasClick = { /* TODO: navegar a citas */ },
-                            shouldRefresh = shouldRefresh
+                            shouldRefresh = profileUpdated // Usa el estado reactivo
                         )
+
+                        // 3. (CRÍTICO) Usar LaunchedEffect para resetear la bandera
+                        //    Esto garantiza que el flag se limpie solo después de que se haya usado
+                        //    para forzar la recarga en ClientHomeScreen.
+                        LaunchedEffect(profileUpdated) {
+                            if (profileUpdated) {
+                                Log.d("MainActivity", "Bandera de perfil restablecida a false")
+                                backStackEntry.savedStateHandle["profile_updated"] = false
+                            }
+                        }
                     }
 
                     // Servicios para cliente autenticado (pantalla independiente con NavBar)
                     composable("cliente_servicios") {
-                        ClienteServiciosScreen(navController = navController)
+                        ClienteServiciosScreen(
+                            navController = navController,
+                            // === AGREGAR ESTAS LAMBDAS ===
+                            onNavigateToNotifications = { navController.navigate("notificaciones") },
+                            onNavigateToConfig = { navController.navigate("configuracion") }
+                        )
                     }
 
                     composable("terapeuta_home") {
@@ -150,5 +169,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+    }
+    private fun initializeAppCheck() {
+        // 1. Asegúrate de que FirebaseApp esté inicializado
+        // Usamos la inicialización explícita, que es más robusta
+        FirebaseApp.initializeApp(this)
+
+        // 2. Instala el proveedor de Play Integrity
+        val firebaseAppCheck = FirebaseAppCheck.getInstance()
+        firebaseAppCheck.installAppCheckProviderFactory(
+            PlayIntegrityAppCheckProviderFactory.getInstance(),
+        )
     }
 }

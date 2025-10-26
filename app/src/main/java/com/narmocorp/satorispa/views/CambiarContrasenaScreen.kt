@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.narmocorp.satorispa.controller.AuthController
+
 // Importación corregida o asumida para la funcionalidad
 // Si usas AuthController, cámbiala. Si es tu archivo, descomenta:
 // import com.narmocorp.satorispa.controller.cambiarContrasena
@@ -51,6 +53,13 @@ fun CambiarContrasenaScreen(navController: NavController) {
     val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Header (Dark Mode)
     val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en fondo (Dark Mode)
     val textOnSurface = MaterialTheme.colorScheme.onSurface             // Blanco en campos de texto (Dark Mode)
+    val successColor = Color(0xFF4CAF50) // Color verde para el mensaje de éxito
+
+    val validarContrasenaActual = contrasenaActual.isNotEmpty()
+    val validarContrasenaNueva = contrasenaNueva.isNotEmpty() && todosRequisitosCumplidos
+    val validarContrasenaConfirmacion = contrasenaConfirmacion.isNotEmpty() && contrasenaCoincide
+    // El estado final de validez
+    val formIsValid = validarContrasenaActual && validarContrasenaNueva && validarContrasenaConfirmacion
 
     Box(
         modifier = Modifier
@@ -143,6 +152,7 @@ fun CambiarContrasenaScreen(navController: NavController) {
                     onValorCambiado = { contrasenaActual = it },
                     label = "Contraseña Actual",
                     textOnSurface = textOnSurface
+                    // YA NO SE NECESITAN LOS PARÁMETROS isValid o successColor
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -158,11 +168,23 @@ fun CambiarContrasenaScreen(navController: NavController) {
                         .padding(start = 4.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                // *************************************************************
+                // CAMBIOS CLAVE: Campo de contraseña nueva con supportingText
+                // *************************************************************
                 CampoTextoContrasena(
                     valor = contrasenaNueva,
                     onValorCambiado = { contrasenaNueva = it },
                     label = "Nueva Contraseña",
-                    textOnSurface = textOnSurface
+                    textOnSurface = textOnSurface,
+                    supportingText = {
+                        if (contrasenaNueva.isNotEmpty() && todosRequisitosCumplidos) {
+                            Text("Contraseña segura", color = successColor)
+                        } else if (contrasenaNueva.isNotEmpty() && !todosRequisitosCumplidos) {
+                            // Opcional: Si quieres un mensaje de error si no cumple,
+                            // pero el checklist ya hace esta función visualmente.
+                            // Puedes dejar esto vacío si solo quieres el mensaje de éxito.
+                        }
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -183,6 +205,7 @@ fun CambiarContrasenaScreen(navController: NavController) {
                     onValorCambiado = { contrasenaConfirmacion = it },
                     label = "Confirmar Nueva Contraseña",
                     textOnSurface = textOnSurface
+                    // Dejamos este sin supportingText para no duplicar el mensaje de éxito
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -207,40 +230,31 @@ fun CambiarContrasenaScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Botón de guardar
                 Button(
                     onClick = {
-                        if (contrasenaActual.isEmpty() || contrasenaNueva.isEmpty() || contrasenaConfirmacion.isEmpty()) {
-                            Toast.makeText(context, "Todos los campos de contraseña son obligatorios.", Toast.LENGTH_SHORT).show()
-                            return@Button
+
+                        // Verifica que el formulario sea válido antes de proceder.
+                        if (formIsValid) {
+                            cargando = true
+
+                            // LÓGICA DE CAMBIO DE CONTRASEÑA IMPLEMENTADA
+                            AuthController.cambiarContrasena(
+                                contrasenaActual = contrasenaActual,
+                                contrasenaNueva = contrasenaNueva,
+                                onSuccess = {
+                                    cargando = false
+                                    mostrarDialogoExito = true
+                                },
+                                onError = { mensaje ->
+                                    cargando = false
+                                    Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+                                }
+                            )
+                        } else {
+                            // Mensaje si el formulario no es válido y el botón fue presionado
+                            // (esto sólo ocurriría si el botón no estuviera deshabilitado correctamente)
+                            Toast.makeText(context, "Por favor, verifica la contraseña actual y que la nueva cumpla con todos los requisitos y coincida.", Toast.LENGTH_LONG).show()
                         }
-                        if (!todosRequisitosCumplidos) {
-                            Toast.makeText(context, "La nueva contraseña no cumple con todos los requisitos.", Toast.LENGTH_LONG).show()
-                            return@Button
-                        }
-                        if (!contrasenaCoincide) {
-                            Toast.makeText(context, "Las contraseñas no coinciden.", Toast.LENGTH_SHORT).show()
-                            return@Button
-                        }
-
-                        cargando = true
-
-                        // LÓGICA DE CAMBIO DE CONTRASEÑA IMPLEMENTADA
-                        // Asegúrate de que AuthController esté disponible
-                        /*AuthController.cambiarContrasena(
-                            contrasenaActual = contrasenaActual,
-                            contrasenaNueva = contrasenaNueva,
-                            onSuccess = {
-                                cargando = false
-                                mostrarDialogoExito = true
-                            },
-                            onError = { mensaje ->
-                                cargando = false
-                                Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
-                            }
-                        )*/
-
-
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -250,7 +264,8 @@ fun CambiarContrasenaScreen(navController: NavController) {
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    enabled = !cargando && todosRequisitosCumplidos && contrasenaCoincide
+                    // 🔑 PROPIEDAD CLAVE: EL BOTÓN SÓLO SE HABILITA SI EL FORMULARIO ES VÁLIDO Y NO ESTÁ CARGANDO
+                    enabled = formIsValid && !cargando
                 ) {
                     if (cargando) {
                         CircularProgressIndicator(
@@ -293,7 +308,7 @@ fun CambiarContrasenaScreen(navController: NavController) {
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = Color(0xff4CAF50),
+                    tint = successColor, // Usar la variable de color de éxito
                     modifier = Modifier.size(48.dp)
                 )
             },
@@ -331,7 +346,11 @@ fun CampoTextoContrasena(
     valor: String,
     onValorCambiado: (String) -> Unit,
     label: String,
-    textOnSurface: Color
+    textOnSurface: Color,
+    // *************************************************************
+    // CAMBIOS CLAVE: Revertir y agregar supportingText slot
+    supportingText: @Composable (() -> Unit)? = null
+    // *************************************************************
 ) {
     var visibilidad by remember { mutableStateOf(false) }
 
@@ -360,13 +379,18 @@ fun CampoTextoContrasena(
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = MaterialTheme.colorScheme.primary,
+            // Revertido a tu color secundario por defecto
             unfocusedBorderColor = MaterialTheme.colorScheme.secondary,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
             cursorColor = MaterialTheme.colorScheme.primary,
             focusedTextColor = textOnSurface,
             unfocusedTextColor = textOnSurface
         ),
-        singleLine = true
+        singleLine = true,
+        // *************************************************************
+        // Slot para el texto condicional
+        supportingText = supportingText
+        // *************************************************************
     )
 }
 
