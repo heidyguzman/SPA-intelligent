@@ -67,6 +67,7 @@ fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
             Spacer(modifier = Modifier.weight(1f))
 
             // Botón principal de servicios
+            // Botón principal de servicios
             Button(
                 onClick = onServicesClick,
                 modifier = Modifier

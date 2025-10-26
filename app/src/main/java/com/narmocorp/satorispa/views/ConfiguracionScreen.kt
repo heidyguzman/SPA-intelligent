@@ -19,16 +19,82 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.narmocorp.satorispa.controller.AuthController
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Logout
+
+//MOVER ESTAS FUNCIONES AL INICIO PARA RESOLVER LOS UNRESOLVED REFERENCE
+
+@Composable
+fun SeccionTitulo(texto: String, color: Color) {
+    Text(
+        text = texto,
+        fontSize = 14.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = color,
+        modifier = Modifier.padding(start = 4.dp)
+    )
+}
+
+@Composable
+fun OpcionConfiguracion(
+    icono: ImageVector,
+    titulo: String,
+    subtitulo: String,
+    onClick: () -> Unit,
+    textOnBackground: Color,
+    textOnSurface: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icono,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = titulo,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium,
+                color = textOnBackground
+            )
+            Text(
+                text = subtitulo,
+                fontSize = 13.sp,
+                color = textOnSurface.copy(alpha = 0.6f)
+            )
+        }
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            tint = textOnSurface.copy(alpha = 0.6f),
+            modifier = Modifier.size(20.dp)
+        )
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
 
 @Composable
 fun ConfiguracionScreen(navController: NavController) {
-    var modoOscuro by remember { mutableStateOf(false) }
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
 
     // Definir colores del tema para facilitar la corrección
+    val primaryBrandColor = MaterialTheme.colorScheme.primary       // << CORRECCIÓN: Definir primaryBrandColor
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
-    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Dark Mode (Header)
-    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en Dark Mode (Texto principal)
-    val textOnSurface = MaterialTheme.colorScheme.onSurface             // Usado como base para subtítulos (Dark/Light)
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
+    val textOnBackground = MaterialTheme.colorScheme.onBackground
+    val textOnSurface = MaterialTheme.colorScheme.onSurface
 
 
     Box(
@@ -52,9 +118,9 @@ fun ConfiguracionScreen(navController: NavController) {
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        Icons.Filled.ArrowBack,
+                        Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Atrás",
-                        tint = textOnSecondaryPlatform, // Corregido
+                        tint = textOnSecondaryPlatform,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -63,7 +129,7 @@ fun ConfiguracionScreen(navController: NavController) {
                     "Configuración",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
-                    color = textOnSecondaryPlatform // Corregido
+                    color = textOnSecondaryPlatform
                 )
             }
 
@@ -75,7 +141,7 @@ fun ConfiguracionScreen(navController: NavController) {
                     .padding(16.dp)
             ) {
                 // Sección: Cuenta
-                SeccionTitulo("Cuenta", color = textOnBackground) // << CORRECCIÓN DE COLOR
+                SeccionTitulo("Cuenta", color = textOnBackground) // << AHORA RESUELTO
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
@@ -83,8 +149,8 @@ fun ConfiguracionScreen(navController: NavController) {
                     titulo = "Perfil",
                     subtitulo = "Editar información personal",
                     onClick = { navController.navigate("editar_perfil") },
-                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
-                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
                 )
 
                 OpcionConfiguracion(
@@ -92,36 +158,16 @@ fun ConfiguracionScreen(navController: NavController) {
                     titulo = "Cambiar contraseña",
                     subtitulo = "Actualizar credenciales de acceso",
                     onClick = { navController.navigate("cambiar_contrasena") },
-                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
-                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-                /*
-                // Sección: Preferencias
-                SeccionTitulo("Preferencias")
-                Spacer(modifier = Modifier.height(8.dp))
-
-                OpcionConSwitch(
-                    icono = Icons.Default.Notifications,
-                    titulo = "Notificaciones",
-                    subtitulo = "Recibir alertas y recordatorios",
-                    checked = notificacionesActivas,
-                    onCheckedChange = { notificacionesActivas = it }
-                )
-
-                OpcionConSwitch(
-                    icono = Icons.Default.DarkMode,
-                    titulo = "Modo oscuro",
-                    subtitulo = "Tema oscuro para la aplicación",
-                    checked = modoOscuro,
-                    onCheckedChange = { modoOscuro = it }
-                )*/
-
+                // ... (Sección Preferencias Comentada)
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // Sección: Información
-                SeccionTitulo("Información", color = textOnBackground) // << CORRECCIÓN DE COLOR
+                SeccionTitulo("Información", color = textOnBackground) // << AHORA RESUELTO
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
@@ -129,8 +175,8 @@ fun ConfiguracionScreen(navController: NavController) {
                     titulo = "Términos y condiciones",
                     subtitulo = "Políticas de uso",
                     onClick = { navController.navigate("terminos_condiciones") },
-                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
-                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
                 )
 
                 OpcionConfiguracion(
@@ -138,8 +184,8 @@ fun ConfiguracionScreen(navController: NavController) {
                     titulo = "Política de privacidad",
                     subtitulo = "Cómo usamos tus datos",
                     onClick = { navController.navigate("politica_privacidad") },
-                    textOnBackground = textOnBackground, // << CORRECCIÓN DE COLOR
-                    textOnSurface = textOnSurface // << CORRECCIÓN DE COLOR
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -147,10 +193,7 @@ fun ConfiguracionScreen(navController: NavController) {
                 // Botón de cerrar sesión
                 Button(
                     onClick = {
-                        // TODO: Lógica de cerrar sesión
-                        navController.navigate("start") {
-                            popUpTo("start") { inclusive = true }
-                        }
+                        mostrarDialogoCerrarSesion = true
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -162,7 +205,7 @@ fun ConfiguracionScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
-                        Icons.Default.Logout,
+                        Icons.AutoMirrored.Filled.Logout,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp)
                     )
@@ -174,67 +217,59 @@ fun ConfiguracionScreen(navController: NavController) {
             }
         }
     }
-}
 
-@Composable
-fun SeccionTitulo(texto: String, color: Color) { // << FIRMA DE FUNCIÓN MODIFICADA
-    Text(
-        text = texto,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = color, // << CORRECCIÓN APLICADA
-        modifier = Modifier.padding(start = 4.dp)
-    )
-}
-
-@Composable
-fun OpcionConfiguracion(
-    icono: ImageVector,
-    titulo: String,
-    subtitulo: String,
-    onClick: () -> Unit,
-    textOnBackground: Color, // << PARÁMETRO DE COLOR AÑADIDO
-    textOnSurface: Color     // << PARÁMETRO DE COLOR AÑADIDO
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = icono,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(24.dp)
-        )
-        Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = titulo,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = textOnBackground // << CORRECCIÓN APLICADA
-            )
-            Text(
-                text = subtitulo,
-                fontSize = 13.sp,
-                color = textOnSurface.copy(alpha = 0.6f) // Subtítulo en gris (visible en ambos)
-            )
-        }
-        Icon(
-            imageVector = Icons.Default.ChevronRight,
-            contentDescription = null,
-            tint = textOnSurface.copy(alpha = 0.6f),
-            modifier = Modifier.size(20.dp)
+    // Diálogo de confirmación para cerrar sesión (Colores Corregidos)
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogoCerrarSesion = false
+            },
+            icon = {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error // Usar color error para advertencia
+                )
+            },
+            title = {
+                Text(
+                    "¿Cerrar Sesión?",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface // Se adapta al fondo del diálogo
+                )
+            },
+            text = {
+                Text(
+                    "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Se adapta al fondo del diálogo
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mostrarDialogoCerrarSesion = false
+                        AuthController.cerrarSesion()
+                        navController.navigate("start") {
+                            popUpTo("start") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error // Botón de acción destructiva
+                    )
+                ) {
+                    // Texto sobre el color 'error' para asegurar contraste
+                    Text("Sí, Cerrar Sesión", color = MaterialTheme.colorScheme.onError)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { mostrarDialogoCerrarSesion = false }
+                ) {
+                    // Texto con el color primario del tema
+                    Text("Cancelar", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface // Fondo del diálogo adaptativo
         )
     }
-    Spacer(modifier = Modifier.height(8.dp))
 }
-/*
-@Composable
-// ... (OpcionConSwitch y el resto del código)
-*/
