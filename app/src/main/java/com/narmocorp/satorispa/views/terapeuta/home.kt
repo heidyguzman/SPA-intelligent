@@ -1,27 +1,31 @@
 package com.narmocorp.satorispa.views.terapeuta
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx   .compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.viewmodel.TerapeutaHomeViewModel
 import com.narmocorp.satorispa.viewmodel.UserState
-import com.narmocorp.satorispa.views.terapeuta.NavBar
-import com.narmocorp.satorispa.views.terapeuta.TopBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,12 +34,20 @@ fun TerapeutaHomeScreen(
     viewModel: TerapeutaHomeViewModel = viewModel(),
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToConfig: () -> Unit = {},
-    selectedRoute: String = "",
+    selectedRoute: String = "inicio",
     onHomeClick: () -> Unit = {},
     onServiciosClick: () -> Unit = {},
-    onCitasClick: () -> Unit = {}
+    onCitasClick: () -> Unit = {},
+    shouldRefresh: Boolean = false // Nuevo parámetro para forzar refresh
 ) {
     val userState by viewModel.userState.collectAsState()
+
+    // Refrescar datos cuando shouldRefresh cambie a true
+    LaunchedEffect(shouldRefresh) {
+        if (shouldRefresh) {
+            viewModel.refreshUserDataSilently()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -49,10 +61,10 @@ fun TerapeutaHomeScreen(
                 selectedRoute = selectedRoute,
                 onHomeClick = onHomeClick,
                 onServiciosClick = onServiciosClick,
-                onCitasClick = onCitasClick
+                onCitasClick = onCitasClick,
             )
         },
-        containerColor = Color.White,
+        containerColor = MaterialTheme.colorScheme.background,
         modifier = modifier.fillMaxSize()
     ) { innerPadding ->
         Column(
@@ -60,24 +72,53 @@ fun TerapeutaHomeScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
                 .padding(horizontal = 24.dp),
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Avatar
+            // Avatar con soporte para imagen
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(Color(0xffdbbba6)),
+                    .background(MaterialTheme.colorScheme.secondary),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = "Perfil",
-                    tint = Color(0xff1c1b1f),
-                    modifier = Modifier.size(100.dp)
-                )
+                when (userState) {
+                    is UserState.Success -> {
+                        val user = (userState as UserState.Success).user
+
+                        // Si el usuario tiene imagen, mostrarla
+                        if (user.imagenUrl.isNotEmpty()) {
+                            Image(
+                                painter = rememberAsyncImagePainter(user.imagenUrl),
+                                contentDescription = "Foto de perfil",
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            // Si no tiene imagen, mostrar icono por defecto
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Perfil",
+                                tint = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.size(100.dp)
+                            )
+                        }
+                    }
+                    else -> {
+                        // Mientras carga o hay error, mostrar icono por defecto
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Perfil",
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(100.dp)
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,13 +128,13 @@ fun TerapeutaHomeScreen(
                 is UserState.Loading -> {
                     CircularProgressIndicator(
                         modifier = Modifier.size(40.dp),
-                        color = Color(0xff995d2d)
+                        color = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Cargando...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
 
@@ -103,17 +144,17 @@ fun TerapeutaHomeScreen(
                         text = user.nombre,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xff1c1b1f)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = user.apellido,
                         style = MaterialTheme.typography.titleLarge,
-                        color = Color(0xff1c1b1f)
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = user.correo,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xff1c1b1f).copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                 }
 
@@ -123,19 +164,19 @@ fun TerapeutaHomeScreen(
                         text = "Error al cargar datos",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Red
+                        color = MaterialTheme.colorScheme.error
                     )
                     Text(
                         text = errorMessage,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Red.copy(alpha = 0.7f),
+                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = { viewModel.loadUserData() },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xff995d2d)
+                            containerColor = MaterialTheme.colorScheme.primary
                         )
                     ) {
                         Text("Reintentar")
@@ -143,7 +184,9 @@ fun TerapeutaHomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(100.dp))
+
+
         }
     }
 }
