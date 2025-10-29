@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,7 +25,17 @@ import com.narmocorp.satorispa.controller.AuthController
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 
-//MOVER ESTAS FUNCIONES AL INICIO PARA RESOLVER LOS UNRESOLVED REFERENCE
+// 🔑 IMPORTS NECESARIOS AÑADIDOS PARA BORRAR CUENTA
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Delete
+
+// =========================================================================
+// FUNCIONES DE DISEÑO ORIGINALES (PRESERVADAS)
+// =========================================================================
 
 @Composable
 fun SeccionTitulo(texto: String, color: Color) {
@@ -85,17 +97,29 @@ fun OpcionConfiguracion(
 }
 
 
+// =========================================================================
+// FUNCIÓN PRINCIPAL CONFIGURACION SCREEN
+// =========================================================================
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfiguracionScreen(navController: NavController) {
+    val context = LocalContext.current
+    val colorEsquema = MaterialTheme.colorScheme
+
+    // 🔑 ESTADOS AÑADIDOS PARA BORRAR CUENTA
     var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    var mostrarDialogoBorrarCuenta by remember { mutableStateOf(false) } // NUEVO
+    var contrasenaBorrarCuenta by remember { mutableStateOf("") } // NUEVO
+    var isLoadingBorrarCuenta by remember { mutableStateOf(false) } // NUEVO
 
     // Definir colores del tema para facilitar la corrección
-    val primaryBrandColor = MaterialTheme.colorScheme.primary       // << CORRECCIÓN: Definir primaryBrandColor
+    val primaryBrandColor = MaterialTheme.colorScheme.primary
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
     val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
     val textOnBackground = MaterialTheme.colorScheme.onBackground
     val textOnSurface = MaterialTheme.colorScheme.onSurface
 
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
@@ -137,11 +161,11 @@ fun ConfiguracionScreen(navController: NavController) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 16.dp)
             ) {
                 // Sección: Cuenta
-                SeccionTitulo("Cuenta", color = textOnBackground) // << AHORA RESUELTO
+                SeccionTitulo("Cuenta", color = textOnBackground)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
@@ -163,11 +187,9 @@ fun ConfiguracionScreen(navController: NavController) {
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-                // ... (Sección Preferencias Comentada)
-                Spacer(modifier = Modifier.height(24.dp))
 
                 // Sección: Información
-                SeccionTitulo("Información", color = textOnBackground) // << AHORA RESUELTO
+                SeccionTitulo("Información", color = textOnBackground)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OpcionConfiguracion(
@@ -190,86 +212,230 @@ fun ConfiguracionScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Botón de cerrar sesión
-                Button(
-                    onClick = {
-                        mostrarDialogoCerrarSesion = true
-                    },
+                // =======================================================
+                // 🔑 SECCIÓN DE BOTONES DE ACCIÓN FINAL
+                // =======================================================
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                        .padding(bottom = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // BOTÓN CERRAR SESIÓN
+                    Button(
+                        onClick = { mostrarDialogoCerrarSesion = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cerrar Sesión", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp)) // Espacio entre botones
+
+                    // 🔑 NUEVO: BOTÓN DE BORRAR CUENTA (Color de Advertencia)
+                    Button(
+                        onClick = { mostrarDialogoBorrarCuenta = true }, // Activa el diálogo de borrar
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE53935), // Rojo Fuerte de Advertencia
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Borrar cuenta", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+
+        // =======================================================
+        // 🔑 DIÁLOGOS (DEBEN IR FUERA DEL DISEÑO PRINCIPAL)
+        // =======================================================
+
+        // DIÁLOGO DE CERRAR SESIÓN (Tu código original)
+        if (mostrarDialogoCerrarSesion) {
+            AlertDialog(
+                onDismissRequest = { mostrarDialogoCerrarSesion = false },
+                icon = {
                     Icon(
                         Icons.AutoMirrored.Filled.Logout,
                         contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                        tint = colorEsquema.error,
+                        modifier = Modifier.size(48.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Cerrar sesión", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                }
+                },
+                title = { Text("¿Cerrar Sesión?") },
+                text = {
+                    Text(
+                        "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+                        color = colorEsquema.onSurface.copy(alpha = 0.8f)
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            mostrarDialogoCerrarSesion = false
+                            AuthController.cerrarSesion()
+                            navController.navigate("start") {
+                                popUpTo("start") { inclusive = true }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorEsquema.error
+                        )
+                    ) {
+                        Text("Sí, Cerrar Sesión", color = colorEsquema.onError)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { mostrarDialogoCerrarSesion = false }
+                    ) {
+                        Text("Cancelar", color = colorEsquema.primary)
+                    }
+                },
+                containerColor = colorEsquema.surface
+            )
+        }
 
-                Spacer(modifier = Modifier.height(32.dp))
-            }
+        // 🔑 NUEVO: Llama al Diálogo de Borrar Cuenta
+        if (mostrarDialogoBorrarCuenta) {
+            BorrarCuentaDialog(
+                navController = navController,
+                onDismiss = {
+                    mostrarDialogoBorrarCuenta = false
+                    contrasenaBorrarCuenta = "" // Limpiar contraseña al cerrar
+                    isLoadingBorrarCuenta = false // Restablecer estado de carga
+                },
+                contrasena = contrasenaBorrarCuenta,
+                onContrasenaChange = { contrasenaBorrarCuenta = it },
+                isLoading = isLoadingBorrarCuenta,
+                onLoadingChange = { isLoadingBorrarCuenta = it }
+            )
         }
     }
+}
 
-    // Diálogo de confirmación para cerrar sesión (Colores Corregidos)
-    if (mostrarDialogoCerrarSesion) {
-        AlertDialog(
-            onDismissRequest = {
-                mostrarDialogoCerrarSesion = false
-            },
-            icon = {
-                Icon(
-                    Icons.AutoMirrored.Filled.Logout,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error // Usar color error para advertencia
-                )
-            },
-            title = {
+
+// =========================================================================
+// 🔑 FUNCIÓN COMPOSABLE PARA EL DIÁLOGO DE BORRAR CUENTA (¡AÑÁDELA AL FINAL DEL ARCHIVO!)
+// =========================================================================
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BorrarCuentaDialog(
+    navController: NavController,
+    onDismiss: () -> Unit,
+    contrasena: String,
+    onContrasenaChange: (String) -> Unit,
+    isLoading: Boolean,
+    onLoadingChange: (Boolean) -> Unit
+) {
+    val context = LocalContext.current
+    val colorEsquema = MaterialTheme.colorScheme
+    var contrasenaVisible by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                Icons.Default.Warning,
+                contentDescription = null,
+                tint = colorEsquema.error, // Icono de advertencia en rojo
+                modifier = Modifier.size(48.dp)
+            )
+        },
+        title = { Text("Confirmar Eliminación de Cuenta") },
+        text = {
+            Column {
                 Text(
-                    "¿Cerrar Sesión?",
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface // Se adapta al fondo del diálogo
+                    "Esta acción es **permanente** y eliminará todos tus datos. " +
+                            "Para continuar, ingresa tu contraseña actual:",
+                    color = colorEsquema.onSurface.copy(alpha = 0.8f)
                 )
-            },
-            text = {
-                Text(
-                    "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f) // Se adapta al fondo del diálogo
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        mostrarDialogoCerrarSesion = false
-                        AuthController.cerrarSesion()
-                        navController.navigate("start") {
-                            popUpTo("start") { inclusive = true }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Campo de Contraseña
+                OutlinedTextField(
+                    value = contrasena,
+                    onValueChange = onContrasenaChange,
+                    label = { Text("Contraseña actual") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+
+                    visualTransformation = if (contrasenaVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = colorEsquema.primary) },
+                    trailingIcon = {
+                        val icon = if (contrasenaVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                        IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
+                            Icon(icon, contentDescription = "Toggle password visibility")
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error // Botón de acción destructiva
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (contrasena.isBlank()) {
+                        Toast.makeText(context, "Por favor, ingresa tu contraseña.", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+                    onLoadingChange(true) // Iniciar carga
+
+                    // Llama a la función de eliminación segura en AuthController
+                    AuthController.deleteUserAndData(
+                        contrasenaActual = contrasena,
+                        onSuccess = {
+                            onDismiss() // Cerrar el diálogo
+                            Toast.makeText(context, "Cuenta eliminada exitosamente.", Toast.LENGTH_LONG).show()
+                            // Navegar al inicio (Login/Start) y limpiar el BackStack
+                            navController.navigate("start") {
+                                popUpTo("start") { inclusive = true }
+                            }
+                        },
+                        onError = { mensaje ->
+                            onLoadingChange(false) // Detener carga en caso de error
+                            Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
+                        }
                     )
-                ) {
-                    // Texto sobre el color 'error' para asegurar contraste
-                    Text("Sí, Cerrar Sesión", color = MaterialTheme.colorScheme.onError)
+                },
+                enabled = contrasena.isNotBlank() && !isLoading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorEsquema.error
+                )
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Borrar permanentemente", color = colorEsquema.onError)
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { mostrarDialogoCerrarSesion = false }
-                ) {
-                    // Texto con el color primario del tema
-                    Text("Cancelar", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface // Fondo del diálogo adaptativo
-        )
-    }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text("Cancelar", color = colorEsquema.primary)
+            }
+        },
+        containerColor = colorEsquema.surface
+    )
 }
