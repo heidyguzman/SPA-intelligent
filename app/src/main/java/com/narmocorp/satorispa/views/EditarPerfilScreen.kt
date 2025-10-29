@@ -49,6 +49,7 @@ fun EditarPerfilScreen(navController: NavController) {
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var rol by remember { mutableStateOf("") }
     var imagenUrl by remember { mutableStateOf("") }
     var nuevaImagenUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -81,6 +82,7 @@ fun EditarPerfilScreen(navController: NavController) {
                 nombre = user.nombre
                 apellido = user.apellido
                 email = user.correo
+                rol = user.rol
                 imagenUrl = user.imagenUrl
                 cargando = false
             },
@@ -318,6 +320,7 @@ fun EditarPerfilScreen(navController: NavController) {
                                 nombre = nombre,
                                 apellido = apellido,
                                 correo = email,
+                                rol = rol,
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
