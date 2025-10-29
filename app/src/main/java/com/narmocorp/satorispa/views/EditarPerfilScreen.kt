@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import android.widget.Toast
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.controller.PerfilController
 import com.narmocorp.satorispa.controller.AuthController
@@ -40,10 +41,11 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardActions
 import android.content.Context
+import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditarPerfilScreen(navController: NavController) {
+fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHomeViewModel = viewModel()) {
     val context = LocalContext.current
 
     var nombre by remember { mutableStateOf("") }
@@ -324,7 +326,11 @@ fun EditarPerfilScreen(navController: NavController) {
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
-                                    mostrarDialogoExito = true
+                                    Toast.makeText(context, "Perfil actualizado correctamente", Toast.LENGTH_SHORT).show()
+                                    // Notificar al ViewModel que los datos han cambiado
+                                    clienteViewModel.refreshUserDataSilently()
+                                    // Regresar a la pantalla anterior
+                                    navController.popBackStack()
                                 },
                                 onError = { mensaje ->
                                     guardando = false
@@ -398,7 +404,7 @@ fun EditarPerfilScreen(navController: NavController) {
                         mostrarDialogoCambioEmail = false
                         email = nuevoEmail
                         guardando = false
-                        mostrarDialogoExito = true
+                        mostrarDialogoExito = true // Muestra el diálogo de re-login solo aquí
                     },
                     onError = { mensaje ->
                         guardando = false
