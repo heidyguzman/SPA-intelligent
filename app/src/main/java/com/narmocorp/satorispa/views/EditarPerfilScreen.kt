@@ -54,7 +54,12 @@ fun EditarPerfilScreen(navController: NavController) {
 
     var cargando by remember { mutableStateOf(true) }
     var guardando by remember { mutableStateOf(false) }
+
+    // Bandera para mostrar el AlertDialog de CIERRE DE SESIÓN (SOLO para cambio de correo)
     var mostrarDialogoExito by remember { mutableStateOf(false) }
+
+    // Bandera para mostrar el Toast de éxito de Nombre/Apellido
+    var mostrarToastExitoPerfil by remember { mutableStateOf(false) }
 
     // ************ ESTADOS PARA CAMBIO DE EMAIL ************
     var mostrarDialogoCambioEmail by remember { mutableStateOf(false) }
@@ -321,7 +326,11 @@ fun EditarPerfilScreen(navController: NavController) {
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
-                                    mostrarDialogoExito = true
+                                    // Usar Toast simple
+                                    showToast(context, "Perfil actualizado exitosamente.")
+                                    // 1. Establecer la bandera de actualización
+                                    navController.popBackStack()
+
                                 },
                                 onError = { mensaje ->
                                     guardando = false
@@ -368,7 +377,7 @@ fun EditarPerfilScreen(navController: NavController) {
         }
     }
 
-    // ************ DIÁLOGO DE ÉXITO FINAL (PARA CAMBIO DE EMAIL) ************
+    // El AlertDialog de éxito ahora solo se usa si se cambia el correo
     if (mostrarDialogoExito) {
         CorreoCambiadoExitoDialog(
             navController = navController,
@@ -392,8 +401,13 @@ fun EditarPerfilScreen(navController: NavController) {
                     nuevoCorreo = nuevoEmail,
                     contrasenaActual = contrasena,
                     onSuccess = { mensaje ->
+                        // 1. Ocultar el diálogo de ingreso de datos
                         mostrarDialogoCambioEmail = false
+
+                        // 2. Actualizar el estado del email en la pantalla
                         email = nuevoEmail
+
+                        // 3. Desactivar loading y activar el AlertDialog de CIERRE DE SESIÓN
                         guardando = false
                         mostrarDialogoExito = true
                     },
@@ -429,19 +443,23 @@ fun CambioEmailDialog(
     val textOnSurface = MaterialTheme.colorScheme.onSurface
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
+    val errorColor = MaterialTheme.colorScheme.error // Usar color de error del tema
+
+    // El unfocusedBorderColor se define localmente para asegurar contraste en modo oscuro
+    val unfocusedBorderColorVisible = Color.LightGray.copy(alpha = 0.5f)
+
 
     // Validación de formato de email
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(nuevoEmail).matches()
     val isFormValid = isEmailValid && contrasenaActual.isNotEmpty()
 
     var contrasenaVisible by remember { mutableStateOf(false) }
-    val unfocusedBorderColorVisible = Color.LightGray.copy(alpha = 0.5f)
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Email, contentDescription = null, tint = primaryBrandColor) },
         title = { Text("Cambiar Correo Electrónico") },
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surface, // Se adapta al modo oscuro/claro
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -463,14 +481,15 @@ fun CambioEmailDialog(
                     isError = nuevoEmail.isNotEmpty() && !isEmailValid,
                     supportingText = {
                         if (nuevoEmail.isNotEmpty() && !isEmailValid) {
-                            Text("Formato de correo inválido", color = MaterialTheme.colorScheme.error)
+                            Text("Formato de correo inválido", color = errorColor)
                         }
                     },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = primaryBrandColor,
                         unfocusedBorderColor = unfocusedBorderColorVisible,
                         focusedTextColor = textOnSurface,
-                        unfocusedTextColor = textOnSurface
+                        unfocusedTextColor = textOnSurface,
+                        errorBorderColor = errorColor
                     )
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -601,7 +620,10 @@ fun CampoTextoPersonalizado(
     OutlinedTextField(
         value = valor,
         onValueChange = { nuevoValor ->
-            val filteredValue = nuevoValor.filter { it.isLetter() || it.isWhitespace() || it.toString().matches("[ñÑáéíóúÁÉÍÓÚüÜ]".toRegex()) }
+            val filteredValue = nuevoValor.filter {
+                it.isLetter() || it.isWhitespace() || it.toString()
+                    .matches("[ñÑáéíóúÁÉÍÓÚüÜ]".toRegex())
+            }
             onValorCambiado(filteredValue)
         },
         label = { Text(label) },
@@ -623,6 +645,8 @@ fun CampoTextoPersonalizado(
             unfocusedTextColor = textOnSurface
         ),
         singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado)
+        keyboardOptions = KeyboardOptions(
+            keyboardType = tipoTeclado
+        )
     )
 }

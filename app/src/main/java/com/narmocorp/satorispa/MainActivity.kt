@@ -6,9 +6,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.collectAsState // << AGREGADO: Necesario para leer StateFlow
-import androidx.compose.runtime.getValue     // << AGREGADO: Necesario para 'by'
-import androidx.compose.runtime.LaunchedEffect // << AGREGADO: Necesario para manejar el side-effect
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,7 +16,6 @@ import com.narmocorp.satorispa.views.ForgotPasswordFlow
 import com.narmocorp.satorispa.views.Login
 import com.narmocorp.satorispa.views.Register
 import com.narmocorp.satorispa.views.ServicesScreen
-import com.narmocorp.satorispa.StartScreen
 import com.narmocorp.satorispa.views.ConfiguracionScreen
 import com.narmocorp.satorispa.views.EditarPerfilScreen
 import com.narmocorp.satorispa.views.CambiarContrasenaScreen
@@ -34,7 +30,7 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 import com.narmocorp.satorispa.views.NotificacionesScreen
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
-import com.google.firebase.FirebaseApp // Podría ser necesario si no lo tienes
+import com.google.firebase.FirebaseApp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,43 +81,26 @@ class MainActivity : ComponentActivity() {
                     }
 
                     // =========================================================
-                    // CLIENTE HOME - LÓGICA DE RECARGA CORREGIDA
+                    // CLIENTE HOME - LÓGICA DE RECARGA ELIMINADA
                     // =========================================================
-                    composable("cliente_home") { backStackEntry ->
-
-                        // 1. Escuchar la bandera "profile_updated" de forma reactiva
-                        //    Usa getStateFlow y collectAsState
-                        val profileUpdated by backStackEntry.savedStateHandle
-                            .getStateFlow("profile_updated", false)
-                            .collectAsState()
-
-                        // 2. Renderizar la pantalla pasando la bandera
+                    composable("cliente_home") {
+                        // 🔑 Eliminamos toda la lógica de SavedStateHandle y shouldRefresh
                         ClientHomeScreen(
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
+                            navController = navController,
                             onNavigateToConfig = { navController.navigate("configuracion") },
                             selectedRoute = "inicio",
                             onHomeClick = { navController.navigate("cliente_home") },
                             onServiciosClick = { navController.navigate("cliente_servicios") },
-                            onCitasClick = { /* TODO: navegar a citas */ },
-                            shouldRefresh = profileUpdated // Usa el estado reactivo
+                            onCitasClick = { /* TODO: navegar a citas */ }
+                            // 🔑 Ya no pasamos shouldRefresh, la pantalla se actualiza sola
                         )
-
-                        // 3. (CRÍTICO) Usar LaunchedEffect para resetear la bandera
-                        //    Esto garantiza que el flag se limpie solo después de que se haya usado
-                        //    para forzar la recarga en ClientHomeScreen.
-                        LaunchedEffect(profileUpdated) {
-                            if (profileUpdated) {
-                                Log.d("MainActivity", "Bandera de perfil restablecida a false")
-                                backStackEntry.savedStateHandle["profile_updated"] = false
-                            }
-                        }
                     }
 
                     // Servicios para cliente autenticado (pantalla independiente con NavBar)
                     composable("cliente_servicios") {
                         ClienteServiciosScreen(
                             navController = navController,
-                            // === AGREGAR ESTAS LAMBDAS ===
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
                             onNavigateToConfig = { navController.navigate("configuracion") }
                         )
