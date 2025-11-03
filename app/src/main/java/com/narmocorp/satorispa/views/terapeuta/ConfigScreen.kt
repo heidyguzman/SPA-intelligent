@@ -13,15 +13,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,7 +33,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,6 +55,58 @@ import com.google.firebase.auth.FirebaseAuth
 @Composable
 fun ConfigScreen(navController: NavController) {
     val context = LocalContext.current
+    var mostrarDialogoCerrarSesion by remember { mutableStateOf(false) }
+    val colorEsquema = MaterialTheme.colorScheme
+
+    if (mostrarDialogoCerrarSesion) {
+        AlertDialog(
+            onDismissRequest = { mostrarDialogoCerrarSesion = false },
+            icon = {
+                Icon(
+                    Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = colorEsquema.error,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = { Text("¿Cerrar Sesión?") },
+            text = {
+                Text(
+                    "Tendrás que volver a iniciar sesión para acceder a tu cuenta.",
+                    color = colorEsquema.onSurface.copy(alpha = 0.8f)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        FirebaseAuth.getInstance().signOut()
+                        Toast.makeText(context, "Sesión cerrada exitosamente", Toast.LENGTH_SHORT).show()
+                        navController.navigate("login") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                        mostrarDialogoCerrarSesion = false
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorEsquema.error
+                    )
+                ) {
+                    Text("Sí, Cerrar Sesión", color = colorEsquema.onError)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { mostrarDialogoCerrarSesion = false }
+                ) {
+                    Text("Cancelar", color = colorEsquema.primary)
+                }
+            },
+            containerColor = colorEsquema.surface
+        )
+    }
+
     Scaffold(
         topBar = {
             Box(
@@ -95,23 +154,21 @@ fun ConfigScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.weight(1f))
 
+            // BOTÓN CERRAR SESIÓN
             Button(
-                onClick = {
-                    FirebaseAuth.getInstance().signOut()
-                    Toast.makeText(context, "Sesión cerrada exitosamente", Toast.LENGTH_SHORT).show()
-                    navController.navigate("login") {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                },
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8A5429)),
-                modifier = Modifier.fillMaxWidth()
+                onClick = { mostrarDialogoCerrarSesion = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ),
+                shape = RoundedCornerShape(12.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar sesión", tint = Color.White)
-                Text("Cerrar sesión", color = Color.White, modifier = Modifier.padding(start = 8.dp))
+                Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Cerrar Sesión", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
