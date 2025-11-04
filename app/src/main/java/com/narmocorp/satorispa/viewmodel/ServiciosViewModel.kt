@@ -28,13 +28,13 @@ class ServiciosViewModel : ViewModel() {
                         try {
                             Servicio(
                                 id = document.id,
-                                servicio = document.getString("servicio") ?: "",
-                                categoria = document.getString("categoria") ?: "",
-                                descripcion = document.getString("descripcion") ?: "",
-                                duracion = document.getString("duracion") ?: "",
-                                estado = document.getString("estado") ?: "",
-                                imagen = document.getString("imagen") ?: "",
-                                precio = document.getString("precio") ?: "0"
+                                servicio = document.get("servicio")?.toString() ?: "",
+                                categoria = document.get("categoria")?.toString() ?: "",
+                                descripcion = document.get("descripcion")?.toString() ?: "",
+                                duracion = document.get("duracion")?.toString() ?: "",
+                                estado = document.get("estado")?.toString() ?: "",
+                                imagen = document.get("imagen")?.toString() ?: "",
+                                precio = document.get("precio")?.toString() ?: "0"
                             )
                         } catch (e: Exception) {
                             Log.e("ServiciosViewModel", "Error converting document ${document.id}", e)
