@@ -25,6 +25,7 @@ import com.narmocorp.satorispa.views.cliente.ClientHomeScreen
 import com.narmocorp.satorispa.views.cliente.ClienteServiciosScreen
 import com.narmocorp.satorispa.views.terapeuta.ConfigScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
+import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 import com.narmocorp.satorispa.views.NotificacionesScreen
@@ -107,7 +108,10 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("terapeuta_home") {
-                        TerapeutaHomeScreen(onNavigateToConfig = { navController.navigate("terapeuta_config") })
+                        TerapeutaHomeScreen(
+                            onNavigateToConfig = { navController.navigate("terapeuta_config") },
+                            onCitasClick = { navController.navigate("terapeuta_citas") }
+                        )
                     }
 
                     composable("terapeuta_config") {
@@ -120,6 +124,10 @@ class MainActivity : ComponentActivity() {
 
                     composable("terapeuta_cambiar_contrasena") {
                         TerapeutaCambiarContrasenaScreen(navController = navController)
+                    }
+
+                    composable("terapeuta_citas") {
+                        TerapeutaCitasScreen(navController = navController)
                     }
 
                     composable("notificaciones") {
