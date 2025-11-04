@@ -55,7 +55,7 @@ fun ClienteServiciosScreen(
 
     val filteredServices = services.filter { service ->
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
-                (searchQuery.isEmpty() || service.nombre.contains(searchQuery, ignoreCase = true))
+                (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
 
     val popularServices = services.shuffled().take(4)
@@ -249,7 +249,7 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
         Column {
             Image(
                 painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.nombre,
+                contentDescription = service.servicio,
                 modifier = Modifier
                     .height(100.dp)
                     .fillMaxWidth(),
@@ -262,7 +262,7 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = service.nombre,
+                    text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = onSecondaryColor
@@ -304,7 +304,7 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
         Column {
             Image(
                 painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.nombre,
+                contentDescription = service.servicio,
                 modifier = Modifier
                     .height(120.dp)
                     .fillMaxWidth(),
@@ -317,7 +317,7 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = service.nombre,
+                    text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     color = onSecondaryColor
                 )
@@ -354,7 +354,7 @@ private fun ServiceDetailsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                service.nombre,
+                service.servicio,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = onSecondaryColor
@@ -364,7 +364,7 @@ private fun ServiceDetailsDialog(
             Column {
                 Image(
                     painter = rememberAsyncImagePainter(service.imagen),
-                    contentDescription = service.nombre,
+                    contentDescription = service.servicio,
                     modifier = Modifier
                         .height(200.dp)
                         .fillMaxWidth(),

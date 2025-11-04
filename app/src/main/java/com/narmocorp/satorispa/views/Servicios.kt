@@ -52,10 +52,10 @@ fun ServicesScreen(
 
     val filteredServices = services.filter { service ->
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
-                (searchQuery.isEmpty() || service.nombre.contains(searchQuery, ignoreCase = true))
+                (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
 
-    val recentServices = services.sortedByDescending { it.createdAt }.take(4)
+    val recentServices = services.take(4)
 
     Scaffold(
         topBar = {
@@ -230,7 +230,7 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
         Column {
             Image(
                 painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.nombre,
+                contentDescription = service.servicio,
                 modifier = Modifier
                     .height(100.dp)
                     .fillMaxWidth(),
@@ -243,7 +243,7 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = service.nombre,
+                    text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSecondary
@@ -277,7 +277,7 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
         Column {
             Image(
                 painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.nombre,
+                contentDescription = service.servicio,
                 modifier = Modifier
                     .height(120.dp)
                     .fillMaxWidth(),
@@ -289,7 +289,7 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     .height(100.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = service.nombre, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                Text(text = service.servicio, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -307,12 +307,12 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
 fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(service.nombre, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onSecondary) },
+        title = { Text(service.servicio, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onSecondary) },
         text = {
             Column {
                 Image(
                     painter = rememberAsyncImagePainter(service.imagen),
-                    contentDescription = service.nombre,
+                    contentDescription = service.servicio,
                     modifier = Modifier
                         .height(200.dp)
                         .fillMaxWidth(),
