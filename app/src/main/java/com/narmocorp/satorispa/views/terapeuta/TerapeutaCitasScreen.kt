@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views.terapeuta
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -9,8 +10,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,9 @@ import coil.compose.AsyncImage
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.controller.CitasController
 import com.narmocorp.satorispa.model.Cita
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 // Pantalla "Mis Citas" para el usuario terapeuta. Lee datos reales desde Firestore.
 @Composable
@@ -43,6 +49,8 @@ fun TerapeutaCitasScreen(navController: NavController) {
     var cargando by remember { mutableStateOf(true) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var selectedCita by remember { mutableStateOf<Cita?>(null) }
+    var selectedDate by remember { mutableStateOf<String?>(null) }
+    var displayedDate by remember { mutableStateOf<String?>(null) }
 
     // Escuchar citas en tiempo real y limpiar listener al recomponer/destruir
     DisposableEffect(Unit) {
@@ -96,6 +104,62 @@ fun TerapeutaCitasScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Filtro de fecha
+            val context = LocalContext.current
+            val calendar = Calendar.getInstance()
+            val datePickerDialog = DatePickerDialog(
+                context,
+                { _, year, month, dayOfMonth ->
+                    // Formato para el filtro
+                    selectedDate = "$year-${(month + 1).toString().padStart(2, '0')}-${dayOfMonth.toString().padStart(2, '0')}"
+
+                    // Formato para mostrar en español
+                    val selectedCalendar = Calendar.getInstance().apply {
+                        set(year, month, dayOfMonth)
+                    }
+                    val dateFormat = SimpleDateFormat("dd 'de' MMMM 'de' yyyy", Locale("es", "ES"))
+                    displayedDate = dateFormat.format(selectedCalendar.time)
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+            ) {
+                Button(onClick = { datePickerDialog.show() }) {
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = "Seleccionar fecha",
+                        modifier = Modifier.size(ButtonDefaults.IconSize)
+                    )
+                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                    Text(text = displayedDate ?: "Seleccionar fecha")
+                }
+                if (selectedDate != null) {
+                    Button(
+                        onClick = {
+                            selectedDate = null
+                            displayedDate = null
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                    ) {
+                        Text("Limpiar")
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            val filteredCitas = if (selectedDate == null) {
+                citas
+            } else {
+                citas.filter { it.fecha == selectedDate }
+            }
+
             when {
                 cargando -> {
                     CircularProgressIndicator()
@@ -103,15 +167,19 @@ fun TerapeutaCitasScreen(navController: NavController) {
                 errorMsg != null -> {
                     Text(text = "Error: ${errorMsg}")
                 }
-                citas.isEmpty() -> {
-                    Text(text = "No hay citas asignadas")
+                filteredCitas.isEmpty() -> {
+                    if (selectedDate != null) {
+                        Text(text = "No hay citas para la fecha seleccionada")
+                    } else {
+                        Text(text = "No hay citas asignadas")
+                    }
                 }
                 else -> {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        items(citas) { cita ->
+                        items(filteredCitas) { cita ->
                             CitaCard(cita) {
                                 selectedCita = cita
                             }
