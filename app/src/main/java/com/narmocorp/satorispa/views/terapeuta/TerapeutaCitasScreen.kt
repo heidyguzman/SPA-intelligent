@@ -8,9 +8,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -24,6 +28,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.narmocorp.satorispa.R
@@ -125,10 +130,12 @@ fun TerapeutaCitasScreen(navController: NavController) {
 private fun CitaCard(cita: Cita, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
+        ),
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 88.dp)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
             .clickable(onClick = onClick)
     ) {
         Row(
@@ -155,18 +162,8 @@ private fun CitaCard(cita: Cita, onClick: () -> Unit) {
             }
 
             Spacer(modifier = Modifier.width(8.dp))
-            val statusColor = when (cita.estado.lowercase()) {
-                "confirmada" -> Color(0xFF4CAF50)
-                "pendiente" -> Color(0xFFFFC107)
-                "cancelada" -> Color(0xFFF44336)
-                else -> MaterialTheme.colorScheme.onSurface
-            }
-            Text(
-                text = cita.estado,
-                modifier = Modifier.padding(start = 8.dp),
-                color = statusColor,
-                fontWeight = FontWeight.Bold
-            )
+
+            StatusIndicator(status = cita.estado)
         }
     }
 }
@@ -198,15 +195,10 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Hora: ${cita.hora}")
                 Spacer(modifier = Modifier.height(8.dp))
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(text = "Estado: ")
-                    val statusColor = when (cita.estado.lowercase()) {
-                        "confirmada" -> Color(0xFF4CAF50)
-                        "pendiente" -> Color(0xFFFFC107)
-                        "cancelada" -> Color(0xFFF44336)
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-                    Text(text = cita.estado, color = statusColor, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    StatusIndicator(status = cita.estado)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
@@ -216,6 +208,35 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                     Text("Cerrar")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun StatusIndicator(status: String) {
+    val (backgroundColor, textColor) = when (status.lowercase()) {
+        "confirmada" -> Color(0xFF26A69A) to Color.White
+        "pendiente" -> Color(0xFFFFB300) to Color.Black
+        "cancelada" -> Color(0xFFEF5350) to Color.White
+        else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
+    }
+
+    Surface(
+        shape = RoundedCornerShape(50.dp),
+        color = backgroundColor,
+        contentColor = textColor
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = status,
+                fontWeight = FontWeight.Bold,
+                fontSize = 12.sp,
+                color = textColor
+            )
         }
     }
 }
