@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -260,4 +261,11 @@ fun ResetPasswordScreen(nestedNavController: NavController, rootNavController: N
             }
         }
     }
+}
+
+@Preview
+@Composable
+fun PreviewForgotPasswordFlow() {
+    val navController = rememberNavController()
+    ForgotPasswordFlow(navController)
 }

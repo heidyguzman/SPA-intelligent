@@ -6,8 +6,9 @@ import com.google.firebase.Timestamp
 
 object RegistroController {
     /**
-     * Registers a new user in Firebase Authentication (email/password) and creates a
-     * Firestore document inside the `usuarios` collection with rol = "cliente".
+     * Registers a new user in Firebase Authentication, sends a verification email,
+     * and creates a Firestore document inside the `usuarios` collection with rol = "cliente".
+     * The user is signed out after registration and must verify their email before logging in.
      *
      * onResult will be invoked with (success, message).
      */
@@ -25,31 +26,38 @@ object RegistroController {
             .addOnCompleteListener { authTask ->
                 if (authTask.isSuccessful) {
                     val user = auth.currentUser
-                    val uid = user?.uid
-                    if (uid == null) {
+                    if (user == null) {
                         onResult(false, "Error: UID no disponible después de crear la cuenta")
                         return@addOnCompleteListener
                     }
 
-                    val userData = hashMapOf(
-                        "nombre" to nombre,
-                        "apellido" to apellido,
-                        "correo" to correo,
-                        "rol" to "cliente",
-                        "createdAt" to Timestamp.now()
-                    )
+                    user.sendEmailVerification()
+                        .addOnCompleteListener { verificationTask ->
+                            if (verificationTask.isSuccessful) {
+                                val userData = hashMapOf(
+                                    "nombre" to nombre,
+                                    "apellido" to apellido,
+                                    "correo" to correo,
+                                    "rol" to "cliente",
+                                    "createdAt" to Timestamp.now()
+                                )
 
-                    firestore.collection("usuarios").document(uid)
-                        .set(userData)
-                        .addOnSuccessListener {
-                            // Sign out so the app is not left authenticated after registration.
-                            //auth.signOut()
-                            onResult(true, "Registro exitoso")
-                        }
-                        .addOnFailureListener { e ->
-                            // If Firestore write fails, delete the created Auth user to avoid orphaned accounts.
-                            auth.currentUser?.delete()
-                            onResult(false, e.message ?: "Error al guardar datos del usuario")
+                                firestore.collection("usuarios").document(user.uid)
+                                    .set(userData)
+                                    .addOnSuccessListener {
+                                        auth.signOut()
+                                        onResult(true, "Registro exitoso. Se ha enviado un correo de verificación.")
+                                    }
+                                    .addOnFailureListener { e ->
+                                        // If Firestore write fails, delete the created Auth user to avoid orphaned accounts.
+                                        user.delete()
+                                        onResult(false, e.message ?: "Error al guardar datos del usuario")
+                                    }
+                            } else {
+                                // Failed to send verification email, delete the user
+                                user.delete()
+                                onResult(false, verificationTask.exception?.message ?: "Error al enviar correo de verificación")
+                            }
                         }
                 } else {
                     val message = authTask.exception?.message ?: "Error al crear cuenta"

@@ -29,60 +29,67 @@ fun loginUser(
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
-                sessionManager.saveSessionPreference(keepSession)
                 val user = auth.currentUser
-                Log.d(TAG, "signInWithEmailAndPassword successful. currentUser=$user")
-                if (user != null) {
-                    val uid = user.uid
-                    Log.d(TAG, "Authenticated user uid=$uid")
-                    db.collection("usuarios").document(uid)
+                if (user != null && user.isEmailVerified) {
+                    // Email is verified, proceed to get user role from Firestore
+                    sessionManager.saveSessionPreference(keepSession)
+                    Log.d(TAG, "Authenticated and verified user uid=${user.uid}")
+
+                    db.collection("usuarios").document(user.uid)
                         .get()
                         .addOnSuccessListener { document ->
-                            Log.d(TAG, "Firestore get() success for uid=$uid; exists=${document?.exists()}")
                             if (document != null && document.exists()) {
-                                val dataMap = document.data
-                                Log.d(TAG, "Documento data=$dataMap")
-                                val rolRaw = document.getString("rol")
-                                Log.d(TAG, "rol raw='$rolRaw'")
-                                val rol = rolRaw?.trim()?.lowercase()
-                                if (rol == "cliente") {
-                                    navController.navigate("cliente_home") {
+                                val rol = document.getString("rol")?.trim()?.lowercase()
+                                Log.d(TAG, "User rol is '$rol'")
+                                when (rol) {
+                                    "cliente" -> navController.navigate("cliente_home") {
                                         popUpTo("login") { inclusive = true }
                                     }
-                                } else if (rol == "terapeuta") {
-                                    navController.navigate("terapeuta_home") {
+                                    "terapeuta" -> navController.navigate("terapeuta_home") {
                                         popUpTo("login") { inclusive = true }
                                     }
-                                } else {
-                                    val dataStr = document.data?.toString() ?: "(sin datos)"
-                                    val msg = "Rol de usuario no reconocido. Valor guardado: '$rolRaw'. Documento: $dataStr"
-                                    Log.d(TAG, msg)
-                                    onLoginError(msg)
+                                    else -> {
+                                        val rolRaw = document.getString("rol")
+                                        val msg = "Rol de usuario no reconocido: '$rolRaw'"
+                                        Log.d(TAG, msg)
+                                        onLoginError(msg)
+                                    }
                                 }
                             } else {
-                                val msg = "No se encontró el usuario en la base de datos. uid=$uid"
+                                val msg = "No se encontró el usuario en la base de datos. uid=${user.uid}"
                                 Log.d(TAG, msg)
+                                auth.signOut() // Sign out if user data is missing
                                 onLoginError(msg)
                             }
                         }
                         .addOnFailureListener { e ->
                             val msg = "Error al obtener datos del usuario: ${e.message}"
                             Log.e(TAG, msg, e)
+                            auth.signOut()
                             onLoginError(msg)
                         }
-                } else {
+                } else if (user != null && !user.isEmailVerified) {
+                    // User is not verified
+                    Log.d(TAG, "Login failed: email not verified for user ${user.email}")
+                    auth.signOut() // Sign out to prevent unverified access
+                    onLoginError("Por favor, verifica tu correo electrónico para poder iniciar sesión.")
+                } else if (user == null) {
+                    // This case should be rare but is good to handle
                     val msg = "Usuario autenticado pero currentUser es null."
                     Log.d(TAG, msg)
                     onLoginError(msg)
                 }
+
             } else {
-                val msg = "Error de autenticación: ${task.exception?.message}"
-                Log.d(TAG, msg, task.exception)
+                // Authentication task failed
+                val msg = task.exception?.message ?: "Correo o contraseña incorrectos."
+                Log.d(TAG, "Authentication failed: $msg", task.exception)
                 onLoginError(msg)
             }
         }
         .addOnFailureListener { e ->
-            val msg = "Error al conectar con el servicio de autenticación: ${e.message}"
+            // This listener is for network errors or other issues before the task completes.
+            val msg = "Error de conexión: ${e.message}"
             Log.e(TAG, msg, e)
             onLoginError(msg)
         }
