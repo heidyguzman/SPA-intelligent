@@ -1,10 +1,14 @@
 package com.narmocorp.satorispa
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.Image
@@ -42,9 +46,18 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 
 class MainActivity : FragmentActivity() {
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (!isGranted) {
+                Toast.makeText(this, "El permiso para acceder a la galería es necesario para cambiar la foto de perfil.", Toast.LENGTH_LONG).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initializeAppCheck()
+        requestGalleryPermission()
 
         enableEdgeToEdge()
         setContent {
@@ -160,6 +173,8 @@ class MainActivity : FragmentActivity() {
                         TerapeutaCambiarContrasenaScreen(navController = navController)
                     }
 
+
+
                     composable("terapeuta_citas") {
                         TerapeutaCitasScreen(navController = navController)
                     }
@@ -189,6 +204,18 @@ class MainActivity : FragmentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun requestGalleryPermission() {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(permission)
         }
     }
 
