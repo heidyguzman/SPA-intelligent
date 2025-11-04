@@ -59,6 +59,13 @@ fun TerapeutaCitasScreen(navController: NavController) {
                 onNavigateToConfig = { navController.navigate("terapeuta_config") }
             )
         },
+        bottomBar = {
+            NavBar(
+                selectedRoute = "citas",
+                onHomeClick = { navController.navigate("terapeuta_home") },
+                onCitasClick = { /* No hacer nada, ya estamos aquí */ }
+            )
+        },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
