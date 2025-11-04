@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import android.widget.Toast
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.controller.PerfilController
 import com.narmocorp.satorispa.controller.AuthController
@@ -40,15 +41,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.text.KeyboardActions
 import android.content.Context
+import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditarPerfilScreen(navController: NavController) {
+fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHomeViewModel = viewModel()) {
     val context = LocalContext.current
 
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var rol by remember { mutableStateOf("") }
     var imagenUrl by remember { mutableStateOf("") }
     var nuevaImagenUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -86,6 +89,7 @@ fun EditarPerfilScreen(navController: NavController) {
                 nombre = user.nombre
                 apellido = user.apellido
                 email = user.correo
+                rol = user.rol
                 imagenUrl = user.imagenUrl
                 cargando = false
             },
@@ -323,14 +327,11 @@ fun EditarPerfilScreen(navController: NavController) {
                                 nombre = nombre,
                                 apellido = apellido,
                                 correo = email,
+                                rol = rol,
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
-                                    // Usar Toast simple
-                                    showToast(context, "Perfil actualizado exitosamente.")
-                                    // 1. Establecer la bandera de actualización
-                                    navController.popBackStack()
-
+                                    mostrarDialogoExito = true
                                 },
                                 onError = { mensaje ->
                                     guardando = false
@@ -409,7 +410,7 @@ fun EditarPerfilScreen(navController: NavController) {
 
                         // 3. Desactivar loading y activar el AlertDialog de CIERRE DE SESIÓN
                         guardando = false
-                        mostrarDialogoExito = true
+                        mostrarDialogoExito = true // Muestra el diálogo de re-login solo aquí
                     },
                     onError = { mensaje ->
                         guardando = false

@@ -65,6 +65,7 @@ object PerfilController {
         nombre: String,
         apellido: String,
         correo: String,
+        rol: String, // Rol del usuario para determinar la carpeta
         imagenUri: Uri?,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
@@ -81,7 +82,7 @@ object PerfilController {
 
         // Si hay una imagen, primero subirla a Storage
         if (imagenUri != null) {
-            subirImagenStorage(uid, imagenUri,
+            subirImagenStorage(uid, imagenUri, rol,
                 onSuccess = { imageUrl ->
                     // Una vez subida la imagen, actualizar Firestore
                     actualizarDatosFirestore(uid, nombre, apellido, correo, imageUrl, onSuccess, onError)
@@ -95,22 +96,27 @@ object PerfilController {
     }
 
     /**
-     * Sube la imagen a Firebase Storage en la carpeta usuarios7
+     * Sube la imagen a Firebase Storage en una carpeta según el rol
      */
     private fun subirImagenStorage(
         uid: String,
         imageUri: Uri,
+        rol: String, // Rol para la ruta de la carpeta
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference
 
+        // Determinar carpeta según el rol
+        val folder = if (rol.equals("terapeuta", ignoreCase = true)) "terapeutas" else "clientes"
+
         // Crear nombre único para la imagen
         val imageName = "perfil_${uid}_${UUID.randomUUID()}.jpg"
-        val imageRef = storageRef.child("usuarios7/$imageName")
+        val imagePath = "perfiles/$folder/$imageName"
+        val imageRef = storageRef.child(imagePath)
 
-        Log.d(TAG, "Subiendo imagen a: usuarios7/$imageName")
+        Log.d(TAG, "Subiendo imagen a: $imagePath")
 
         imageRef.putFile(imageUri)
             .addOnSuccessListener { taskSnapshot ->
