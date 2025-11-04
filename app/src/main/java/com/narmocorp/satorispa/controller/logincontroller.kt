@@ -1,15 +1,19 @@
 package com.narmocorp.satorispa.controller
 
+import android.content.Context
 import android.util.Log
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.narmocorp.satorispa.utils.SessionManager
 
 private const val TAG = "LoginController"
 
 fun loginUser(
     email: String,
     password: String,
+    keepSession: Boolean,
+    context: Context,
     navController: NavController,
     onLoginError: (String) -> Unit
 ) {
@@ -20,10 +24,12 @@ fun loginUser(
 
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
+    val sessionManager = SessionManager(context)
 
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
+                sessionManager.saveSessionPreference(keepSession)
                 val user = auth.currentUser
                 Log.d(TAG, "signInWithEmailAndPassword successful. currentUser=$user")
                 if (user != null) {
