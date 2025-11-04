@@ -14,6 +14,6 @@ data class Cita(
     val servicio: String = "",
     val telefono: String = "",
     val terapeuta: String? = null,
-    val updatedAt: Timestamp? = null
+    val updatedAt: Timestamp? = null,
+    val imagenServicio: String? = null // URL de la imagen del servicio (opcional)
 )
-

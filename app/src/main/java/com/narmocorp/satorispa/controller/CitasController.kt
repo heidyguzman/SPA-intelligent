@@ -47,10 +47,19 @@ object CitasController {
         return null
     }
 
-    private fun mapCitasConNombres(citasDocs: List<com.google.firebase.firestore.DocumentSnapshot>, clientNames: Map<String, String>): List<Cita> {
+    private fun mapCitasConNombres(
+        citasDocs: List<com.google.firebase.firestore.DocumentSnapshot>,
+        clientNames: Map<String, String>,
+        serviceNames: Map<String, String>,
+        serviceImages: Map<String, String?>
+    ): List<Cita> {
         return citasDocs.map { doc ->
             val clienteId = doc.getString("cliente_id")
             val nombreCliente = clientNames[clienteId] ?: doc.getString("cliente")
+
+            val servicioId = doc.getString("servicio")
+            val nombreServicio = serviceNames[servicioId] ?: servicioId ?: ""
+            val imagenServicio = serviceImages[servicioId]
 
             Cita(
                 id = doc.id,
@@ -60,10 +69,11 @@ object CitasController {
                 estado = doc.getString("estado") ?: "",
                 fecha = doc.getString("fecha") ?: "",
                 hora = doc.getString("hora") ?: "",
-                servicio = doc.getString("servicio") ?: "",
+                servicio = nombreServicio,
                 telefono = doc.getString("telefono") ?: "",
                 terapeuta = doc.getString("terapeuta"),
-                updatedAt = parseIsoToTimestamp(doc.get("updatedAt"))
+                updatedAt = parseIsoToTimestamp(doc.get("updatedAt")),
+                imagenServicio = imagenServicio
             )
         }
     }
@@ -111,20 +121,71 @@ object CitasController {
                         }
                         val citasDocs = result.documents
                         val clientIds = citasDocs.mapNotNull { it.getString("cliente_id") }.filter { it.isNotBlank() }.distinct()
+                        val servicioIds = citasDocs.mapNotNull { it.getString("servicio") }.filter { it.isNotBlank() }.distinct()
 
-                        if (clientIds.isEmpty()) {
-                            onSuccess(mapCitasConNombres(citasDocs, emptyMap()))
-                            return@addOnSuccessListener
+                        val dbRef = db
+                        // helpers to hold maps
+                        var clientNames: Map<String, String> = emptyMap()
+                        var serviceNames: Map<String, String> = emptyMap()
+                        var serviceImages: Map<String, String?> = emptyMap()
+
+                        fun finishIfReady() {
+                            onSuccess(mapCitasConNombres(citasDocs, clientNames, serviceNames, serviceImages))
                         }
 
-                        db.collection("usuarios").whereIn(FieldPath.documentId(), clientIds).get()
-                            .addOnSuccessListener { usersSnapshot ->
-                                val clientNames = usersSnapshot.associate { it.id to (it.getString("nombre") ?: "") }
-                                onSuccess(mapCitasConNombres(citasDocs, clientNames))
+                        // Fetch clients if needed
+                        if (clientIds.isNotEmpty()) {
+                            dbRef.collection("usuarios").whereIn(FieldPath.documentId(), clientIds).get()
+                                .addOnSuccessListener { usersSnapshot ->
+                                    clientNames = usersSnapshot.associate { it.id to (it.getString("nombre") ?: "") }
+                                    // after clients fetched, fetch services
+                                    if (servicioIds.isNotEmpty()) {
+                                        dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                            .addOnSuccessListener { servicesSnapshot ->
+                                                serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                                serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                                finishIfReady()
+                                            }
+                                            .addOnFailureListener { _ ->
+                                                // Ignore and proceed with empty serviceNames
+                                                finishIfReady()
+                                            }
+                                    } else {
+                                        finishIfReady()
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    // if fail to fetch clients, still try to fetch services
+                                    if (servicioIds.isNotEmpty()) {
+                                        dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                            .addOnSuccessListener { servicesSnapshot ->
+                                                serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                                serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                                finishIfReady()
+                                            }
+                                            .addOnFailureListener { _ ->
+                                                finishIfReady()
+                                            }
+                                    } else {
+                                        finishIfReady()
+                                    }
+                                }
+                        } else {
+                            // No clients to fetch, fetch services if needed
+                            if (servicioIds.isNotEmpty()) {
+                                dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                    .addOnSuccessListener { servicesSnapshot ->
+                                        serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                        serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                        finishIfReady()
+                                    }
+                                    .addOnFailureListener { _ ->
+                                        finishIfReady()
+                                    }
+                            } else {
+                                finishIfReady()
                             }
-                            .addOnFailureListener {
-                                onSuccess(mapCitasConNombres(citasDocs, emptyMap()))
-                            }
+                        }
                     }
                     .addOnFailureListener { e ->
                         Log.e(TAG, "Error al leer citas por servicio", e)
@@ -154,6 +215,9 @@ object CitasController {
         val uid = currentUser.uid
         val db = FirebaseFirestore.getInstance()
 
+        // We'll return an immediate ListenerRegistration wrapper that delegates to the inner snapshot listener
+        var innerRegistration: ListenerRegistration? = null
+
         db.collection("usuarios").document(uid).get()
             .addOnSuccessListener { userDoc ->
                 if (!userDoc.exists()) {
@@ -166,7 +230,7 @@ object CitasController {
                     return@addOnSuccessListener
                 }
 
-                db.collection("citas").whereEqualTo("servicio", servicioId)
+                innerRegistration = db.collection("citas").whereEqualTo("servicio", servicioId)
                     .addSnapshotListener { snapshot, error ->
                         if (error != null) {
                             onError("Error en tiempo real: ${error.message}")
@@ -179,27 +243,77 @@ object CitasController {
 
                         val citasDocs = snapshot.documents
                         val clientIds = citasDocs.mapNotNull { it.getString("cliente_id") }.filter { it.isNotBlank() }.distinct()
+                        val servicioIds = citasDocs.mapNotNull { it.getString("servicio") }.filter { it.isNotBlank() }.distinct()
 
-                        if (clientIds.isEmpty()) {
-                            onUpdate(mapCitasConNombres(citasDocs, emptyMap()))
-                            return@addSnapshotListener
+                        val dbRef = db
+                        var clientNames: Map<String, String> = emptyMap()
+                        var serviceNames: Map<String, String> = emptyMap()
+                        var serviceImages: Map<String, String?> = emptyMap()
+
+                        fun finishIfReady() {
+                            onUpdate(mapCitasConNombres(citasDocs, clientNames, serviceNames, serviceImages))
                         }
 
-                        db.collection("usuarios").whereIn(FieldPath.documentId(), clientIds).get()
-                            .addOnSuccessListener { usersSnapshot ->
-                                val clientNames = usersSnapshot.associate { it.id to (it.getString("nombre") ?: "") }
-                                onUpdate(mapCitasConNombres(citasDocs, clientNames))
+                        if (clientIds.isNotEmpty()) {
+                            dbRef.collection("usuarios").whereIn(FieldPath.documentId(), clientIds).get()
+                                .addOnSuccessListener { usersSnapshot ->
+                                    clientNames = usersSnapshot.associate { it.id to (it.getString("nombre") ?: "") }
+                                    if (servicioIds.isNotEmpty()) {
+                                        dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                            .addOnSuccessListener { servicesSnapshot ->
+                                                serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                                serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                                finishIfReady()
+                                            }
+                                            .addOnFailureListener { _ ->
+                                                finishIfReady()
+                                            }
+                                    } else {
+                                        finishIfReady()
+                                    }
+                                }
+                                .addOnFailureListener { e ->
+                                    Log.w(TAG, "No se pudieron obtener los nombres de los clientes", e)
+                                    if (servicioIds.isNotEmpty()) {
+                                        dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                            .addOnSuccessListener { servicesSnapshot ->
+                                                serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                                serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                                finishIfReady()
+                                            }
+                                            .addOnFailureListener { _ ->
+                                                finishIfReady()
+                                            }
+                                    } else {
+                                        finishIfReady()
+                                    }
+                                }
+                        } else {
+                            if (servicioIds.isNotEmpty()) {
+                                dbRef.collection("servicios").whereIn(FieldPath.documentId(), servicioIds).get()
+                                    .addOnSuccessListener { servicesSnapshot ->
+                                        serviceNames = servicesSnapshot.associate { it.id to (it.getString("servicio") ?: "") }
+                                        serviceImages = servicesSnapshot.associate { doc -> doc.id to doc.getString("imagen") }
+                                        finishIfReady()
+                                    }
+                                    .addOnFailureListener { _ ->
+                                        finishIfReady()
+                                    }
+                            } else {
+                                finishIfReady()
                             }
-                            .addOnFailureListener { e ->
-                                Log.w(TAG, "No se pudieron obtener los nombres de los clientes", e)
-                                onUpdate(mapCitasConNombres(citasDocs, emptyMap()))
-                            }
+                        }
                     }
             }
             .addOnFailureListener { e ->
                 onError("Error al obtener datos del terapeuta: ${e.message}")
             }
 
-        return null
+        // Return a wrapper registration that allows callers to remove the inner listener when ready
+        return object : ListenerRegistration {
+            override fun remove() {
+                innerRegistration?.remove()
+            }
+        }
     }
 }

@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.controller.CitasController
 import com.narmocorp.satorispa.model.Cita
@@ -137,14 +138,27 @@ private fun CitaCard(cita: Cita, onClick: () -> Unit) {
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.logo),
-                contentDescription = cita.servicio,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
-            )
+            if (!cita.imagenServicio.isNullOrEmpty()) {
+                AsyncImage(
+                    model = cita.imagenServicio,
+                    contentDescription = cita.servicio,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    error = painterResource(id = R.drawable.logo),
+                    placeholder = painterResource(id = R.drawable.logo)
+                )
+            } else {
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = cita.servicio,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -190,6 +204,22 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
                 Spacer(modifier = Modifier.height(16.dp))
+
+                if (!cita.imagenServicio.isNullOrEmpty()) {
+                    AsyncImage(
+                        model = cita.imagenServicio,
+                        contentDescription = cita.servicio,
+                        modifier = Modifier
+                            .height(80.dp)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                        placeholder = painterResource(id = R.drawable.logo),
+                        error = painterResource(id = R.drawable.logo)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
                 Text(text = "Servicio: ${cita.servicio}")
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = "Cliente: ${cita.cliente}")
