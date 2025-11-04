@@ -42,7 +42,7 @@ class ClientHomeViewModel : ViewModel() {
         Log.d(TAG, "Iniciando listener para datos del usuario: $uid")
 
         // 2. Usar addSnapshotListener (Lectura en Tiempo Real)
-        userListenerregistration = firestore.collection("usuarios")
+        userListenerRegistration = firestore.collection("usuarios")
             .document(uid)
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
@@ -74,10 +74,4 @@ class ClientHomeViewModel : ViewModel() {
     }
 
     // 🔑 ELIMINADO: Ya no se necesitan loadUserData() ni refreshUserDataSilently()
-}
-
-sealed class UserState {
-    object Loading : UserState()
-    data class Success(val user: User) : UserState()
-    data class Error(val message: String) : UserState()
 }
