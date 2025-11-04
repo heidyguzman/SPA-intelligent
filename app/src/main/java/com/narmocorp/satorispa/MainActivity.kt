@@ -3,40 +3,45 @@ package com.narmocorp.satorispa
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.collectAsState // << AGREGADO: Necesario para leer StateFlow
-import androidx.compose.runtime.getValue     // << AGREGADO: Necesario para 'by'
-import androidx.compose.runtime.LaunchedEffect // << AGREGADO: Necesario para manejar el side-effect
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.narmocorp.satorispa.controller.loginUser
 import com.narmocorp.satorispa.ui.theme.SatoriSPATheme
-import com.narmocorp.satorispa.views.ForgotPasswordFlow
-import com.narmocorp.satorispa.views.Login
-import com.narmocorp.satorispa.views.Register
-import com.narmocorp.satorispa.views.ServicesScreen
-import com.narmocorp.satorispa.StartScreen
-import com.narmocorp.satorispa.views.ConfiguracionScreen
-import com.narmocorp.satorispa.views.EditarPerfilScreen
-import com.narmocorp.satorispa.views.CambiarContrasenaScreen
-import com.narmocorp.satorispa.views.TerminosCondicionesScreen
-import com.narmocorp.satorispa.views.PoliticaPrivacidadScreen
+import com.narmocorp.satorispa.utils.SessionManager
+import com.narmocorp.satorispa.views.*
 import com.narmocorp.satorispa.views.cliente.ClientHomeScreen
 import com.narmocorp.satorispa.views.cliente.ClienteServiciosScreen
 import com.narmocorp.satorispa.views.terapeuta.ConfigScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
+import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
-import com.narmocorp.satorispa.views.NotificacionesScreen
-import com.google.firebase.appcheck.FirebaseAppCheck
-import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
-import com.google.firebase.FirebaseApp // Podría ser necesario si no lo tienes
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initializeAppCheck()
@@ -47,11 +52,44 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val context = LocalContext.current
 
-                NavHost(navController = navController, startDestination = "start") {
+                NavHost(navController = navController, startDestination = "auth_gate") {
+                    composable("auth_gate") {
+                        // Dibuja la misma UI que la pantalla de inicio para evitar el fondo blanco.
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            Image(
+                                painter = painterResource(id = R.drawable.fondo),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = "Logo Satori Spa",
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(200.dp)
+                            )
+                        }
+
+                        val sessionManager = SessionManager(context)
+                        val user = FirebaseAuth.getInstance().currentUser
+
+                        LaunchedEffect(Unit) {
+                            if (user != null && sessionManager.getSessionPreference()) {
+                                showBiometricPrompt { navigateToUserHome(navController) }
+                            } else {
+                                navController.navigate("start") {
+                                    popUpTo("auth_gate") { inclusive = true }
+                                }
+                            }
+                        }
+                    }
+
                     composable("start") {
                         StartScreen(
                             onServicesClick = { navController.navigate("services") },
-                            onRegisterClick = { navController.navigate("register") }
+                            onRegisterClick = { navController.navigate("register") },
+                            onLoginClick = { navController.navigate("login")}
                         )
                     }
 
@@ -66,10 +104,9 @@ class MainActivity : ComponentActivity() {
                     composable("login") {
                         Login(
                             emailLabel = "Correo electrónico",
-                            onLogin = { email, password ->
-                                loginUser(email, password, navController) { errorMessage ->
-                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT)
-                                        .show()
+                            onLogin = { email, password, keepSession ->
+                                loginUser(email, password, keepSession, context, navController) { errorMessage ->
+                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
                                 }
                             },
                             navController = navController
@@ -84,51 +121,31 @@ class MainActivity : ComponentActivity() {
                         ForgotPasswordFlow(navController = navController)
                     }
 
-                    // =========================================================
-                    // CLIENTE HOME - LÓGICA DE RECARGA CORREGIDA
-                    // =========================================================
-                    composable("cliente_home") { backStackEntry ->
-
-                        // 1. Escuchar la bandera "profile_updated" de forma reactiva
-                        //    Usa getStateFlow y collectAsState
-                        val profileUpdated by backStackEntry.savedStateHandle
-                            .getStateFlow("profile_updated", false)
-                            .collectAsState()
-
-                        // 2. Renderizar la pantalla pasando la bandera
+                    composable("cliente_home") {
                         ClientHomeScreen(
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
+                            navController = navController,
                             onNavigateToConfig = { navController.navigate("configuracion") },
                             selectedRoute = "inicio",
                             onHomeClick = { navController.navigate("cliente_home") },
                             onServiciosClick = { navController.navigate("cliente_servicios") },
-                            onCitasClick = { /* TODO: navegar a citas */ },
-                            shouldRefresh = profileUpdated // Usa el estado reactivo
+                            onCitasClick = { /* TODO: navegar a citas */ }
                         )
-
-                        // 3. (CRÍTICO) Usar LaunchedEffect para resetear la bandera
-                        //    Esto garantiza que el flag se limpie solo después de que se haya usado
-                        //    para forzar la recarga en ClientHomeScreen.
-                        LaunchedEffect(profileUpdated) {
-                            if (profileUpdated) {
-                                Log.d("MainActivity", "Bandera de perfil restablecida a false")
-                                backStackEntry.savedStateHandle["profile_updated"] = false
-                            }
-                        }
                     }
 
-                    // Servicios para cliente autenticado (pantalla independiente con NavBar)
                     composable("cliente_servicios") {
                         ClienteServiciosScreen(
                             navController = navController,
-                            // === AGREGAR ESTAS LAMBDAS ===
                             onNavigateToNotifications = { navController.navigate("notificaciones") },
                             onNavigateToConfig = { navController.navigate("configuracion") }
                         )
                     }
 
                     composable("terapeuta_home") {
-                        TerapeutaHomeScreen(onNavigateToConfig = { navController.navigate("terapeuta_config") })
+                        TerapeutaHomeScreen(
+                            onNavigateToConfig = { navController.navigate("terapeuta_config") },
+                            onCitasClick = { navController.navigate("terapeuta_citas") }
+                        )
                     }
 
                     composable("terapeuta_config") {
@@ -141,6 +158,10 @@ class MainActivity : ComponentActivity() {
 
                     composable("terapeuta_cambiar_contrasena") {
                         TerapeutaCambiarContrasenaScreen(navController = navController)
+                    }
+
+                    composable("terapeuta_citas") {
+                        TerapeutaCitasScreen(navController = navController)
                     }
 
                     composable("notificaciones") {
@@ -169,17 +190,72 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
     }
-    private fun initializeAppCheck() {
-        // 1. Asegúrate de que FirebaseApp esté inicializado
-        // Usamos la inicialización explícita, que es más robusta
-        FirebaseApp.initializeApp(this)
 
-        // 2. Instala el proveedor de Play Integrity
+    private fun initializeAppCheck() {
+        FirebaseApp.initializeApp(this)
         val firebaseAppCheck = FirebaseAppCheck.getInstance()
         firebaseAppCheck.installAppCheckProviderFactory(
-            PlayIntegrityAppCheckProviderFactory.getInstance(),
+            PlayIntegrityAppCheckProviderFactory.getInstance()
         )
+    }
+
+    private fun navigateToUserHome(navController: NavController) {
+        val auth = FirebaseAuth.getInstance()
+        val db = FirebaseFirestore.getInstance()
+        val user = auth.currentUser
+
+        if (user == null) {
+            navController.navigate("start") { popUpTo("auth_gate") { inclusive = true } }
+            return
+        }
+
+        db.collection("usuarios").document(user.uid).get()
+            .addOnSuccessListener { document ->
+                val rol = document?.getString("rol")?.trim()?.lowercase()
+                val destination = when (rol) {
+                    "cliente" -> "cliente_home"
+                    "terapeuta" -> "terapeuta_home"
+                    else -> "start" // Fallback
+                }
+                navController.navigate(destination) { popUpTo("auth_gate") { inclusive = true } }
+            }
+            .addOnFailureListener {
+                Log.e("MainActivity", "Error getting user role", it)
+                navController.navigate("start") { popUpTo("auth_gate") { inclusive = true } }
+            }
+    }
+
+    private fun showBiometricPrompt(onSuccess: () -> Unit) {
+        val biometricManager = BiometricManager.from(this)
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
+            val executor = ContextCompat.getMainExecutor(this)
+            val biometricPrompt = BiometricPrompt(this, executor,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        onSuccess()
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        super.onAuthenticationError(errorCode, errString)
+                        finish()
+                    }
+
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                    }
+                })
+
+            val promptInfo = BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Inicio de Sesión Biométrico")
+                .setSubtitle("Inicia sesión con tu huella o Face ID")
+                .setNegativeButtonText("Cancelar")
+                .build()
+
+            biometricPrompt.authenticate(promptInfo)
+        } else {
+            onSuccess()
+        }
     }
 }

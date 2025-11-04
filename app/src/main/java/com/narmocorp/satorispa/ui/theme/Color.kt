@@ -42,7 +42,7 @@ val LightError = Satori_Error
 
 val DarkPrimary = Satori_Primary
 val DarkOnPrimary = Satori_Text_Light // Blanco sobre el color primario
-val DarkSecondary = Color(0xFF333333) // << CORRECCIÓN: Fondo oscuro para Secondary en Dark Mode
+val DarkSecondary = Color(0xFF2A2A2A) // << CORRECCIÓN: Fondo oscuro para Secondary en Dark Mode
 val DarkOnSecondary = Color.White    // << CORRECCIÓN: Blanco para asegurar contraste en el Header
 val DarkTertiary = Satori_Tertiary
 

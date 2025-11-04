@@ -1,5 +1,6 @@
 package com.narmocorp.satorispa.views
 
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +11,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -18,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +34,6 @@ import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.model.Servicio
 import com.narmocorp.satorispa.viewmodel.ServiciosViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,8 +48,7 @@ fun ServicesScreen(
     var selectedService by remember { mutableStateOf<Servicio?>(null) }
 
     var searchQuery by remember { mutableStateOf("") }
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     val filteredServices = services.filter { service ->
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
@@ -56,7 +58,6 @@ fun ServicesScreen(
     val recentServices = services.sortedByDescending { it.createdAt }.take(4)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -92,7 +93,8 @@ fun ServicesScreen(
                 text = "Servicios",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(16.dp),
+                color = MaterialTheme.colorScheme.onSecondary
             )
             OutlinedTextField(
                 value = searchQuery,
@@ -124,12 +126,23 @@ fun ServicesScreen(
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
-                        text = "Lo más reciente",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Lo más reciente",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.ArrowForward,
+                            contentDescription = "Scroll horizontal",
+                            tint = MaterialTheme.colorScheme.onSecondary,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -146,12 +159,23 @@ fun ServicesScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text(
-                        text = "Todos los servicios",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Todos los servicios",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSecondary
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDownward,
+                            contentDescription = "Scroll vertical",
+                            tint = MaterialTheme.colorScheme.onSecondary,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -184,12 +208,8 @@ fun ServicesScreen(
             onDismiss = { selectedService = null },
             onBookClick = {
                 if (isGuest) {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            message = "Inicia sesión para agendar una cita",
-                            duration = SnackbarDuration.Short
-                        )
-                    }
+                    Toast.makeText(context, "Inicia sesión en tu cuenta.", Toast.LENGTH_LONG).show()
+                    navController.navigate("login")
                 } else {
                     // TODO: Handle booking for logged-in user
                 }
@@ -225,7 +245,8 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 Text(
                     text = service.nombre,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -237,7 +258,7 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                         color = Color.Gray,
                         fontSize = 12.sp
                     )
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita", tint = MaterialTheme.colorScheme.onSecondary)
                 }
             }
         }
@@ -268,14 +289,14 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     .height(100.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = service.nombre, fontWeight = FontWeight.Bold)
+                Text(text = service.nombre, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(text = "$${service.precio}", color = Color.Gray)
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita")
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita", tint = MaterialTheme.colorScheme.onSecondary)
                 }
             }
         }
@@ -286,7 +307,7 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
 fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(service.nombre, fontWeight = FontWeight.Bold, fontSize = 24.sp) },
+        title = { Text(service.nombre, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onSecondary) },
         text = {
             Column {
                 Image(
@@ -298,7 +319,7 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Precio: $${service.precio}", fontSize = 18.sp)
+                Text(text = "Precio: $${service.precio}", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSecondary)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(text = service.descripcion, fontSize = 16.sp, color = Color.Gray)
 

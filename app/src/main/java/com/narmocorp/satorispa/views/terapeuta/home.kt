@@ -36,7 +36,6 @@ fun TerapeutaHomeScreen(
     onNavigateToConfig: () -> Unit = {},
     selectedRoute: String = "inicio",
     onHomeClick: () -> Unit = {},
-    onServiciosClick: () -> Unit = {},
     onCitasClick: () -> Unit = {},
     shouldRefresh: Boolean = false // Nuevo parámetro para forzar refresh
 ) {
@@ -60,7 +59,6 @@ fun TerapeutaHomeScreen(
             NavBar(
                 selectedRoute = selectedRoute,
                 onHomeClick = onHomeClick,
-                onServiciosClick = onServiciosClick,
                 onCitasClick = onCitasClick,
             )
         },

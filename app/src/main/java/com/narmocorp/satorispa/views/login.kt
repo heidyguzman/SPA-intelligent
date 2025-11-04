@@ -33,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,12 +45,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.controller.loginUser
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
     emailLabel: String,
-    onLogin: (String, String) -> Unit,
+    onLogin: (String, String, Boolean) -> Unit,
     navController: NavController
 ) {
     var correo by remember { mutableStateOf("") }
@@ -212,7 +214,7 @@ fun Login(
                 }
 
                 Button(
-                    onClick = { onLogin(correo, contrasena) },
+                    onClick = { onLogin(correo, contrasena, keepSession) },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

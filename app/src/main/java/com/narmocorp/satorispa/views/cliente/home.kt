@@ -10,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -26,11 +25,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
 import com.narmocorp.satorispa.viewmodel.UserState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientHomeScreen(
     modifier: Modifier = Modifier,
+    navController: NavController,
     viewModel: ClientHomeViewModel = viewModel(),
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToConfig: () -> Unit = {},
@@ -38,16 +40,9 @@ fun ClientHomeScreen(
     onHomeClick: () -> Unit = {},
     onServiciosClick: () -> Unit = {},
     onCitasClick: () -> Unit = {},
-    shouldRefresh: Boolean = false // Nuevo parámetro para forzar refresh
+
 ) {
     val userState by viewModel.userState.collectAsState()
-
-    // Refrescar datos cuando shouldRefresh cambie a true
-    LaunchedEffect(shouldRefresh) {
-        if (shouldRefresh) {
-            viewModel.refreshUserDataSilently()
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -173,14 +168,6 @@ fun ClientHomeScreen(
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(
-                        onClick = { viewModel.loadUserData() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        )
-                    ) {
-                        Text("Reintentar")
-                    }
                 }
             }
 
@@ -240,5 +227,8 @@ fun ClientHomeScreen(
 @Preview(showBackground = true)
 @Composable
 fun ClientHomeScreenPreview() {
-    ClientHomeScreen()
+    // Pasa el NavController de prueba requerido por la función
+    ClientHomeScreen(
+        navController = rememberNavController()
+    )
 }

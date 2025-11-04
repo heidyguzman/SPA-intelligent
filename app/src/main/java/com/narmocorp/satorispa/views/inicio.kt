@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +23,11 @@ import androidx.compose.ui.unit.sp
 import com.narmocorp.satorispa.R
 
 @Composable
-fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
+fun StartScreen(
+    onServicesClick: () -> Unit,
+    onRegisterClick: () -> Unit = {},
+    onLoginClick: () -> Unit = {}
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +72,6 @@ fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
             Spacer(modifier = Modifier.weight(1f))
 
             // Botón principal de servicios
-            // Botón principal de servicios
             Button(
                 onClick = onServicesClick,
                 modifier = Modifier
@@ -86,7 +90,7 @@ fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón para registrarse (usa onRegisterClick para evitar advertencia de parámetro no usado)
+            // Botón para registrarse
             OutlinedButton(
                 onClick = onRegisterClick,
                 modifier = Modifier
@@ -99,7 +103,11 @@ fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
                 Text(text = "Registrarse", fontSize = 18.sp, fontWeight = FontWeight.Medium)
             }
 
-            Spacer(modifier = Modifier.height(150.dp))
+            TextButton(onClick = onLoginClick) {
+                Text("¿Ya tienes una cuenta? Inicia sesión", color = Color(0xFF986A48))
+            }
+
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
@@ -107,5 +115,5 @@ fun StartScreen(onServicesClick: () -> Unit, onRegisterClick: () -> Unit = {}) {
 @Preview(showBackground = true)
 @Composable
 fun StartScreenPreview() {
-    StartScreen(onServicesClick = {}, onRegisterClick = {})
+    StartScreen(onServicesClick = {}, onRegisterClick = {}, onLoginClick = {})
 }

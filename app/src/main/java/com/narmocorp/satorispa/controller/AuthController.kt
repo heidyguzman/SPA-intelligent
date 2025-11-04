@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.Timestamp
 
 private const val TAG = "AuthController"
 
@@ -125,5 +126,65 @@ object AuthController {
     fun cerrarSesion() {
         FirebaseAuth.getInstance().signOut()
         Log.d("AuthController", "Sesión de usuario cerrada.")
+    }
+
+    /**
+     * Reautentica al usuario con la contraseña actual, elimina su documento en Firestore
+     * y luego elimina la cuenta de Firebase Authentication.
+     * @param contrasenaActual Contraseña actual del usuario.
+     * @param onSuccess Callback en caso de éxito.
+     * @param onError Callback en caso de error (con mensaje).
+     */
+
+    fun deleteUserAndData(
+        contrasenaActual: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val auth = FirebaseAuth.getInstance()
+        val user = auth.currentUser
+        val firestore = FirebaseFirestore.getInstance()
+
+        if (user == null || user.email == null || user.uid == null) {
+            onError("Error: No hay usuario autenticado o la sesión es inválida.")
+            return
+        }
+        val uid = user.uid
+
+        // 1. Crear credencial para la reautenticación
+        val credential = EmailAuthProvider.getCredential(user.email!!, contrasenaActual)
+
+        // 2. Reautenticar al usuario para verificar la contraseña
+        user.reauthenticate(credential)
+            .addOnSuccessListener {
+                Log.d(TAG, "Reautenticación exitosa. Procediendo a eliminar datos.")
+
+                // 3. Eliminar Documento en Firestore (CRÍTICO: Primero los datos)
+                firestore.collection("usuarios").document(uid)
+                    .delete()
+                    .addOnSuccessListener {
+                        Log.d(TAG, "Documento de Firestore eliminado exitosamente.")
+
+                        // 4. Eliminar la cuenta de Authentication
+                        user.delete()
+                            .addOnSuccessListener {
+                                Log.d(TAG, "Cuenta de usuario eliminada exitosamente de Auth.")
+                                auth.signOut() // Cerrar sesión después de la eliminación
+                                onSuccess()
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "Error al eliminar la cuenta de Auth", e)
+                                onError("Error de seguridad: No se pudo eliminar la cuenta de inicio de sesión.")
+                            }
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e(TAG, "Error al eliminar datos de Firestore", e)
+                        onError("Error al eliminar los datos de la base de datos.")
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Reautenticación fallida", e)
+                onError("Contraseña actual incorrecta. Por favor, verifica.")
+            }
     }
 }
