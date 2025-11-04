@@ -11,6 +11,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -260,7 +264,8 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.Start
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     text = "Detalles de la Cita",
@@ -268,7 +273,6 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
-                Spacer(modifier = Modifier.height(16.dp))
 
                 if (!cita.imagenServicio.isNullOrEmpty()) {
                     AsyncImage(
@@ -282,23 +286,28 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                         placeholder = painterResource(id = R.drawable.logo),
                         error = painterResource(id = R.drawable.logo)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                Text(text = "Servicio: ${cita.servicio}")
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Cliente: ${cita.cliente}")
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Fecha: ${cita.fecha}")
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Hora: ${cita.hora}")
-                Spacer(modifier = Modifier.height(8.dp))
+                DetailRow(icon = Icons.Filled.Spa, text = "Servicio: ${cita.servicio}")
+                DetailRow(icon = Icons.Filled.Person, text = "Cliente: ${cita.cliente}")
+                DetailRow(icon = Icons.Default.CalendarToday, text = "Fecha: ${cita.fecha}")
+                DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${cita.hora}")
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(text = "Estado: ")
+                    Icon(
+                        Icons.Filled.Label,
+                        contentDescription = "Estado",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Estado: ")
+                    Spacer(modifier = Modifier.width(4.dp))
                     StatusIndicator(status = cita.estado)
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Button(
                     onClick = onDismiss,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -307,6 +316,20 @@ fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(text = text)
     }
 }
 
