@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-// It's good practice to import Material 3 components specifically
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -26,32 +25,27 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.narmocorp.satorispa.R
-import com.narmocorp.satorispa.controller.loginUser
 
 @Composable
 fun Login(
     modifier: Modifier = Modifier,
     emailLabel: String,
-    onLogin: (String, String, Boolean) -> Unit,
+    onLogin: (String, String, Boolean) -> Unit, // Se mantiene la firma correcta
     navController: NavController
 ) {
     var correo by remember { mutableStateOf("") }
@@ -59,23 +53,24 @@ fun Login(
     var passwordVisible by remember { mutableStateOf(false) }
     var keepSession by remember { mutableStateOf(false) }
 
-    // Consider defining these in your MaterialTheme.colorScheme
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6) // Used for backgrounds/accents
-    val tertiaryBrandColor = Color(0xffb08d73)  // Used for selected tab/active elements
-    val textOnPrimaryBrand = Color.White
-    val textOnSecondaryPlatform = Color(0xff71390c) // For titles or important text on lighter backgrounds
-    val subtleTextColor = Color.Gray
-    val pageBackgroundColor = Color.White
+    // GESTIÓN DE COLORES
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    val subtleTextColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    // -------------------------------------------------------------
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(pageBackgroundColor)
-            .imePadding() // Adjusts for the keyboard
+            .background(backgroundColor) // Color del tema
+            .imePadding()
     ) {
         val screenHeight = this.maxHeight
-        // val screenWidth = maxWidth // Not directly used in this version, relying more on fillMaxWidth and fixed dp
 
         // Background Image
         Image(
@@ -93,19 +88,19 @@ fun Login(
             contentDescription = "Logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.05f) // Give a bit more space from top
-                .size(160.dp), // Consistent logo size
+                .padding(top = screenHeight * 0.05f)
+                .size(160.dp),
             contentScale = ContentScale.Fit
         )
 
-        // Main content card, positioned from the bottom
+        // Main content card
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .fillMaxHeight(0.65f), // Overlaps with top image and "tab selector"
-            shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp), // Only top corners rounded
-            colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
+                .fillMaxHeight(0.65f),
+            shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
+            colors = CardDefaults.cardColors(containerColor = surfaceColor), // Color del tema
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             val scrollState = rememberScrollState()
@@ -113,54 +108,56 @@ fun Login(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(scrollState)
-                    .padding(horizontal = 24.dp, vertical = 16.dp), // Symmetrical horizontal padding
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Spacer to account for the "Login/Register Selector" that will be placed on top of this card.
-                Spacer(Modifier.height(52.dp + 24.dp)) // Space for selector + some breathing room
+                Spacer(Modifier.height(52.dp + 24.dp))
 
                 Text(
                     text = "SATORI SPA TE DA LA BIENVENIDA",
-                    color = textOnSecondaryPlatform.copy(alpha = 0.85f),
+                    color = onBackgroundColor.copy(alpha = 0.85f), // Color del tema
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.headlineSmall, // More prominent title
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                // 🎨 TextField Colors: Usando colores del tema
+                val textFieldColors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = secondaryColor,
+                    focusedTextColor = onBackgroundColor, // Texto adaptativo
+                    unfocusedTextColor = onBackgroundColor, // Texto adaptativo
+                    cursorColor = primaryColor
                 )
 
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text(text = emailLabel, color = subtleTextColor) },
+                    label = { Text(text = emailLabel, color = subtleTextColor) }, // Color del tema
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Email,
                             contentDescription = "Icono de Correo",
-                            tint = primaryBrandColor
+                            tint = primaryColor
                         )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 16.dp),
                     shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryBrandColor,
-                        unfocusedBorderColor = secondaryBrandColor,
-                        focusedTextColor = textOnSecondaryPlatform, // Updated text color
-                        unfocusedTextColor = textOnSecondaryPlatform, // Updated text color
-                        cursorColor = primaryBrandColor
-                    ),
+                    colors = textFieldColors,
                     singleLine = true
                 )
 
                 OutlinedTextField(
                     value = contrasena,
                     onValueChange = { contrasena = it },
-                    label = { Text(text = "Contraseña", color = subtleTextColor) },
+                    label = { Text(text = "Contraseña", color = subtleTextColor) }, // Color del tema
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Lock,
                             contentDescription = "Icono de Contraseña",
-                            tint = primaryBrandColor
+                            tint = primaryColor
                         )
                     },
                     modifier = Modifier
@@ -176,16 +173,14 @@ fun Login(
                         val description = if (passwordVisible) "Hide password" else "Show password"
 
                         IconButton(onClick = {passwordVisible = !passwordVisible}){
-                            Icon(imageVector  = image, contentDescription = description, tint = primaryBrandColor)
+                            Icon(
+                                imageVector  = image,
+                                contentDescription = description,
+                                tint = primaryColor
+                            )
                         }
                     },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = primaryBrandColor,
-                        unfocusedBorderColor = secondaryBrandColor,
-                        focusedTextColor = textOnSecondaryPlatform, // Updated text color
-                        unfocusedTextColor = textOnSecondaryPlatform, // Updated text color
-                        cursorColor = primaryBrandColor
-                    ),
+                    colors = textFieldColors,
                     singleLine = true
                 )
 
@@ -198,30 +193,30 @@ fun Login(
                 ) {
                     Text(
                         text = "Mantener sesión iniciada",
-                        color = subtleTextColor,
+                        color = subtleTextColor, // Color del tema
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Switch(
                         checked = keepSession,
                         onCheckedChange = { keepSession = it },
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = primaryBrandColor,
-                            checkedTrackColor = tertiaryBrandColor,
-                            uncheckedThumbColor = subtleTextColor,
-                            uncheckedTrackColor = secondaryBrandColor
+                            checkedThumbColor = primaryColor,
+                            checkedTrackColor = tertiaryColor, // Color del tema
+                            uncheckedThumbColor = subtleTextColor, // Color del tema
+                            uncheckedTrackColor = secondaryColor // Color del tema
                         )
                     )
                 }
 
                 Button(
-                    onClick = { onLogin(correo, contrasena, keepSession) },
+                    onClick = { onLogin(correo, contrasena, keepSession) }, // Uso correcto de keepSession
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    shape = RoundedCornerShape(25.dp), // Pill shape
+                    shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = primaryBrandColor, // Stronger call to action
-                        contentColor = textOnPrimaryBrand   // Ensure contrast
+                        containerColor = primaryColor, // Color del tema
+                        contentColor = onPrimaryColor // Color del tema
                     )
                 ) {
                     Text(
@@ -238,7 +233,7 @@ fun Login(
                 ) {
                     Text(
                         text = "¿Olvidaste tu contraseña?",
-                        color = primaryBrandColor,
+                        color = primaryColor,
                         textDecoration = TextDecoration.Underline,
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -246,15 +241,15 @@ fun Login(
             }
         }
 
-        // "Login" / "Register" Selector - Positioned like the original "tabs"
+        // "Login" / "Register" Selector
         Row(
             modifier = Modifier
-                .align(Alignment.TopCenter) // Align in the parent BoxWithConstraints
-                .padding(top = screenHeight * 0.32f) // Original positioning
-                .fillMaxWidth(0.82f) // Original width
+                .align(Alignment.TopCenter)
+                .padding(top = screenHeight * 0.32f)
+                .fillMaxWidth(0.82f)
                 .height(52.dp)
-                .clip(RoundedCornerShape(26.dp)) // pill shape for the row
-                .background(secondaryBrandColor.copy(alpha = 0.9f)), // Background for the whole selector
+                .clip(RoundedCornerShape(26.dp))
+                .background(secondaryColor.copy(alpha = 0.9f)), // Color del tema
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Login Button (Active)
@@ -263,10 +258,10 @@ fun Login(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(4.dp) // Padding to create inner selection effect
-                    .background(tertiaryBrandColor, RoundedCornerShape(22.dp)), // Selected background with rounding
+                    .padding(4.dp)
+                    .background(tertiaryColor, RoundedCornerShape(22.dp)), // Color del tema
                 shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.Black) // Dark text on selected tab
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onTertiary) // Color del tema
             ) {
                 Text("Inicio", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
             }
@@ -277,9 +272,9 @@ fun Login(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .padding(4.dp), // Consistent padding
-                shape = RoundedCornerShape(22.dp), // Consistent rounding
-                colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand) // Ensure this contrasts with secondaryBrandColor
+                    .padding(4.dp),
+                shape = RoundedCornerShape(22.dp),
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondary) // Color del tema
             ) {
                 Text("Registro", style = MaterialTheme.typography.titleSmall)
             }

@@ -15,6 +15,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme // 💡 Añadido de copia.kt
+import androidx.compose.material3.Surface // 💡 Añadido de copia.kt
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,147 +64,153 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         setContent {
             SatoriSPATheme {
-                val navController = rememberNavController()
-                val context = LocalContext.current
+                // 💡 INICIO de la mejora de "copia.kt" (Solución Anti-Flash)
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    val context = LocalContext.current
 
-                NavHost(navController = navController, startDestination = "auth_gate") {
-                    composable("auth_gate") {
-                        // Dibuja la misma UI que la pantalla de inicio para evitar el fondo blanco.
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            Image(
-                                painter = painterResource(id = R.drawable.fondo),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "Logo Satori Spa",
-                                modifier = Modifier
-                                    .align(Alignment.Center)
-                                    .size(200.dp)
-                            )
-                        }
+                    NavHost(navController = navController, startDestination = "auth_gate") {
+                        composable("auth_gate") {
+                            // Dibuja la misma UI que la pantalla de inicio para evitar el fondo blanco.
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                Image(
+                                    painter = painterResource(id = R.drawable.fondo),
+                                    contentDescription = null,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                                Image(
+                                    painter = painterResource(id = R.drawable.logo),
+                                    contentDescription = "Logo Satori Spa",
+                                    modifier = Modifier
+                                        .align(Alignment.Center)
+                                        .size(200.dp)
+                                )
+                            }
 
-                        val sessionManager = SessionManager(context)
-                        val user = FirebaseAuth.getInstance().currentUser
+                            val sessionManager = SessionManager(context)
+                            val user = FirebaseAuth.getInstance().currentUser
 
-                        LaunchedEffect(Unit) {
-                            if (user != null && sessionManager.getSessionPreference()) {
-                                showBiometricPrompt { navigateToUserHome(navController) }
-                            } else {
-                                navController.navigate("start") {
-                                    popUpTo("auth_gate") { inclusive = true }
+                            LaunchedEffect(Unit) {
+                                if (user != null && sessionManager.getSessionPreference()) {
+                                    showBiometricPrompt { navigateToUserHome(navController) }
+                                } else {
+                                    navController.navigate("start") {
+                                        popUpTo("auth_gate") { inclusive = true }
+                                    }
                                 }
                             }
                         }
+
+                        composable("start") {
+                            StartScreen(
+                                onServicesClick = { navController.navigate("services") },
+                                onRegisterClick = { navController.navigate("register") },
+                                onLoginClick = { navController.navigate("login")}
+                            )
+                        }
+
+                        // Servicios como invitado (desde start screen)
+                        composable("services") {
+                            ServicesScreen(
+                                navController = navController,
+                                isGuest = true
+                            )
+                        }
+
+                        composable("login") {
+                            Login(
+                                emailLabel = "Correo electrónico",
+                                onLogin = { email, password, keepSession ->
+                                    loginUser(email, password, keepSession, context, navController) { errorMessage ->
+                                        Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                navController = navController
+                            )
+                        }
+
+                        composable("register") {
+                            Register(navController = navController)
+                        }
+
+                        composable("forgot_password") {
+                            ForgotPasswordFlow(navController = navController)
+                        }
+
+                        composable("cliente_home") {
+                            ClientHomeScreen(
+                                onNavigateToNotifications = { navController.navigate("notificaciones") },
+                                navController = navController,
+                                onNavigateToConfig = { navController.navigate("configuracion") },
+                                selectedRoute = "inicio",
+                                onHomeClick = { navController.navigate("cliente_home") },
+                                onServiciosClick = { navController.navigate("cliente_servicios") },
+                                onCitasClick = { /* TODO: navegar a citas */ }
+                            )
+                        }
+
+                        composable("cliente_servicios") {
+                            ClienteServiciosScreen(
+                                navController = navController,
+                                onNavigateToNotifications = { navController.navigate("notificaciones") },
+                                onNavigateToConfig = { navController.navigate("configuracion") }
+                            )
+                        }
+
+                        composable("terapeuta_home") {
+                            TerapeutaHomeScreen(
+                                onNavigateToConfig = { navController.navigate("terapeuta_config") },
+                                onCitasClick = { navController.navigate("terapeuta_citas") }
+                            )
+                        }
+
+                        composable("terapeuta_config") {
+                            ConfigScreen(navController = navController)
+                        }
+
+                        composable("terapeuta_perfil") {
+                            TerapeutaPerfilScreen(navController = navController)
+                        }
+
+                        composable("terapeuta_cambiar_contrasena") {
+                            TerapeutaCambiarContrasenaScreen(navController = navController)
+                        }
+
+
+
+                        composable("terapeuta_citas") {
+                            TerapeutaCitasScreen(navController = navController)
+                        }
+
+                        composable("notificaciones") {
+                            NotificacionesScreen(navController = navController)
+                        }
+
+                        composable("configuracion") {
+                            ConfiguracionScreen(navController = navController)
+                        }
+
+                        composable("editar_perfil") {
+                            EditarPerfilScreen(navController = navController)
+                        }
+
+                        composable("cambiar_contrasena") {
+                            CambiarContrasenaScreen(navController = navController)
+                        }
+
+                        composable("terminos_condiciones") {
+                            TerminosCondicionesScreen(navController = navController)
+                        }
+
+                        composable("politica_privacidad") {
+                            PoliticaPrivacidadScreen(navController = navController)
+                        }
                     }
-
-                    composable("start") {
-                        StartScreen(
-                            onServicesClick = { navController.navigate("services") },
-                            onRegisterClick = { navController.navigate("register") },
-                            onLoginClick = { navController.navigate("login")}
-                        )
-                    }
-
-                    // Servicios como invitado (desde start screen)
-                    composable("services") {
-                        ServicesScreen(
-                            navController = navController,
-                            isGuest = true
-                        )
-                    }
-
-                    composable("login") {
-                        Login(
-                            emailLabel = "Correo electrónico",
-                            onLogin = { email, password, keepSession ->
-                                loginUser(email, password, keepSession, context, navController) { errorMessage ->
-                                    Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            navController = navController
-                        )
-                    }
-
-                    composable("register") {
-                        Register(navController = navController)
-                    }
-
-                    composable("forgot_password") {
-                        ForgotPasswordFlow(navController = navController)
-                    }
-
-                    composable("cliente_home") {
-                        ClientHomeScreen(
-                            onNavigateToNotifications = { navController.navigate("notificaciones") },
-                            navController = navController,
-                            onNavigateToConfig = { navController.navigate("configuracion") },
-                            selectedRoute = "inicio",
-                            onHomeClick = { navController.navigate("cliente_home") },
-                            onServiciosClick = { navController.navigate("cliente_servicios") },
-                            onCitasClick = { /* TODO: navegar a citas */ }
-                        )
-                    }
-
-                    composable("cliente_servicios") {
-                        ClienteServiciosScreen(
-                            navController = navController,
-                            onNavigateToNotifications = { navController.navigate("notificaciones") },
-                            onNavigateToConfig = { navController.navigate("configuracion") }
-                        )
-                    }
-
-                    composable("terapeuta_home") {
-                        TerapeutaHomeScreen(
-                            onNavigateToConfig = { navController.navigate("terapeuta_config") },
-                            onCitasClick = { navController.navigate("terapeuta_citas") }
-                        )
-                    }
-
-                    composable("terapeuta_config") {
-                        ConfigScreen(navController = navController)
-                    }
-
-                    composable("terapeuta_perfil") {
-                        TerapeutaPerfilScreen(navController = navController)
-                    }
-
-                    composable("terapeuta_cambiar_contrasena") {
-                        TerapeutaCambiarContrasenaScreen(navController = navController)
-                    }
-
-
-
-                    composable("terapeuta_citas") {
-                        TerapeutaCitasScreen(navController = navController)
-                    }
-
-                    composable("notificaciones") {
-                        NotificacionesScreen(navController = navController)
-                    }
-
-                    composable("configuracion") {
-                        ConfiguracionScreen(navController = navController)
-                    }
-
-                    composable("editar_perfil") {
-                        EditarPerfilScreen(navController = navController)
-                    }
-
-                    composable("cambiar_contrasena") {
-                        CambiarContrasenaScreen(navController = navController)
-                    }
-
-                    composable("terminos_condiciones") {
-                        TerminosCondicionesScreen(navController = navController)
-                    }
-
-                    composable("politica_privacidad") {
-                        PoliticaPrivacidadScreen(navController = navController)
-                    }
-                }
+                } // 💡 FIN de la mejora de "copia.kt"
             }
         }
     }

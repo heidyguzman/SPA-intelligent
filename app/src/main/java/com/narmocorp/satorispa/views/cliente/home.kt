@@ -15,8 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,7 +27,7 @@ import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
 import com.narmocorp.satorispa.viewmodel.UserState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavController
-
+import coil.request.ImageRequest
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClientHomeScreen(
@@ -41,7 +41,7 @@ fun ClientHomeScreen(
     onServiciosClick: () -> Unit = {},
     onCitasClick: () -> Unit = {},
 
-) {
+    ) {
     val userState by viewModel.userState.collectAsState()
 
     Scaffold(
@@ -86,8 +86,17 @@ fun ClientHomeScreen(
 
                         // Si el usuario tiene imagen, mostrarla
                         if (user.imagenUrl.isNotEmpty()) {
+                            val uniqueImageUrl = "${user.imagenUrl}?t=${System.currentTimeMillis()}"
+                            val imageRequest = ImageRequest.Builder(LocalContext.current)
+                                .data(user.imagenUrl) // Aquí se pasa la URL
+                                .crossfade(true)      // ✅ Aquí se habilita el crossfade
+                                .build()
+
                             Image(
-                                painter = rememberAsyncImagePainter(user.imagenUrl),
+                                painter = rememberAsyncImagePainter(
+                                    model = imageRequest, // Pasa el objeto ImageRequest completo
+                                    contentScale = ContentScale.Crop
+                                ),
                                 contentDescription = "Foto de perfil",
                                 modifier = Modifier
                                     .fillMaxSize()

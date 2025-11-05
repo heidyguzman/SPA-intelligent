@@ -64,18 +64,17 @@ fun Register(
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    // Consistent color palette
-    val primaryBrandColor = Color(0xff995d2d)
-    val secondaryBrandColor = Color(0xffdbbba6)
-    val tertiaryBrandColor = Color(0xffb08d73)
-    val textOnPrimaryBrand = Color.White
-    val textOnSecondaryPlatform = Color(0xff71390c)
-    val subtleTextColor = Color.Gray
-    val pageBackgroundColor = Color.White
+    // 🎨 FUSIÓN CLAVE: USAR COLORES DEL TEMA (copia.kt)
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.secondary
+    val tertiaryColor = MaterialTheme.colorScheme.tertiary
+    val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground // Color del texto principal
+    val subtleTextColor = MaterialTheme.colorScheme.onSurfaceVariant // Usado para labels no enfocados
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val surfaceColor = MaterialTheme.colorScheme.surface
     val errorColor = MaterialTheme.colorScheme.error
-    val successColor = Color(0xFF4CAF50)
-
-
+    val successColor = Color(0xFF4CAF50) // Mantener verde fijo para éxito
 
     fun showMessage(message: String) {
         scope.launch {
@@ -91,11 +90,12 @@ fun Register(
             !Patterns.EMAIL_ADDRESS.matcher(correo).matches() -> "Ingresa un correo válido"
             else -> null
         }
+        // Lógica de validación de contraseña CORRECTA (tomada de Register.kt)
         contrasenaError = when {
             contrasena.isBlank() -> "La contraseña no puede estar vacía"
             contrasena.length < 8 -> "La contraseña debe tener al menos 8 caracteres"
-            !contrasena.any { it.isUpperCase() } -> "Debe incluir al menos una mayúscula" // <--- CAMBIOS AQUÍ
-            !contrasena.any { it.isDigit() } -> "Debe incluir al menos un número" // <--- CAMBIOS AQUÍ
+            !contrasena.any { it.isUpperCase() } -> "Debe incluir al menos una mayúscula"
+            !contrasena.any { it.isDigit() } -> "Debe incluir al menos un número"
             else -> null
         }
         confirmarContrasenaError = when {
@@ -109,7 +109,7 @@ fun Register(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(pageBackgroundColor)
+            .background(backgroundColor) // Usar color del tema
     ) {
         val screenHeight = this.maxHeight
 
@@ -138,32 +138,30 @@ fun Register(
         Card(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                // CORRECCIÓN 1: Reducir altura para que el botón entre antes de abrir el teclado
                 .fillMaxWidth()
-                .fillMaxHeight(0.72f), // Reducido de 0.72f a 0.65f
+                .fillMaxHeight(0.72f), // Se mantiene 0.72f
             shape = RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp),
-            colors = CardDefaults.cardColors(containerColor = pageBackgroundColor),
+            colors = CardDefaults.cardColors(containerColor = surfaceColor), // Usar color de tema
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .imePadding() // Makes the column content move up with the keyboard
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // CORRECCIÓN 2: Eliminar el Spacer grande y añadir el selector dentro del scroll
 
-                Spacer(Modifier.height(8.dp)) // Espacio de inicio
+                Spacer(Modifier.height(8.dp))
 
-                // Selector "Inicio/Registro" (Ahora dentro del Scroll)
+                // Selector "Inicio/Registro"
                 Row(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
                         .height(52.dp)
                         .clip(RoundedCornerShape(26.dp))
-                        .background(secondaryBrandColor.copy(alpha = 0.9f)),
+                        .background(secondaryColor.copy(alpha = 0.9f)), // Usar color del tema
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     TextButton(
@@ -173,7 +171,7 @@ fun Register(
                             .fillMaxHeight()
                             .padding(4.dp),
                         shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.textButtonColors(contentColor = textOnPrimaryBrand)
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondary) // Usar color del tema
                     ) {
                         Text("Inicio", style = MaterialTheme.typography.titleSmall)
                     }
@@ -183,31 +181,33 @@ fun Register(
                             .weight(1f)
                             .fillMaxHeight()
                             .padding(4.dp)
-                            .background(tertiaryBrandColor, RoundedCornerShape(22.dp)),
+                            .background(tertiaryColor, RoundedCornerShape(22.dp)), // Usar color del tema
                         shape = RoundedCornerShape(22.dp),
-                        colors = ButtonDefaults.textButtonColors(contentColor = Color.Black)
+                        // FUSIÓN: Usamos onBackground (o onSurface) para el texto dentro del botón de registro para asegurar contraste en Modo Oscuro.
+                        colors = ButtonDefaults.textButtonColors(contentColor = onBackgroundColor)
                     ) {
                         Text("Registro", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
                     }
                 }
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(25.dp)) // Espacio ajustado, como en copia.kt
 
                 Text(
                     text = "CREA TU CUENTA",
-                    color = textOnSecondaryPlatform.copy(alpha = 0.85f),
+                    color = onBackgroundColor.copy(alpha = 0.85f), // Usar color del tema
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
+                // Colores de TextField usando el tema
                 val textFieldColors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = primaryBrandColor,
-                    unfocusedBorderColor = secondaryBrandColor,
-                    focusedTextColor = textOnSecondaryPlatform,
-                    unfocusedTextColor = textOnSecondaryPlatform,
-                    errorTextColor = textOnSecondaryPlatform,
-                    cursorColor = primaryBrandColor,
-                    focusedLabelColor = primaryBrandColor,
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = secondaryColor,
+                    focusedTextColor = onBackgroundColor,
+                    unfocusedTextColor = onBackgroundColor,
+                    errorTextColor = onBackgroundColor,
+                    cursorColor = primaryColor,
+                    focusedLabelColor = primaryColor,
                     unfocusedLabelColor = subtleTextColor,
                     errorBorderColor = errorColor,
                     errorLabelColor = errorColor
@@ -221,37 +221,43 @@ fun Register(
                     OutlinedTextField(
                         value = nombre,
                         onValueChange = {
-                            // CORRECCIÓN 3: Filtrar solo letras y espacios
-                            nombre = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            // FUSIÓN: Lógica de filtro y límite de longitud de copia.kt
+                            val filteredText = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            if (filteredText.length <= 20) {
+                                nombre = filteredText
+                            }
                             nombreError = if (nombre.isBlank()) "El nombre no puede estar vacío" else null
                         },
                         label = { Text("Nombre") },
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Nombre", tint = primaryBrandColor) },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Nombre", tint = primaryColor) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         colors = textFieldColors,
                         singleLine = true,
                         isError = nombreError != null,
                         supportingText = { if (nombreError != null) Text(nombreError!!) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next), // Forzar teclado de texto
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Right) })
                     )
                     OutlinedTextField(
                         value = apellido,
                         onValueChange = {
-                            // CORRECCIÓN 3: Filtrar solo letras y espacios
-                            apellido = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            // FUSIÓN: Lógica de filtro y límite de longitud de copia.kt
+                            val filteredText = it.filter { char -> char.isLetter() || char.isWhitespace() }
+                            if (filteredText.length <= 15) {
+                                apellido = filteredText
+                            }
                             apellidoError = if (apellido.isBlank()) "El apellido no puede estar vacío" else null
                         },
                         label = { Text("Apellido") },
-                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Apellido", tint = primaryBrandColor) },
+                        leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Apellido", tint = primaryColor) },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         colors = textFieldColors,
                         singleLine = true,
                         isError = apellidoError != null,
                         supportingText = { if (apellidoError != null) Text(apellidoError!!) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next), // Forzar teclado de texto
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
                         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
                     )
                 }
@@ -269,12 +275,12 @@ fun Register(
                         }
                     },
                     label = { Text("Correo Electrónico") },
-                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo Electrónico", tint = primaryBrandColor) },
+                    leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo Electrónico", tint = primaryColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
-                        focusedTextColor = textOnSecondaryPlatform,
-                        unfocusedTextColor = textOnSecondaryPlatform
+                        focusedTextColor = onBackgroundColor,
+                        unfocusedTextColor = onBackgroundColor
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
@@ -292,21 +298,22 @@ fun Register(
                         contrasenaError = when {
                             it.isBlank() -> "La contraseña no puede estar vacía"
                             it.length < 8 -> "Debe tener al menos 8 caracteres"
-                            !it.any { char -> char.isUpperCase() } -> "Debe incluir al menos una mayúscula" // <--- CAMBIOS AQUÍ
-                            !it.any { char -> char.isDigit() } -> "Debe incluir al menos un número" //
+                            !it.any { char -> char.isUpperCase() } -> "Debe incluir al menos una mayúscula"
+                            !it.any { char -> char.isDigit() } -> "Debe incluir al menos un número"
                             else -> null
                         }
+                        // FUSIÓN: Eliminar la lógica de "it.length <= 15" para no forzar el cambio en confirmarContrasena
                         if (confirmarContrasena.isNotBlank()) {
                             confirmarContrasenaError = if (it != confirmarContrasena) "Las contraseñas no coinciden" else null
                         }
                     },
                     label = { Text("Contraseña") },
-                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña", tint = primaryBrandColor) },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña", tint = primaryColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
-                        focusedTextColor = textOnSecondaryPlatform,
-                        unfocusedTextColor = textOnSecondaryPlatform
+                        focusedTextColor = onBackgroundColor,
+                        unfocusedTextColor = onBackgroundColor
                     ),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -314,7 +321,7 @@ fun Register(
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                 contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
-                                tint = primaryBrandColor
+                                tint = primaryColor
                             )
                         }
                     },
@@ -327,10 +334,10 @@ fun Register(
                         //Lógica para mostrar el mensaje
                         if (contrasena.isNotEmpty()) {
                             if (contrasenaError != null) {
-                                // Muestra el error detallado en rojo
+                                // Muestra el error detallado usando el color del tema
                                 Text(contrasenaError!!, color = errorColor)
                             } else {
-                                // Muestra el mensaje de éxito en verde
+                                // Muestra el mensaje de éxito en verde fijo
                                 Text("Contraseña segura", color = successColor)
                             }
                         }
@@ -346,12 +353,12 @@ fun Register(
                         confirmarContrasenaError = if (it != contrasena) "Las contraseñas no coinciden" else null
                     },
                     label = { Text("Confirmar Contraseña") },
-                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar Contraseña", tint = primaryBrandColor) },
+                    leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Confirmar Contraseña", tint = primaryColor) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = textFieldColors.copy(
-                        focusedTextColor = textOnSecondaryPlatform,
-                        unfocusedTextColor = textOnSecondaryPlatform
+                        focusedTextColor = onBackgroundColor,
+                        unfocusedTextColor = onBackgroundColor
                     ),
                     visualTransformation = if (confirmarPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     trailingIcon = {
@@ -359,7 +366,7 @@ fun Register(
                             Icon(
                                 imageVector = if (confirmarPasswordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
                                 contentDescription = if (confirmarPasswordVisible) "Ocultar" else "Mostrar",
-                                tint = primaryBrandColor
+                                tint = primaryColor
                             )
                         }
                     },
@@ -429,14 +436,14 @@ fun Register(
                         .height(50.dp),
                     shape = RoundedCornerShape(25.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = primaryBrandColor,
-                        contentColor = textOnPrimaryBrand
+                        containerColor = primaryColor, // Usar color del tema
+                        contentColor = onPrimaryColor // Usar color del tema
                     ),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            color = textOnPrimaryBrand,
+                            color = onPrimaryColor, // Usar color del tema
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp
                         )
@@ -453,13 +460,10 @@ fun Register(
                     }
                 }
 
-                // CORRECCIÓN 1: Añadir un Spacer grande DENTRO del scroll para asegurar que el botón suba sobre el teclado
+                // FUSIÓN: Mantener el Spacer grande DENTRO del scroll para manejar el teclado
                 Spacer(Modifier.height(100.dp))
             }
         }
-
-        // CORRECCIÓN 2: Eliminar el Spacer que estaba fuera del scroll y causaba problemas
-        // Spacer(Modifier.height(150.dp)) // ELIMINADO
 
         // Snackbar for showing messages
         SnackbarHost(

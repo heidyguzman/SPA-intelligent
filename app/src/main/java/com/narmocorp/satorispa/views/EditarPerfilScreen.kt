@@ -61,9 +61,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
     // Bandera para mostrar el AlertDialog de CIERRE DE SESIÓN (SOLO para cambio de correo)
     var mostrarDialogoExito by remember { mutableStateOf(false) }
 
-    // Bandera para mostrar el Toast de éxito de Nombre/Apellido
-    var mostrarToastExitoPerfil by remember { mutableStateOf(false) }
-
     // ************ ESTADOS PARA CAMBIO DE EMAIL ************
     var mostrarDialogoCambioEmail by remember { mutableStateOf(false) }
     var nuevoEmailInput by remember { mutableStateOf("") }
@@ -331,7 +328,21 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
-                                    mostrarDialogoExito = true
+
+                                    // *** INICIO DE LA CORRECCIÓN ***
+                                    // Solo mostrar Toast de éxito si no es cambio de correo
+                                    Toast.makeText(
+                                        context,
+                                        "Perfil actualizado correctamente.",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+
+                                    // Si la actualización fue exitosa, limpiamos la URI local
+                                    // para que se use la nueva URL de la imagen si se cambió.
+                                    nuevaImagenUri = null
+
+                                    // Aquí NO se activa mostrarDialogoExito, lo cual era el problema.
+                                    // *** FIN DE LA CORRECCIÓN ***
                                 },
                                 onError = { mensaje ->
                                     guardando = false
@@ -378,7 +389,7 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
         }
     }
 
-    // El AlertDialog de éxito ahora solo se usa si se cambia el correo
+    // El AlertDialog de éxito (Cerrar Sesión) solo se usa si se cambia el correo
     if (mostrarDialogoExito) {
         CorreoCambiadoExitoDialog(
             navController = navController,
@@ -410,7 +421,7 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
 
                         // 3. Desactivar loading y activar el AlertDialog de CIERRE DE SESIÓN
                         guardando = false
-                        mostrarDialogoExito = true // Muestra el diálogo de re-login solo aquí
+                        mostrarDialogoExito = true // Muestra el diálogo de re-login SOLO aquí
                     },
                     onError = { mensaje ->
                         guardando = false

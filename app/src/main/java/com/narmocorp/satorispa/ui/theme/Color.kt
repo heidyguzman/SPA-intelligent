@@ -42,12 +42,12 @@ val LightError = Satori_Error
 
 val DarkPrimary = Satori_Primary
 val DarkOnPrimary = Satori_Text_Light // Blanco sobre el color primario
-val DarkSecondary = Color(0xFF2A2A2A) // << CORRECCIÓN: Fondo oscuro para Secondary en Dark Mode
+val DarkSecondary = Color(0xFF414141) // Gris medio // << CORRECCIÓN: Fondo oscuro para Secondary en Dark Mode
 val DarkOnSecondary = Color.White    // << CORRECCIÓN: Blanco para asegurar contraste en el Header
 val DarkTertiary = Satori_Tertiary
 
 // Para el modo oscuro, la superficie debe ser oscura y el texto claro
-val DarkBackground = Color(0xFF1C1C1E) // Un gris oscuro para el fondo
+val DarkBackground = Color(0xFF2A2A2A) // Un gris oscuro para el fondo
 val DarkSurface = Color(0xFF333333)    // Una superficie ligeramente más clara para Cards
 val DarkOnBackground = Color.White     // Texto blanco en fondos oscuros
 val DarkOnSurface = Color.White        // Texto blanco en superficies oscuras

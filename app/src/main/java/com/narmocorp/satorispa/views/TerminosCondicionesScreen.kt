@@ -146,12 +146,11 @@ fun TerminosCondicionesScreen(navController: NavController) {
                 )
 
                 SeccionTerminos(
-                    titulo = "5. Pagos y Reembolsos",
-                    contenido = "Los pagos se procesan en efectivo. Las políticas incluyen:\n\n" +
-                            "• Pago anticipado para confirmar reservas\n" +
-                            "• Reembolsos según política de cancelación\n" +
-                            "• Cargos por cancelaciones tardías\n" +
-                            "• No show: sin reembolso",
+                    titulo = "5. Acceso mediante NFC ",
+                    contenido = "El acceso mediante tarjetas NFC:\n\n" +
+                            "• Permite validar accesos dentro del spa.\n" +
+                            "• El usuario es responsable del uso adecuado de su tarjeta NFC asociado a su\n" +
+                            "cuenta.\n" ,
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
                 )
@@ -194,12 +193,12 @@ fun TerminosCondicionesScreen(navController: NavController) {
 
                 SeccionTerminos(
                     titulo = "11. Ley Aplicable",
-                    contenido = "Estos términos se rigen por las leyes de México. Cualquier disputa será resuelta en los tribunales de Jalisco, México.",
+                    contenido = "Estos términos se rigen por las leyes de México. Cualquier disputa será resuelta en los tribunales de Manzanillo, México.",
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionTerminos(
+                /*SeccionTerminos(
                     titulo = "12. Contacto",
                     contenido = "Si tiene preguntas sobre estos términos, puede contactarnos a:\n\n" +
                             "Email: soporte@satorispa.com\n" +
@@ -207,7 +206,7 @@ fun TerminosCondicionesScreen(navController: NavController) {
                             "Dirección: Manzanillo, Colima, México",
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
-                )
+                )*/
 
                 Spacer(modifier = Modifier.height(16.dp))
 

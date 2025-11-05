@@ -140,7 +140,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     contenido = "Recopilamos información personal que nos proporcionas directamente:\n\n" +
                             "• Información de cuenta: nombre, correo electrónico\n" +
                             "• Información de perfil: foto, preferencias, historial\n" +
-                            "• Información de uso: interacciones con la app",
+                            "• Datos de NFC: identificación de la tarjeta o dispositivo asociado.",
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
                 )
@@ -150,9 +150,8 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     contenido = "Utilizamos tus datos para:\n\n" +
                             "• Proporcionar y mejorar nuestros servicios\n" +
                             "• Enviar confirmaciones y recordatorios\n" +
-                            "• Personalizar tu experiencia\n" +
                             "• Comunicarnos contigo sobre servicios\n" +
-                            "• Prevenir fraudes y garantizar seguridad\n" +
+                            "• Validar accesos mediante NFC.\n" +
                             "• Cumplir con requisitos legales",
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
@@ -162,8 +161,6 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     titulo = "3. Compartir Información",
                     contenido = "Compartimos tu información solo cuando es necesario:\n\n" +
                             "• Con terapeutas: para coordinar servicios\n" +
-                            "• Con procesadores de pago: para transacciones\n" +
-                            "• Con proveedores de servicios: analytics, hosting\n" +
                             "• Por requisitos legales: autoridades competentes\n\n" +
                             "Nunca vendemos tu información personal a terceros.",
                     titleColor = textOnBackground,
@@ -190,8 +187,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "• Solicitar eliminación de tu cuenta\n" +
                             "• Oponerte al procesamiento de datos\n" +
                             "• Portabilidad de tus datos\n" +
-                            "• Retirar consentimiento en cualquier momento\n\n" +
-                            "Para ejercer estos derechos, contáctanos en privacidad@satorispa.com",
+                            "• Retirar consentimiento en cualquier momento\n\n" ,
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
                 )
@@ -227,27 +223,10 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "9. Transferencias Internacionales",
-                    contenido = "Tus datos pueden ser transferidos y procesados en servidores ubicados fuera de México, siempre bajo medidas de protección adecuadas según normativas internacionales.",
-                    titleColor = textOnBackground,
-                    bodyColor = textColorBody
-                )
 
                 SeccionPrivacidad(
-                    titulo = "10. Cambios a esta Política",
+                    titulo = "9. Cambios a esta Política",
                     contenido = "Podemos actualizar esta política periódicamente. Te notificaremos cambios importantes por email o mediante aviso en la aplicación. El uso continuado después de cambios constituye aceptación.",
-                    titleColor = textOnBackground,
-                    bodyColor = textColorBody
-                )
-
-                SeccionPrivacidad(
-                    titulo = "11. Contacto",
-                    contenido = "Para preguntas sobre privacidad o ejercer tus derechos:\n\n" +
-                            "Email: privacidad@satorispa.com\n" +
-                            "Teléfono: +52 33 1234 5678\n" +
-                            "Dirección: Manzanillo, Colima, México\n\n" +
-                            "Responsable de Protección de Datos: data@satorispa.com",
                     titleColor = textOnBackground,
                     bodyColor = textColorBody
                 )
