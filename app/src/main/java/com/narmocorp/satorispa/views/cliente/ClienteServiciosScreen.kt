@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -58,12 +60,13 @@ fun ClienteServiciosScreen(
                 (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
 
-    val popularServices = services.shuffled().take(4)
+    // MODIFICACIÓN: Cambiado de popularServices a recentServices, alineado con Servicios.kt
+    val recentServices = services.take(4)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            // Error corregido: Las funciones ya están en el ámbito
+            // Se mantiene el TopBar original
             TopBar(
                 onNavigateToNotifications = onNavigateToNotifications,
                 onNavigateToConfig = onNavigateToConfig
@@ -156,14 +159,25 @@ fun ClienteServiciosScreen(
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Sección "Lo más popular"
-                    Text(
-                        text = "Lo más popular",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = onSecondaryColor,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    // MODIFICACIÓN: Sección "Lo más reciente" con flecha (Alineado con Servicios.kt)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Lo más reciente",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = onSecondaryColor
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                            contentDescription = "Scroll horizontal",
+                            tint = onSecondaryColor,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                    // FIN MODIFICACIÓN
 
                     Spacer(modifier = Modifier.height(8.dp))
 
@@ -171,7 +185,8 @@ fun ClienteServiciosScreen(
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(popularServices) { service ->
+                        // MODIFICACIÓN: Usando recentServices
+                        items(recentServices) { service ->
                             PopularServiceCard(service = service) {
                                 selectedService = it
                             }
@@ -180,14 +195,25 @@ fun ClienteServiciosScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Sección "Todos los servicios"
-                    Text(
-                        text = "Todos los servicios",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = onSecondaryColor,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
+                    // MODIFICACIÓN: Sección "Todos los servicios" con flecha (Alineado con Servicios.kt)
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Todos los servicios",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = onSecondaryColor
+                        )
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDownward,
+                            contentDescription = "Scroll vertical",
+                            tint = onSecondaryColor,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                    // FIN MODIFICACIÓN
 
                     Spacer(modifier = Modifier.height(16.dp))
                 }
@@ -236,9 +262,6 @@ fun ClienteServiciosScreen(
 
 @Composable
 private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
-
     Card(
         modifier = Modifier
             .width(160.dp)
@@ -265,7 +288,7 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
                     text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = onSecondaryColor
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -280,8 +303,7 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = primaryColor,
-                        modifier = Modifier.size(18.dp)
+                        tint = MaterialTheme.colorScheme.onSecondary, // Alineado con Servicios.kt
                     )
                 }
             }
@@ -291,9 +313,6 @@ private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Uni
 
 @Composable
 private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -319,7 +338,7 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 Text(
                     text = service.servicio,
                     fontWeight = FontWeight.Bold,
-                    color = onSecondaryColor
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -333,7 +352,7 @@ private fun ServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = primaryColor
+                        tint = MaterialTheme.colorScheme.onSecondary // Alineado con Servicios.kt
                     )
                 }
             }
@@ -347,9 +366,6 @@ private fun ServiceDetailsDialog(
     onDismiss: () -> Unit,
     onBookClick: () -> Unit
 ) {
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -357,7 +373,7 @@ private fun ServiceDetailsDialog(
                 service.servicio,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
-                color = onSecondaryColor
+                color = MaterialTheme.colorScheme.onSecondary
             )
         },
         text = {
@@ -374,8 +390,7 @@ private fun ServiceDetailsDialog(
                 Text(
                     text = "Precio: $${service.precio}",
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = onSecondaryColor
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -386,23 +401,15 @@ private fun ServiceDetailsDialog(
             }
         },
         confirmButton = {
-            Button(
-                onClick = onBookClick,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = primaryColor,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
+            Button(onClick = {
+                onBookClick()
+                onDismiss()
+            }) {
                 Text("Agendar Cita")
             }
         },
         dismissButton = {
-            TextButton(
-                onClick = onDismiss,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = primaryColor
-                )
-            ) {
+            TextButton(onClick = onDismiss) {
                 Text("Cerrar")
             }
         }
