@@ -210,6 +210,15 @@ fun ConfiguracionScreen(navController: NavController) {
                     textOnSurface = textOnSurface
                 )
 
+                OpcionConfiguracion(
+                    icono = Icons.Default.HelpOutline,
+                    titulo = "Ayuda y Soporte",
+                    subtitulo = "Preguntas frecuentes y contacto",
+                    onClick = { navController.navigate("ayuda") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
                 Spacer(modifier = Modifier.height(24.dp))
 
                 // =======================================================
