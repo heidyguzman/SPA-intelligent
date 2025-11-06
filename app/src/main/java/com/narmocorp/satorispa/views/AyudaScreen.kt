@@ -1,6 +1,7 @@
 package com.narmocorp.satorispa.views
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,8 +40,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 data class FaqItem(
@@ -68,58 +69,79 @@ fun AyudaScreen(navController: NavController) {
     val groupedFaqs = faqList.groupBy { it.category }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Ayuda y Soporte", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        LazyColumn(
-            contentPadding = paddingValues,
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .padding(paddingValues)
         ) {
-            groupedFaqs.forEach { (category, faqs) ->
-                item {
-                    val icon = when (category) {
-                        "Cuenta y acceso" -> Icons.Default.ManageAccounts
-                        "Citas y servicios" -> Icons.Default.EventSeat
-                        "Pagos" -> Icons.Default.CreditCard
-                        "Atención al cliente" -> Icons.Default.ContactSupport
-                        else -> Icons.Default.HelpOutline
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = category,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+            // Header con diseño personalizado, igual a ConfiguracionScreen
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 32.dp, bottom = 12.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.secondary)
+                    .padding(vertical = 12.dp, horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = { navController.popBackStack() },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Atrás",
+                        tint = MaterialTheme.colorScheme.onSecondary,
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
-                items(faqs) { faq ->
-                    ExpandableFaqCard(faq = faq)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    "Ayuda y Soporte",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
+            }
+
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                groupedFaqs.forEach { (category, faqs) ->
+                    item {
+                        val icon = when (category) {
+                            "Cuenta y acceso" -> Icons.Default.ManageAccounts
+                            "Citas y servicios" -> Icons.Default.EventSeat
+                            "Pagos" -> Icons.Default.CreditCard
+                            "Atención al cliente" -> Icons.Default.ContactSupport
+                            else -> Icons.Default.HelpOutline
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(bottom = 8.dp, top = 16.dp) 
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = category,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    items(faqs) { faq ->
+                        ExpandableFaqCard(faq = faq)
+                    }
                 }
             }
         }
@@ -138,7 +160,7 @@ fun ExpandableFaqCard(faq: FaqItem) {
     ) {
         Column(
             modifier = Modifier
-                .animateContentSize() // Anima el cambio de tamaño
+                .animateContentSize() 
                 .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {
