@@ -22,6 +22,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
@@ -52,6 +53,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.google.firebase.auth.FirebaseAuth
 import com.narmocorp.satorispa.controller.AuthController
+import com.narmocorp.satorispa.views.OpcionConfiguracion
 
 @Composable
 fun SeccionTitulo(texto: String, color: Color) {
@@ -258,6 +260,24 @@ fun ConfigScreen(navController: NavController) {
                     titulo = "Política de privacidad",
                     subtitulo = "Cómo usamos tus datos",
                     onClick = { navController.navigate("politica_privacidad") },
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.Info, // Usamos un ícono de información
+                    titulo = "Acerca de Satori Spa",
+                    subtitulo = "Versión y detalles de la aplicación",
+                    onClick = { navController.navigate("acerca_de") }, // Nueva ruta de navegación
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
+                OpcionConfiguracion(
+                    icono = Icons.Default.HelpOutline,
+                    titulo = "Ayuda y Soporte",
+                    subtitulo = "Preguntas frecuentes y contacto",
+                    onClick = { navController.navigate("ayuda") },
                     textOnBackground = textOnBackground,
                     textOnSurface = textOnSurface
                 )
