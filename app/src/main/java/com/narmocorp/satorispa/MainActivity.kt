@@ -209,14 +209,13 @@ class MainActivity : FragmentActivity() {
                         composable("politica_privacidad") {
                             PoliticaPrivacidadScreen(navController = navController)
                         }
-<<<<<<< HEAD
 
                         composable("ayuda") {
                             AyudaScreen(navController = navController)
-=======
+                        }
+
                         composable("acerca_de") {
                             AcercaDeScreen(navController = navController)
->>>>>>> 43dc4dd6bc49edc1f17cc523fd39938b6514f39c
                         }
                     }
                 } // 💡 FIN de la mejora de "copia.kt"
