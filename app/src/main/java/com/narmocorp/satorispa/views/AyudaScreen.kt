@@ -56,14 +56,13 @@ data class FaqItem(
 @Composable
 fun AyudaScreen(navController: NavController) {
     val faqList = listOf(
-        FaqItem("Cuenta y acceso", "¿Cómo puedo registrarme o iniciar sesión?", "Puedes registrarte fácilmente desde la pantalla principal seleccionando “Crear cuenta”. Solo necesitas tu nombre, correo electrónico y una contraseña.\nSi ya tienes una cuenta, selecciona “Iniciar sesión” e ingresa tus datos."),
+        FaqItem("Cuenta y acceso", "¿Cómo puedo registrarme o iniciar sesión?", "Regístrate desde la pantalla principal en “Crear cuenta” con tu nombre, correo y contraseña, o inicia sesión si ya tienes una cuenta."),
         FaqItem("Cuenta y acceso", "¿Olvidé mi contraseña, ¿qué hago?", "Selecciona la opción “¿Olvidaste tu contraseña?” en la pantalla de inicio de sesión. Recibirás un enlace para restablecerla en tu correo."),
         FaqItem("Citas y servicios", "¿Puedo cambiar mi cita una vez agendada?", "Sí. En el apartado “Mis citas”, selecciona la cita que deseas modificar y presiona “Reprogramar” o “Cancelar”. Recibirás una confirmación al instante."),
-        FaqItem("Citas y servicios", "¿Qué servicios ofrece el spa?", "Puedes consultar todos los servicios disponibles en la sección “Catálogo de servicios”, con su descripción, duración y precio."),
-        FaqItem("Citas y servicios", "¿Recibiré una notificación antes de mi cita?", "Sí. La app te enviará un recordatorio con al menos 24 horas de anticipación y otro 1 hora antes de tu cita."),
+        FaqItem("Citas y servicios", "¿Qué servicios ofrece el spa?", "Puedes consultar todos los servicios disponibles en la sección “Catálogo de servicios”, con su descripción y precio."),
+        FaqItem("Citas y servicios", "¿Recibiré una notificación antes de mi cita?", "Sí. La app te enviará un recordatorio con al menos 24 horas de anticipación antes de tu cita."),
         FaqItem("Pagos", "¿Qué métodos de pago aceptan?", "Aceptamos pagos con tarjeta de crédito o débito, transferencias y pagos en efectivo al llegar al spa."),
-        FaqItem("Pagos", "¿Puedo solicitar factura?", "Sí. Después de tu cita, en el apartado “Historial de servicios” puedes solicitar la factura correspondiente."),
-        FaqItem("Atención al cliente", "¿Cómo puedo contactar con atención al cliente?", "Puedes comunicarte con nosotros desde el menú “Ayuda” → “Contacto”.\nTambién puedes escribirnos por WhatsApp o al correo soporte@tuspa.com.")
+        FaqItem("Atención al cliente", "¿Cómo puedo contactar con atención al cliente?", "Puedes comunicarte con nosotros desde el menú “Ayuda” → 312 233 7959.\nTambién puedes escribirnos por WhatsApp o al correo rvuelvas@ucol.mx.")
     )
 
     val groupedFaqs = faqList.groupBy { it.category }
