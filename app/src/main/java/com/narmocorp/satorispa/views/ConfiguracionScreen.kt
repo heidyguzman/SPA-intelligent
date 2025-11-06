@@ -209,6 +209,15 @@ fun ConfiguracionScreen(navController: NavController) {
                     textOnBackground = textOnBackground,
                     textOnSurface = textOnSurface
                 )
+                OpcionConfiguracion(
+                    icono = Icons.Default.Info, // Usamos un ícono de información
+                    titulo = "Acerca de Satori Spa",
+                    subtitulo = "Versión y detalles de la aplicación",
+                    onClick = { navController.navigate("acerca_de") }, // Nueva ruta de navegación
+                    textOnBackground = textOnBackground,
+                    textOnSurface = textOnSurface
+                )
+
 
                 Spacer(modifier = Modifier.height(24.dp))
 
