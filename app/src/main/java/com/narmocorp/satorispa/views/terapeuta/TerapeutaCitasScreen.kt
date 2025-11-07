@@ -48,7 +48,28 @@ fun TerapeutaCitasScreen(navController: NavController) {
         errorMsg = null
         val registration = CitasController.escucharCitasTerapeutaRealtime(
             onUpdate = { lista: List<Cita> ->
-                citas = lista
+                val ahora = Calendar.getInstance()
+                val formatoFechaHora = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+
+                val citasActualizadas = lista.map { cita ->
+                    if (cita.estado.equals("pendiente", ignoreCase = true)) {
+                        try {
+                            val fechaHoraCita = formatoFechaHora.parse("${cita.fecha} ${cita.hora}")
+                            if (fechaHoraCita != null && ahora.time.after(fechaHoraCita)) {
+                                CitasController.actualizarEstadoCita(cita.id, "confirmada")
+                                cita.copy(estado = "confirmada")
+                            } else {
+                                cita
+                            }
+                        } catch (e: Exception) {
+                            // En caso de error de parseo, mantener la cita original
+                            cita
+                        }
+                    } else {
+                        cita
+                    }
+                }
+                citas = citasActualizadas
                 cargando = false
             },
             onError = { mensaje: String ->

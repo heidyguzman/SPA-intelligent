@@ -78,6 +78,18 @@ object CitasController {
         }
     }
 
+    fun actualizarEstadoCita(citaId: String, nuevoEstado: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("citas").document(citaId)
+            .update("estado", nuevoEstado)
+            .addOnSuccessListener {
+                Log.d(TAG, "Estado de la cita $citaId actualizado a $nuevoEstado")
+            }
+            .addOnFailureListener { e ->
+                Log.e(TAG, "Error al actualizar estado de la cita $citaId", e)
+            }
+    }
+
     /**
      * Obtiene las citas del terapeuta autenticado, filtrando por su servicio asignado.
      */

@@ -298,7 +298,7 @@ private fun CitaCardHome(cita: Cita, onClick: () -> Unit) {
 @Composable
 private fun StatusIndicatorHome(status: String) {
     val (backgroundColor, textColor) = when (status.lowercase()) {
-        "confirmada" -> Color(0xFF26A69A) to Color.White
+        "confirmada" -> Color(0xFF4CAF50) to Color.White
         "pendiente" -> Color(0xFFFFB300) to Color.Black
         "cancelada" -> Color(0xFFEF5350) to Color.White
         else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
