@@ -114,7 +114,7 @@ fun Login(
                 Spacer(Modifier.height(52.dp + 24.dp))
 
                 Text(
-                    text = "SATORI SPA TE DA LA BIENVENIDA",
+                    text = "SATORI SPA LE DA LA BIENVENIDA",
                     color = onBackgroundColor.copy(alpha = 0.85f), // Color del tema
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.headlineSmall,

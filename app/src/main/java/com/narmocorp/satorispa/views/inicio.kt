@@ -61,7 +61,7 @@ fun StartScreen(
 
             // Mensaje de bienvenida
             Text(
-                text = "Bienvenido a Satori Spa",
+                text = "Satori Spa le da la bienvenida",
                 color = Color(0xFF986A48),
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
