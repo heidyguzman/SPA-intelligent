@@ -15,8 +15,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme // 💡 Añadido de copia.kt
-import androidx.compose.material3.Surface // 💡 Añadido de copia.kt
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,12 +47,24 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
 
+private const val TAG = "MainActivity"
+
 class MainActivity : FragmentActivity() {
 
-    private val requestPermissionLauncher =
+    private val requestGalleryPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (!isGranted) {
                 Toast.makeText(this, "El permiso para acceder a la galería es necesario para cambiar la foto de perfil.", Toast.LENGTH_LONG).show()
+            }
+        }
+
+    private val requestNotificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                Log.d(TAG, "Notification permission GRANTED by user.")
+            } else {
+                Log.d(TAG, "Notification permission DENIED by user.")
+                Toast.makeText(this, "Las notificaciones estarán desactivadas.", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -60,11 +72,11 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         initializeAppCheck()
         requestGalleryPermission()
+        requestNotificationPermission()
 
         enableEdgeToEdge()
         setContent {
             SatoriSPATheme {
-                // 💡 INICIO de la mejora de "copia.kt" (Solución Anti-Flash)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -74,7 +86,6 @@ class MainActivity : FragmentActivity() {
 
                     NavHost(navController = navController, startDestination = "auth_gate") {
                         composable("auth_gate") {
-                            // Dibuja la misma UI que la pantalla de inicio para evitar el fondo blanco.
                             Box(modifier = Modifier.fillMaxSize()) {
                                 Image(
                                     painter = painterResource(id = R.drawable.fondo),
@@ -113,7 +124,6 @@ class MainActivity : FragmentActivity() {
                             )
                         }
 
-                        // Servicios como invitado (desde start screen)
                         composable("services") {
                             ServicesScreen(
                                 navController = navController,
@@ -180,8 +190,6 @@ class MainActivity : FragmentActivity() {
                             TerapeutaCambiarContrasenaScreen(navController = navController)
                         }
 
-
-
                         composable("terapeuta_citas") {
                             TerapeutaCitasScreen(navController = navController)
                         }
@@ -218,8 +226,31 @@ class MainActivity : FragmentActivity() {
                             AcercaDeScreen(navController = navController)
                         }
                     }
-                } // 💡 FIN de la mejora de "copia.kt"
+                }
             }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        Log.d(TAG, "Checking for notification permission...")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Log.d(TAG, "Device is Android 13 or newer.")
+            when {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
+                    Log.d(TAG, "Notification permission is already granted.")
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    Log.d(TAG, "Showing rationale for notification permission.")
+                    // Aquí podrías mostrar una UI explicando por qué necesitas el permiso
+                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    Log.d(TAG, "Permission not granted, launching request...")
+                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            Log.d(TAG, "Device is older than Android 13, no permission needed.")
         }
     }
 
@@ -231,7 +262,7 @@ class MainActivity : FragmentActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(permission)
+            requestGalleryPermissionLauncher.launch(permission)
         }
     }
 
@@ -264,7 +295,7 @@ class MainActivity : FragmentActivity() {
                 navController.navigate(destination) { popUpTo("auth_gate") { inclusive = true } }
             }
             .addOnFailureListener {
-                Log.e("MainActivity", "Error getting user role", it)
+                Log.e(TAG, "Error getting user role", it)
                 navController.navigate("start") { popUpTo("auth_gate") { inclusive = true } }
             }
     }

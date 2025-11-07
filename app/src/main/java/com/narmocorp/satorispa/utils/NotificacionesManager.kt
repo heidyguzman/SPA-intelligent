@@ -7,20 +7,25 @@ import kotlinx.coroutines.tasks.await
 
 class NotificacionesManager {
 
-    private val db = FirebaseFirestore.getInstance()
     private val functions = FirebaseFunctions.getInstance()
 
     // Enviar notificación de BIENVENIDA
     suspend fun enviarBienvenida(usuarioId: String) {
         try {
+            // Estructura de datos que coincide con la Cloud Function
             val data = hashMapOf(
                 "usuarioId" to usuarioId,
-                "tipo" to "bienvenida",
                 "titulo" to "¡Bienvenido a Satori SPA!",
-                "mensaje" to "Nos alegra tenerte aquí. Descubre nuestros servicios"
+                "mensaje" to "Nos alegra tenerte aquí. Descubre nuestros servicios",
+                "tipo" to "bienvenida"
             )
-            val result = functions.getHttpsCallable("enviarNotificacion").call(data).await()
-            Log.d("NotificacionesManager", "Bienvenida enviada: $result")
+            
+            // Llamamos a la función con el mapa de datos
+            functions.getHttpsCallable("enviarNotificacion")
+                .call(data) // El mapa 'data' es el cuerpo de la solicitud
+                .await()
+
+            Log.d("NotificacionesManager", "Llamada a enviarBienvenida completada para el usuario: $usuarioId")
         } catch (e: Exception) {
             Log.e("NotificacionesManager", "Error al enviar bienvenida", e)
         }

@@ -5,7 +5,12 @@ import android.util.Log
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.messaging.FirebaseMessaging
+import com.narmocorp.satorispa.utils.NotificacionesManager
 import com.narmocorp.satorispa.utils.SessionManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private const val TAG = "LoginController"
 
@@ -25,13 +30,13 @@ fun loginUser(
     val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
     val sessionManager = SessionManager(context)
+    val notificacionesManager = NotificacionesManager()
 
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val user = auth.currentUser
                 if (user != null && user.isEmailVerified) {
-                    // Email is verified, proceed to get user role from Firestore
                     sessionManager.saveSessionPreference(keepSession)
                     Log.d(TAG, "Authenticated and verified user uid=${user.uid}")
 
@@ -39,6 +44,29 @@ fun loginUser(
                         .get()
                         .addOnSuccessListener { document ->
                             if (document != null && document.exists()) {
+                                val notificacionBienvenidaEnviada = document.getBoolean("notificacionBienvenidaEnviada") ?: false
+                                if (!notificacionBienvenidaEnviada) {
+                                    // Guardar el token de FCM y enviar la notificación de bienvenida
+                                    FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+                                        if (tokenTask.isSuccessful) {
+                                            val token = tokenTask.result
+                                            val userDocRef = db.collection("usuarios").document(user.uid)
+                                            userDocRef.update("fcmToken", token, "notificacionBienvenidaEnviada", true)
+                                                .addOnSuccessListener {
+                                                    Log.d(TAG, "FCM token and welcome flag saved for user ${user.uid}")
+                                                    CoroutineScope(Dispatchers.IO).launch {
+                                                        notificacionesManager.enviarBienvenida(user.uid)
+                                                    }
+                                                }
+                                                .addOnFailureListener { e ->
+                                                    Log.e(TAG, "Error saving FCM token for user ${user.uid}", e)
+                                                }
+                                        } else {
+                                            Log.w(TAG, "Fetching FCM registration token failed", tokenTask.exception)
+                                        }
+                                    }
+                                }
+
                                 val rol = document.getString("rol")?.trim()?.lowercase()
                                 Log.d(TAG, "User rol is '$rol'")
                                 when (rol) {
@@ -58,7 +86,7 @@ fun loginUser(
                             } else {
                                 val msg = "No se encontró el usuario en la base de datos. uid=${user.uid}"
                                 Log.d(TAG, msg)
-                                auth.signOut() // Sign out if user data is missing
+                                auth.signOut()
                                 onLoginError(msg)
                             }
                         }
@@ -69,26 +97,22 @@ fun loginUser(
                             onLoginError(msg)
                         }
                 } else if (user != null && !user.isEmailVerified) {
-                    // User is not verified
                     Log.d(TAG, "Login failed: email not verified for user ${user.email}")
-                    auth.signOut() // Sign out to prevent unverified access
+                    auth.signOut()
                     onLoginError("Por favor, verifica tu correo electrónico para poder iniciar sesión.")
                 } else if (user == null) {
-                    // This case should be rare but is good to handle
                     val msg = "Usuario autenticado pero currentUser es null."
                     Log.d(TAG, msg)
                     onLoginError(msg)
                 }
 
             } else {
-                // Authentication task failed
                 val msg = task.exception?.message ?: "Correo o contraseña incorrectos."
                 Log.d(TAG, "Authentication failed: $msg", task.exception)
                 onLoginError(msg)
             }
         }
         .addOnFailureListener { e ->
-            // This listener is for network errors or other issues before the task completes.
             val msg = "Error de conexión: ${e.message}"
             Log.e(TAG, msg, e)
             onLoginError(msg)
