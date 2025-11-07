@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.Timestamp
 
 private const val TAG = "AuthController"
@@ -124,8 +125,25 @@ object AuthController {
     }
 
     fun cerrarSesion() {
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            val uid = user.uid
+            val firestore = FirebaseFirestore.getInstance()
+
+            // 1. Remove the FCM token from the user's document in Firestore.
+            val updates = hashMapOf<String, Any>("fcmToken" to FieldValue.delete())
+            firestore.collection("usuarios").document(uid).update(updates)
+                .addOnSuccessListener {
+                    Log.d(TAG, "FCM token deleted for user $uid")
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "Error deleting FCM token for user $uid", e)
+                }
+        }
+
+        // 2. Sign out the user from Firebase Authentication.
         FirebaseAuth.getInstance().signOut()
-        Log.d("AuthController", "Sesión de usuario cerrada.")
+        Log.d(TAG, "User session signed out.")
     }
 
     /**
@@ -178,7 +196,7 @@ object AuthController {
                             }
                     }
                     .addOnFailureListener { e ->
-                        Log.e(TAG, "Error al eliminar datos de Firestore", e)
+                        Log.e(TAG, "Error al eliminar los datos de Firestore", e)
                         onError("Error al eliminar los datos de la base de datos.")
                     }
             }

@@ -50,7 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.google.firebase.auth.FirebaseAuth
 import com.narmocorp.satorispa.controller.AuthController
 import com.narmocorp.satorispa.views.OpcionConfiguracion
@@ -150,7 +149,7 @@ fun ConfigScreen(navController: NavController) {
                         FirebaseAuth.getInstance().signOut()
                         Toast.makeText(context, "Sesión cerrada exitosamente", Toast.LENGTH_SHORT).show()
                         navController.navigate("login") {
-                            popUpTo(navController.graph.findStartDestination().id) {
+                            popUpTo(navController.graph.id) {
                                 inclusive = true
                             }
                             launchSingleTop = true

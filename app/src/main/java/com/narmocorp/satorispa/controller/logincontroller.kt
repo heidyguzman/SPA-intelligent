@@ -45,25 +45,38 @@ fun loginUser(
                         .addOnSuccessListener { document ->
                             if (document != null && document.exists()) {
                                 val notificacionBienvenidaEnviada = document.getBoolean("notificacionBienvenidaEnviada") ?: false
-                                if (!notificacionBienvenidaEnviada) {
-                                    // Guardar el token de FCM y enviar la notificación de bienvenida
-                                    FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
-                                        if (tokenTask.isSuccessful) {
-                                            val token = tokenTask.result
-                                            val userDocRef = db.collection("usuarios").document(user.uid)
+
+                                // Get the latest FCM token and update it in Firestore for the current user.
+                                FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
+                                    if (tokenTask.isSuccessful) {
+                                        val token = tokenTask.result
+                                        val userDocRef = db.collection("usuarios").document(user.uid)
+
+                                        if (!notificacionBienvenidaEnviada) {
+                                            // First login: update token, set welcome flag, and send notification.
                                             userDocRef.update("fcmToken", token, "notificacionBienvenidaEnviada", true)
                                                 .addOnSuccessListener {
                                                     Log.d(TAG, "FCM token and welcome flag saved for user ${user.uid}")
+                                                    // Send welcome notification in a background thread.
                                                     CoroutineScope(Dispatchers.IO).launch {
                                                         notificacionesManager.enviarBienvenida(user.uid)
                                                     }
                                                 }
                                                 .addOnFailureListener { e ->
-                                                    Log.e(TAG, "Error saving FCM token for user ${user.uid}", e)
+                                                    Log.e(TAG, "Error saving FCM token and/or welcome flag for user ${user.uid}", e)
                                                 }
                                         } else {
-                                            Log.w(TAG, "Fetching FCM registration token failed", tokenTask.exception)
+                                            // Subsequent logins: just update the FCM token.
+                                            userDocRef.update("fcmToken", token)
+                                                .addOnSuccessListener {
+                                                    Log.d(TAG, "FCM token updated for user ${user.uid}")
+                                                }
+                                                .addOnFailureListener { e ->
+                                                     Log.e(TAG, "Error updating FCM token for user ${user.uid}", e)
+                                                }
                                         }
+                                    } else {
+                                        Log.w(TAG, "Fetching FCM registration token failed", tokenTask.exception)
                                     }
                                 }
 

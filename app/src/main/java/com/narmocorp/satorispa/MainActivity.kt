@@ -51,28 +51,36 @@ private const val TAG = "MainActivity"
 
 class MainActivity : FragmentActivity() {
 
-    private val requestGalleryPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (!isGranted) {
-                Toast.makeText(this, "El permiso para acceder a la galería es necesario para cambiar la foto de perfil.", Toast.LENGTH_LONG).show()
+    private val requestMultiplePermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            val galleryPermission = getGalleryPermissionString()
+            permissions[galleryPermission]?.let { isGranted ->
+                if (!isGranted) {
+                    Toast.makeText(
+                        this,
+                        "El permiso para acceder a la galería es necesario para cambiar la foto de perfil.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
-        }
 
-    private val requestNotificationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                Log.d(TAG, "Notification permission GRANTED by user.")
-            } else {
-                Log.d(TAG, "Notification permission DENIED by user.")
-                Toast.makeText(this, "Las notificaciones estarán desactivadas.", Toast.LENGTH_SHORT).show()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                permissions[Manifest.permission.POST_NOTIFICATIONS]?.let { isGranted ->
+                    if (isGranted) {
+                        Log.d(TAG, "Notification permission GRANTED by user.")
+                    } else {
+                        Log.d(TAG, "Notification permission DENIED by user.")
+                        Toast.makeText(this, "Las notificaciones estarán desactivadas.", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
             }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initializeAppCheck()
-        requestGalleryPermission()
-        requestNotificationPermission()
+        requestPermissions()
 
         enableEdgeToEdge()
         setContent {
@@ -173,6 +181,7 @@ class MainActivity : FragmentActivity() {
 
                         composable("terapeuta_home") {
                             TerapeutaHomeScreen(
+                                onNavigateToNotifications = { navController.navigate("notificaciones") },
                                 onNavigateToConfig = { navController.navigate("terapeuta_config") },
                                 onCitasClick = { navController.navigate("terapeuta_citas") }
                             )
@@ -231,38 +240,30 @@ class MainActivity : FragmentActivity() {
         }
     }
 
-    private fun requestNotificationPermission() {
-        Log.d(TAG, "Checking for notification permission...")
+    private fun requestPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+
+        val galleryPermission = getGalleryPermissionString()
+        if (ContextCompat.checkSelfPermission(this, galleryPermission) != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(galleryPermission)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Log.d(TAG, "Device is Android 13 or newer.")
-            when {
-                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED -> {
-                    Log.d(TAG, "Notification permission is already granted.")
-                }
-                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
-                    Log.d(TAG, "Showing rationale for notification permission.")
-                    // Aquí podrías mostrar una UI explicando por qué necesitas el permiso
-                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-                else -> {
-                    Log.d(TAG, "Permission not granted, launching request...")
-                    requestNotificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
             }
-        } else {
-            Log.d(TAG, "Device is older than Android 13, no permission needed.")
+        }
+
+        if (permissionsToRequest.isNotEmpty()) {
+            requestMultiplePermissionsLauncher.launch(permissionsToRequest.toTypedArray())
         }
     }
 
-    private fun requestGalleryPermission() {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    private fun getGalleryPermissionString(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Manifest.permission.READ_MEDIA_IMAGES
         } else {
             Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-
-        if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-            requestGalleryPermissionLauncher.launch(permission)
         }
     }
 
