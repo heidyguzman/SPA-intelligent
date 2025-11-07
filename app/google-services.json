@@ -7,25 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:583460358553:android:bc5e1e54679f723076ab08",
-        "android_client_info": {
-          "package_name": "com.example.satorispa"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDTYg3Bmng4RL-ySKKSj1ZUuDDmg9Dy-kM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:583460358553:android:bf10bfd9daca690176ab08",
         "android_client_info": {
           "package_name": "com.narmocorp.satorispa"
