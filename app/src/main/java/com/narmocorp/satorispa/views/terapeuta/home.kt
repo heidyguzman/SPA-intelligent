@@ -34,6 +34,8 @@ import com.narmocorp.satorispa.controller.CitasController
 import com.narmocorp.satorispa.model.Cita
 import com.narmocorp.satorispa.viewmodel.TerapeutaHomeViewModel
 import com.narmocorp.satorispa.viewmodel.UserState
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -284,7 +286,7 @@ private fun CitaCardHome(cita: Cita, onClick: () -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = cita.cliente.ifEmpty { cita.servicio }, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
-                Text(text = "${cita.fecha} ${cita.hora}", maxLines = 2, style = MaterialTheme.typography.bodySmall)
+                Text(text = "${cita.fecha} ${formatHora(cita.hora)}", maxLines = 2, style = MaterialTheme.typography.bodySmall)
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -321,6 +323,17 @@ private fun StatusIndicatorHome(status: String) {
                 color = textColor
             )
         }
+    }
+}
+
+private fun formatHora(hora24: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val date = inputFormat.parse(hora24)
+        if (date != null) outputFormat.format(date) else hora24
+    } catch (e: Exception) {
+        hora24 // Devuelve la hora original si hay un error
     }
 }
 

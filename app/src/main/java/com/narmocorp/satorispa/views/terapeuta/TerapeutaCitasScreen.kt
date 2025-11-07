@@ -297,7 +297,7 @@ private fun CitaCard(cita: Cita, isSelected: Boolean, onClick: () -> Unit) {
                 Text(text = cita.cliente.ifEmpty { cita.servicio }, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${cita.fecha} ${cita.hora}",
+                    text = "${cita.fecha} ${formatHora(cita.hora)}",
                     maxLines = 2,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -366,7 +366,7 @@ private fun CitaDetailsContent(cita: Cita) {
         DetailRow(icon = Icons.Filled.Spa, text = "Servicio: ${cita.servicio}")
         DetailRow(icon = Icons.Filled.Person, text = "Cliente: ${cita.cliente}")
         DetailRow(icon = Icons.Default.CalendarToday, text = "Fecha: ${cita.fecha}")
-        DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${cita.hora}")
+        DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${formatHora(cita.hora)}")
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -424,5 +424,16 @@ private fun StatusIndicator(status: String) {
                 color = textColor
             )
         }
+    }
+}
+
+private fun formatHora(hora24: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val date = inputFormat.parse(hora24)
+        if (date != null) outputFormat.format(date) else hora24
+    } catch (e: Exception) {
+        hora24 // Devuelve la hora original si hay un error
     }
 }
