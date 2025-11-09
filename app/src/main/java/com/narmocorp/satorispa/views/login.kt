@@ -111,7 +111,45 @@ fun Login(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(52.dp + 24.dp))
+
+                // "Login" / "Register" Selector
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(0.82f)
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(secondaryColor.copy(alpha = 0.9f)), // Color del tema
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Login Button (Active)
+                    TextButton(
+                        onClick = { /* Already on Login */ },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(4.dp)
+                            .background(tertiaryColor, RoundedCornerShape(22.dp)), // Color del tema
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onTertiary) // Color del tema
+                    ) {
+                        Text("Inicio", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                    }
+
+                    // Register Button
+                    TextButton(
+                        onClick = { navController.navigate("register") },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(4.dp),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondary) // Color del tema
+                    ) {
+                        Text("Registro", style = MaterialTheme.typography.titleSmall)
+                    }
+                }
+
+                Spacer(Modifier.height(24.dp))
 
                 Text(
                     text = "SATORI SPA LE DA LA BIENVENIDA",
@@ -238,45 +276,6 @@ fun Login(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-            }
-        }
-
-        // "Login" / "Register" Selector
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = screenHeight * 0.32f)
-                .fillMaxWidth(0.82f)
-                .height(52.dp)
-                .clip(RoundedCornerShape(26.dp))
-                .background(secondaryColor.copy(alpha = 0.9f)), // Color del tema
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Login Button (Active)
-            TextButton(
-                onClick = { /* Already on Login */ },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp)
-                    .background(tertiaryColor, RoundedCornerShape(22.dp)), // Color del tema
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onTertiary) // Color del tema
-            ) {
-                Text("Inicio", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
-            }
-
-            // Register Button
-            TextButton(
-                onClick = { navController.navigate("register") },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .padding(4.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSecondary) // Color del tema
-            ) {
-                Text("Registro", style = MaterialTheme.typography.titleSmall)
             }
         }
     }
