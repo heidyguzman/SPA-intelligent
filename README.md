@@ -1,7 +1,5 @@
 # Satori Spa - Aplicación Móvil
 
-![Satori Spa](https://i.imgur.com/your-logo-image.png) 
-
 Bienvenido al repositorio oficial de la aplicación móvil de Satori Spa. Esta aplicación está diseñada para ofrecer a nuestros clientes una experiencia de bienestar y relajación inigualable, permitiéndoles gestionar sus citas y tratamientos de manera sencilla y eficiente.
 
 ## 🌟 Características Principales
