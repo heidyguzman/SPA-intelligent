@@ -39,7 +39,7 @@ Para compilar y ejecutar este proyecto, necesitarás:
     *   Habilita los servicios de **Authentication**, **Firestore**, **Storage** y **Cloud Messaging** en la consola de Firebase.
 3.  **Clona el repositorio:**
     ```bash
-    git clone https://github.com/tu-usuario/SPA-intelligent.git
+    git clone https://github.com/heidyguzman/SPA-intelligent.git
     ```
 4.  **Abre el proyecto en Android Studio y sincroniza Gradle.**
 5.  **Ejecuta la aplicación en un emulador o dispositivo físico.**
