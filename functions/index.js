@@ -129,12 +129,11 @@ exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async 
       `el día ${fecha}.`;
 
     const payload = {
-      notification: {
+      data: {
         title: "¡Nueva Cita Asignada!",
         body: body,
-      },
-      data: {
         tipo: "nueva_cita",
+        usuarioId: terapeutaId, // ID del usuario para identificarlo en la app
       },
       token: token,
     };

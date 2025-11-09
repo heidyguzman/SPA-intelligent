@@ -17,14 +17,16 @@ class SatoriMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
 
         Log.d("FCM", "Notificación recibida de: ${remoteMessage.from}")
+        Log.d("FCM", "Data payload: ${remoteMessage.data}")
 
         // Extraer datos de la notificación
-        val title = remoteMessage.notification?.title ?: "Satori SPA"
-        val body = remoteMessage.notification?.body ?: ""
-        val tipo = remoteMessage.data["tipo"] ?: "" // bienvenida, confirmacion, recordatorio
+        val title = remoteMessage.data["title"] ?: remoteMessage.notification?.title ?: "Satori SPA"
+        val body = remoteMessage.data["body"] ?: remoteMessage.notification?.body ?: ""
+        val tipo = remoteMessage.data["tipo"] ?: "general"
+        val usuarioId = remoteMessage.data["usuarioId"] // ID del destinatario
 
         // Mostrar la notificación
-        mostrarNotificacion(title, body, tipo)
+        mostrarNotificacion(title, body, tipo, usuarioId)
     }
 
     override fun onNewToken(token: String) {
@@ -35,7 +37,7 @@ class SatoriMessagingService : FirebaseMessagingService() {
         guardarTokenEnFirebase(token)
     }
 
-    private fun mostrarNotificacion(titulo: String, mensaje: String, tipo: String) {
+    private fun mostrarNotificacion(titulo: String, mensaje: String, tipo: String, usuarioId: String?) {
         val canalId = "satori_notificaciones"
         val notificationId = System.currentTimeMillis().toInt()
 
@@ -66,12 +68,14 @@ class SatoriMessagingService : FirebaseMessagingService() {
         notificationManager.notify(notificationId, builder.build())
 
         // Guardar la notificación en Firestore
-        guardarNotificacionEnFirestore(titulo, mensaje, tipo)
+        guardarNotificacionEnFirestore(titulo, mensaje, tipo, usuarioId)
     }
 
-    private fun guardarNotificacionEnFirestore(titulo: String, mensaje: String, tipo: String) {
-        val usuarioId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-        if (usuarioId != null) {
+    private fun guardarNotificacionEnFirestore(titulo: String, mensaje: String, tipo: String, usuarioIdFromMessage: String?) {
+        // Priorizar el ID del mensaje; si no existe, usar el del usuario actual (si está logueado)
+        val targetUsuarioId = usuarioIdFromMessage ?: com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+
+        if (targetUsuarioId != null) {
             val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
             val notificacion = mapOf(
                 "titulo" to titulo,
@@ -81,11 +85,11 @@ class SatoriMessagingService : FirebaseMessagingService() {
                 "leida" to false
             )
 
-            db.collection("usuarios").document(usuarioId)
+            db.collection("usuarios").document(targetUsuarioId)
                 .collection("notificaciones")
                 .add(notificacion)
                 .addOnSuccessListener {
-                    Log.d("FCM", "Notificación guardada en Firestore")
+                    Log.d("FCM", "Notificación guardada en Firestore para el usuario: $targetUsuarioId")
                 }
                 .addOnFailureListener { e ->
                     Log.e("FCM", "Error al guardar notificación", e)
