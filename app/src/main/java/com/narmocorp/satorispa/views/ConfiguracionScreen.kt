@@ -230,9 +230,6 @@ fun ConfiguracionScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // =======================================================
-                // 🔑 SECCIÓN DE BOTONES DE ACCIÓN FINAL
-                // =======================================================
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -277,10 +274,6 @@ fun ConfiguracionScreen(navController: NavController) {
                 }
             }
         }
-
-        // =======================================================
-        // 🔑 DIÁLOGOS (DEBEN IR FUERA DEL DISEÑO PRINCIPAL)
-        // =======================================================
 
         // DIÁLOGO DE CERRAR SESIÓN (Tu código original)
         if (mostrarDialogoCerrarSesion) {
@@ -346,10 +339,6 @@ fun ConfiguracionScreen(navController: NavController) {
     }
 }
 
-
-// =========================================================================
-// 🔑 FUNCIÓN COMPOSABLE PARA EL DIÁLOGO DE BORRAR CUENTA (¡AÑÁDELA AL FINAL DEL ARCHIVO!)
-// =========================================================================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BorrarCuentaDialog(
