@@ -12,8 +12,15 @@ data class Cita(
     val fecha: String = "",
     val hora: String = "",
     val servicio: String = "",
+
+    // Propiedades del CLIENTE (las que estaban causando el conflicto)
+    val servicioNombre: String = "",
+    val servicioImagen: String = "", // Mantenemos String para la vista del cliente
+
+    // Propiedad del TERAPEUTA (que tu compañero ya usaba)
+    val imagenServicio: String? = null, // Agregado para que la vista del Terapeuta compile
+
     val telefono: String = "",
     val terapeuta: String? = null,
-    val updatedAt: Timestamp? = null,
-    val imagenServicio: String? = null // URL de la imagen del servicio (opcional)
+    val updatedAt: Timestamp? = null
 )

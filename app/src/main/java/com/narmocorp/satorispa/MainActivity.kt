@@ -46,6 +46,11 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
+import androidx.navigation.NavType
+import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
+import com.narmocorp.satorispa.views.cliente.AgendarCitaScreen
+import com.narmocorp.satorispa.views.cliente.MisCitasScreen
 
 private const val TAG = "MainActivity"
 
@@ -167,13 +172,38 @@ class MainActivity : FragmentActivity() {
                                 selectedRoute = "inicio",
                                 onHomeClick = { navController.navigate("cliente_home") },
                                 onServiciosClick = { navController.navigate("cliente_servicios") },
-                                onCitasClick = { /* TODO: navegar a citas */ }
+                                onCitasClick = { navController.navigate("cliente_mis_citas") }
                             )
                         }
 
                         composable("cliente_servicios") {
                             ClienteServiciosScreen(
                                 navController = navController,
+                                onNavigateToNotifications = { navController.navigate("notificaciones") },
+                                onNavigateToConfig = { navController.navigate("configuracion") }
+                            )
+                        }
+                        // 💡 NUEVA RUTA PARA AGENDAR CITA
+                        composable(
+                            route = "agendar_cita/{servicioId}",
+                            arguments = listOf(navArgument("servicioId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val servicioId = backStackEntry.arguments?.getString("servicioId")
+                            if (servicioId != null) {
+                                // Debes asegurarte de importar AgendarCitaScreen
+                                AgendarCitaScreen(
+                                    navController = navController,
+                                    servicioId = servicioId
+                                )
+                            } else {
+                                // Manejar el error si el ID no está presente, volviendo a servicios
+                                navController.popBackStack()
+                            }
+                        }
+                        composable("cliente_mis_citas") {
+                            MisCitasScreen(
+                                navController = navController,
+                                // 💡 PASAR LOS CALLBACKS AQUÍ:
                                 onNavigateToNotifications = { navController.navigate("notificaciones") },
                                 onNavigateToConfig = { navController.navigate("configuracion") }
                             )

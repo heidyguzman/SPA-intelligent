@@ -27,7 +27,6 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.model.Servicio
 import com.narmocorp.satorispa.viewmodel.ServiciosViewModel
-import kotlinx.coroutines.launch
 
 /**
  * Pantalla de servicios para clientes autenticados
@@ -77,7 +76,7 @@ fun ClienteServiciosScreen(
                 selectedRoute = "servicios",
                 onHomeClick = { navController.navigate("cliente_home") },
                 onServiciosClick = { navController.navigate("cliente_servicios") },
-                onCitasClick = { /* TODO: navegar a citas */ }
+                onCitasClick = { navController.navigate("cliente_mis_citas") }
             )
         },
         containerColor = backgroundColor,
@@ -247,14 +246,11 @@ fun ClienteServiciosScreen(
             service = service,
             onDismiss = { selectedService = null },
             onBookClick = {
-                selectedService = null
-                // TODO: Navegar a agendar cita con el servicio seleccionado
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = "Funcionalidad de agendar cita próximamente",
-                        duration = SnackbarDuration.Short
-                    )
+                // Reemplaza la lógica anterior:
+                selectedService?.let { serviceToBook ->
+                    navController.navigate("agendar_cita/${serviceToBook.id}")
                 }
+                selectedService = null
             }
         )
     }
