@@ -300,7 +300,10 @@ fun ConfiguracionScreen(navController: NavController) {
                             mostrarDialogoCerrarSesion = false
                             AuthController.cerrarSesion()
                             navController.navigate("start") {
-                                popUpTo("start") { inclusive = true }
+                                popUpTo(navController.graph.id) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
                             }
                         },
                         colors = ButtonDefaults.buttonColors(
@@ -410,7 +413,10 @@ fun BorrarCuentaDialog(
                             Toast.makeText(context, "Cuenta eliminada exitosamente.", Toast.LENGTH_LONG).show()
                             // Navegar al inicio (Login/Start) y limpiar el BackStack
                             navController.navigate("start") {
-                                popUpTo("start") { inclusive = true }
+                                popUpTo(navController.graph.id) {
+                                    inclusive = true
+                                }
+                                launchSingleTop = true
                             }
                         },
                         onError = { mensaje ->
