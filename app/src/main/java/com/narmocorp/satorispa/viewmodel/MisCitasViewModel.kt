@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.narmocorp.satorispa.model.Cita
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.*
@@ -17,14 +18,30 @@ class MisCitasViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
+    // Guarda la lista completa y sin filtros de las citas.
+    private val _allCitas = MutableStateFlow<List<Cita>>(emptyList())
+
+    // Expone la lista que se mostrará en la UI (puede estar filtrada)
     private val _citas = MutableStateFlow<List<Cita>>(emptyList())
-    val citas: StateFlow<List<Cita>> = _citas
+    val citas: StateFlow<List<Cita>> = _citas.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
         fetchMisCitas()
+    }
+
+    /**
+     * Filtra la lista de citas por una fecha específica.
+     * @param fecha La fecha en formato "yyyy-MM-dd". Si es nulo, se limpia el filtro.
+     */
+    fun filterCitasByDate(fecha: String?) {
+        if (fecha == null) {
+            _citas.value = _allCitas.value
+        } else {
+            _citas.value = _allCitas.value.filter { it.fecha == fecha }
+        }
     }
 
     private fun fetchMisCitas() {
@@ -50,43 +67,38 @@ class MisCitasViewModel : ViewModel() {
 
                 val citasList = citasSnapshot.documents.mapNotNull { document ->
                     val servicioId = document.getString("servicio") ?: ""
-
-                    // Sub-consulta: Obtener la imagen y el nombre del servicio
                     val servicioDoc = db.collection("servicios").document(servicioId).get().await()
-
                     val servicioImagenUrl = servicioDoc.getString("imagen") ?: ""
                     val servicioNombre = servicioDoc.getString("servicio") ?: "Servicio Desconocido"
-
-                    // Extraemos los campos sensibles a nulos de la cita
                     val clienteId = document.getString("cliente_id")
                     val clienteNombre = document.getString("cliente")
                     val terapeutaNombre = document.getString("terapeuta")
 
                     Cita(
                         id = document.id,
-                        // String? -> String?
                         cliente_id = clienteId,
-                        // String -> String (usamos ?: "" en la DB y en el modelo es String)
                         servicio = servicioId,
                         servicioNombre = servicioNombre,
-                        servicioImagen = servicioImagenUrl, // Asignamos la URL al campo del cliente
-                        // Línea AGREGADA: Asignamos la misma URL al campo del terapeuta para evitar errores.
+                        servicioImagen = servicioImagenUrl,
                         imagenServicio = servicioImagenUrl,
                         fecha = document.getString("fecha") ?: "",
                         hora = document.getString("hora") ?: "",
                         telefono = document.getString("telefono") ?: "",
                         estado = document.getString("estado") ?: "Pendiente",
-                        // String? -> String?
                         cliente = clienteNombre ?: "",
                         terapeuta = terapeutaNombre
                     )
                 }
 
-                _citas.value = citasList.filter { it.cliente_id == currentUserId }
+                // Guarda la lista completa y establece la lista inicial a mostrar.
+                _allCitas.value = citasList
+                _citas.value = citasList
+
                 Log.d("CitasDebug", "Citas mostradas en UI: ${_citas.value.size}")
 
             } catch (e: Exception) {
                 Log.e("CitasDebug", "Error fatal al cargar citas: ${e.message}", e)
+                _allCitas.value = emptyList()
                 _citas.value = emptyList()
             } finally {
                 _isLoading.value = false
