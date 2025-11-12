@@ -18,10 +18,7 @@ class MisCitasViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
-    // Guarda la lista completa y sin filtros de las citas.
     private val _allCitas = MutableStateFlow<List<Cita>>(emptyList())
-
-    // Expone la lista que se mostrará en la UI (puede estar filtrada)
     private val _citas = MutableStateFlow<List<Cita>>(emptyList())
     val citas: StateFlow<List<Cita>> = _citas.asStateFlow()
 
@@ -32,10 +29,6 @@ class MisCitasViewModel : ViewModel() {
         fetchMisCitas()
     }
 
-    /**
-     * Filtra la lista de citas por una fecha específica.
-     * @param fecha La fecha en formato "yyyy-MM-dd". Si es nulo, se limpia el filtro.
-     */
     fun filterCitasByDate(fecha: String?) {
         if (fecha == null) {
             _citas.value = _allCitas.value
@@ -44,12 +37,30 @@ class MisCitasViewModel : ViewModel() {
         }
     }
 
+    fun cancelCita(citaId: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                db.collection("citas").document(citaId)
+                    .update("estado", "Cancelada")
+                    .addOnSuccessListener {
+                        Log.d("CitasDebug", "Cita $citaId cancelada con éxito.")
+                        fetchMisCitas() // Recarga las citas para reflejar el cambio
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("CitasDebug", "Error al cancelar la cita $citaId", e)
+                        onFailure("No se pudo cancelar la cita. Inténtalo de nuevo.")
+                    }
+            } catch (e: Exception) {
+                Log.e("CitasDebug", "Excepción al cancelar la cita $citaId", e)
+                onFailure("Error interno al cancelar la cita.")
+            }
+        }
+    }
+
     private fun fetchMisCitas() {
         val currentUserId = auth.currentUser?.uid
-        Log.d("CitasDebug", "Buscando citas con UID: $currentUserId")
-
         if (currentUserId == null) {
-            Log.e("CitasDebug", "Usuario no autenticado.")
             _isLoading.value = false
             return
         }
@@ -63,20 +74,15 @@ class MisCitasViewModel : ViewModel() {
                     .get()
                     .await()
 
-                Log.d("CitasDebug", "Documentos devueltos por Firestore: ${citasSnapshot.size()}")
-
                 val citasList = citasSnapshot.documents.mapNotNull { document ->
                     val servicioId = document.getString("servicio") ?: ""
                     val servicioDoc = db.collection("servicios").document(servicioId).get().await()
                     val servicioImagenUrl = servicioDoc.getString("imagen") ?: ""
                     val servicioNombre = servicioDoc.getString("servicio") ?: "Servicio Desconocido"
-                    val clienteId = document.getString("cliente_id")
-                    val clienteNombre = document.getString("cliente")
-                    val terapeutaNombre = document.getString("terapeuta")
 
                     Cita(
                         id = document.id,
-                        cliente_id = clienteId,
+                        cliente_id = document.getString("cliente_id"),
                         servicio = servicioId,
                         servicioNombre = servicioNombre,
                         servicioImagen = servicioImagenUrl,
@@ -85,16 +91,13 @@ class MisCitasViewModel : ViewModel() {
                         hora = document.getString("hora") ?: "",
                         telefono = document.getString("telefono") ?: "",
                         estado = document.getString("estado") ?: "Pendiente",
-                        cliente = clienteNombre ?: "",
-                        terapeuta = terapeutaNombre
+                        cliente = document.getString("cliente") ?: "",
+                        terapeuta = document.getString("terapeuta")
                     )
                 }
 
-                // Guarda la lista completa y establece la lista inicial a mostrar.
                 _allCitas.value = citasList
                 _citas.value = citasList
-
-                Log.d("CitasDebug", "Citas mostradas en UI: ${_citas.value.size}")
 
             } catch (e: Exception) {
                 Log.e("CitasDebug", "Error fatal al cargar citas: ${e.message}", e)
