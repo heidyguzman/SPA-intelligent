@@ -40,7 +40,9 @@ android {
     buildFeatures {
         compose = true
     }
+
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)

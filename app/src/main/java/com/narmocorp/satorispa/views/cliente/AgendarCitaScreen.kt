@@ -1,5 +1,7 @@
 package com.narmocorp.satorispa.views.cliente
 
+import android.app.Activity
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -20,9 +22,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip // <-- ¡IMPORTADO!
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale // <-- ¡IMPORTADO!
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,32 +33,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage // <-- ¡IMPORTADO para la imagen!
+import coil.compose.AsyncImage
 import com.narmocorp.satorispa.model.Servicio
+import com.narmocorp.satorispa.ui.theme.Satori_Success
 import com.narmocorp.satorispa.viewmodel.AgendarCitaViewModel
 import com.narmocorp.satorispa.viewmodel.HoraCitaDTO
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-
-// 🎨 COLORES EXACTOS como pantalla "Cambiar Contraseña"
-val Satori_Primary = Color(0xFF995D2D) // Marrón para bordes e iconos
-
-// ✨ MODO CLARO: Fondo blanco con bordes café (como Cambiar Contraseña)
-val InputCardBackgroundLight = Color.White // Fondo BLANCO
-val InputCardBorderLight = Color(0xFFDBBBA6) // Borde beige/café claro
-val ErrorTextLight = Color(0xFFD32F2F) // Rojo para errores
-val OnSurfaceTextLight = Color(0xFF1C1C1C) // Texto negro
-val SecondaryTextLight = Color(0xFF666666) // Gris para textos secundarios
-val PlaceholderTextLight = Color(0xFF999999) // Gris para placeholders
-
-// ✨ MODO OSCURO: Campos grises con buen contraste
-val InputCardBackgroundDark = Color(0xFF353535) // Gris más claro y visible
-val InputCardBorderDark = Color(0xFF505050) // Borde más claro y visible
-val ErrorTextDark = Color(0xFFFF5252) // Rojo brillante tipo Material
-val OnSurfaceTextDark = Color(0xFFFFFFFF) // BLANCO puro para textos
-val SecondaryTextDark = Color(0xFFCCCCCC) // Gris MÁS claro para "Duración"
-val PlaceholderTextDark = Color(0xFF999999) // Gris claro para placeholders
+import com.narmocorp.satorispa.utils.PhoneAuthManager
+import com.narmocorp.satorispa.utils.PhoneAuthListener
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,46 +53,88 @@ fun AgendarCitaScreen(
     viewModel: AgendarCitaViewModel = viewModel()
 ) {
     // ESTADOS Y REFERENCIAS
-    val isDarkTheme = isSystemInDarkTheme()
     val servicio by viewModel.servicio.collectAsState()
-
-    // RECIBE la lista de DTOs
     val horasDisponibles by viewModel.horasDisponibles.collectAsState()
 
+    // --- ESTADOS DE LA PANTALLA ---
     var showDatePickerDialog by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
-
     var selectedDateDbFormat by remember { mutableStateOf<String?>(null) }
     var selectedDateUiFormat by remember { mutableStateOf("Seleccionar Fecha") }
     var selectedTime by remember { mutableStateOf<String?>(null) }
+    var hasSelectedDate by remember { mutableStateOf(false) } // Para controlar el mensaje de horarios
+
+    // --- ESTADOS DE VALIDACIÓN DE TELÉFONO ---
     var telefono by remember { mutableStateOf("") }
+    var isPhoneValidated by remember { mutableStateOf(false) }
+    var showOtpField by remember { mutableStateOf(false) }
+    var isSendingCode by remember { mutableStateOf(false) }
+    var verificationId by remember { mutableStateOf<String?>(null) }
+    var otpCode by remember { mutableStateOf("") }
+    var phoneError by remember { mutableStateOf<String?>(null) }
+
+    val context = LocalContext.current
+    val phoneAuthManager = remember {
+        PhoneAuthManager(context as Activity)
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // 🎨 Colores dinámicos
-    val currentInputCardBackgroundColor = if (isDarkTheme) InputCardBackgroundDark else InputCardBackgroundLight
-    val currentInputCardBorderColor = if (isDarkTheme) InputCardBorderDark else InputCardBorderLight
-    val currentErrorTextColor = if (isDarkTheme) ErrorTextDark else ErrorTextLight
-    val currentTextColor = if (isDarkTheme) OnSurfaceTextDark else OnSurfaceTextLight
-    val currentSecondaryTextColor = if (isDarkTheme) SecondaryTextDark else SecondaryTextLight
-    val currentPlaceholderColor = if (isDarkTheme) PlaceholderTextDark else PlaceholderTextLight
 
-    // Cargar el servicio al inicio
-    LaunchedEffect(servicioId) {
-        viewModel.fetchServicioDetails(servicioId)
+    // --- CALLBACK PARA PHONE AUTH (INTEGRA PERSISTENCIA) ---
+    val phoneAuthListener = remember {
+        object : PhoneAuthListener {
+            override fun onCodeSent(id: String) {
+                isSendingCode = false
+                verificationId = id
+                showOtpField = true
+                phoneError = null
+                scope.launch { snackbarHostState.showSnackbar("Código enviado correctamente.") }
+            }
+
+            override fun onVerificationFailed(error: String) {
+                isSendingCode = false
+                showOtpField = false
+                phoneError = "Verificación fallida: $error"
+                Log.e("PhoneAuth", "Error de verificación: $error")
+            }
+
+            override fun onVerificationSuccess() {
+                viewModel.saveVerifiedTelefono(
+                    telefono = telefono,
+                    onSuccess = {
+                        phoneError = null
+                        showOtpField = false
+                        isPhoneValidated = true
+                        scope.launch { snackbarHostState.showSnackbar("Teléfono verificado y guardado en tu perfil.") }
+                    },
+                    onFailure = { errorMsg ->
+                        isPhoneValidated = true
+                        scope.launch { snackbarHostState.showSnackbar("Éxito en verificación, pero falló al guardar: $errorMsg") }
+                    }
+                )
+            }
+        }
     }
 
-    // Limpiar selectedTime si la hora ya no es agendable/válida.
-    LaunchedEffect(horasDisponibles) {
-        if (selectedTime != null) {
-            val selectedDto = horasDisponibles.find { it.hora == selectedTime }
-
-            // Si no se encuentra O no está disponible (isAvailable=false), la limpiamos.
-            if (selectedDto == null || !selectedDto.isAvailable) {
-                selectedTime = null
+    // --- Cargar datos iniciales ---
+    LaunchedEffect(servicioId) {
+        viewModel.fetchServicioDetails(servicioId)
+        viewModel.fetchProfileTelefono { loadedTelefono, isValidated ->
+            if (isValidated && loadedTelefono != null) {
+                telefono = loadedTelefono
+                isPhoneValidated = true
+                scope.launch { snackbarHostState.showSnackbar("Teléfono recuperado y validado.") }
             }
+        }
+    }
+
+    // Limpiar hora seleccionada si ya no es válida
+    LaunchedEffect(horasDisponibles) {
+        if (selectedTime != null && horasDisponibles.none { it.hora == selectedTime && it.isAvailable }) {
+            selectedTime = null
         }
     }
 
@@ -113,20 +142,10 @@ fun AgendarCitaScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "Agendar Cita",
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                },
+                title = { Text("Agendar Cita", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.Default.ChevronLeft,
-                            contentDescription = "Atrás",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
+                        Icon(Icons.Default.ChevronLeft, contentDescription = "Atrás")
                     }
                 }
             )
@@ -140,74 +159,59 @@ fun AgendarCitaScreen(
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
-
-                // --- 1. Servicio Seleccionado (AQUÍ SE MUESTRA LA IMAGEN) ---
-                item {
-                    ServiceHeader(
-                        servicio = loadedService,
-                        cardBackgroundColor = currentInputCardBackgroundColor,
-                        secondaryTextColor = currentSecondaryTextColor,
-                        textColor = currentTextColor
-                    )
-                }
-
+                item { ServiceHeader(servicio = loadedService) }
                 item { HorizontalDivider(Modifier.padding(vertical = 4.dp)) }
-
-                // --- 2. Selección de Fecha ---
+                item { DatePickerComponent(selectedDateText = selectedDateUiFormat, onOpenDialog = { showDatePickerDialog = true }) }
+                item { TimeSelectionComponent(horas = horasDisponibles, selectedTime = selectedTime, onTimeSelected = { selectedTime = it }, hasSelectedDate = hasSelectedDate) }
                 item {
-                    DatePickerComponent(
-                        selectedDateText = selectedDateUiFormat,
-                        onOpenDialog = { showDatePickerDialog = true },
-                        cardBackgroundColor = currentInputCardBackgroundColor,
-                        borderColor = currentInputCardBorderColor,
-                        textColor = currentTextColor,
-                        secondaryTextColor = currentSecondaryTextColor
-
-                    )
-                }
-
-                // --- 3. Selección de Hora ---
-                item {
-                    // PASAMOS la lista de DTOs
-                    TimeSelectionComponent(
-                        horas = horasDisponibles,
-                        selectedTime = selectedTime,
-                        onTimeSelected = { selectedTime = it },
-                        errorTextColor = currentErrorTextColor
-                    )
-                }
-
-                // --- 4. Teléfono ---
-                item {
-                    TelefonoField(
+                    TelefonoFieldWithValidation(
                         telefono = telefono,
                         onTelefonoChange = { telefono = it },
-                        inputBackgroundColor = currentInputCardBackgroundColor,
-                        borderColor = currentInputCardBorderColor,
-                        textColor = currentTextColor,
-                        secondaryTextColor = currentSecondaryTextColor,
-                        placeholderColor = currentPlaceholderColor
+                        isPhoneValidated = isPhoneValidated,
+                        showOtpField = showOtpField,
+                        otpCode = otpCode,
+                        onOtpChange = { otpCode = it },
+                        phoneError = phoneError,
+                        isSendingCode = isSendingCode,
+                        onSendCodeClick = {
+                            if (isPhoneValidated) {
+                                scope.launch { snackbarHostState.showSnackbar("El teléfono ya está verificado.") }
+                                return@TelefonoFieldWithValidation
+                            }
+                            if (telefono.length != 10) {
+                                scope.launch { snackbarHostState.showSnackbar("Ingresa un número de 10 dígitos.") }
+                                return@TelefonoFieldWithValidation
+                            }
+                            isSendingCode = true
+                            phoneError = null
+                            phoneAuthManager.verifyPhoneNumber(telefono, phoneAuthListener)
+                        },
+                        onVerifyOtpClick = {
+                            phoneError = null
+                            if (verificationId != null && otpCode.length == 6) {
+                                phoneAuthManager.signInWithOtp(verificationId!!, otpCode, phoneAuthListener)
+                            } else {
+                                phoneError = "Código OTP inválido."
+                            }
+                        }
                     )
                 }
-
                 item { HorizontalDivider(Modifier.padding(vertical = 4.dp)) }
-
-                // --- 5. Resumen y Confirmación ---
                 item {
                     AppointmentSummary(
                         servicio = loadedService,
                         quantity = 1,
-                        isReadyToBook = selectedTime != null && selectedDateDbFormat != null && telefono.isNotBlank(),
+                        isReadyToBook = selectedTime != null && selectedDateDbFormat != null && isPhoneValidated,
+                        isPhoneValidated = isPhoneValidated,
                         onConfirmClick = {
-                            if (selectedTime != null && selectedDateDbFormat != null && telefono.isNotBlank()) {
+                            if (selectedTime != null && selectedDateDbFormat != null && isPhoneValidated) {
                                 showConfirmationDialog = true
                             } else {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar("Selecciona fecha, hora y proporciona tu teléfono.")
-                                }
+                                val message = if (!isPhoneValidated) "Selecciona fecha, hora y verifica tu teléfono."
+                                else "Selecciona fecha y hora para continuar."
+                                scope.launch { snackbarHostState.showSnackbar(message) }
                             }
-                        },
-                        errorTextColor = currentErrorTextColor
+                        }
                     )
                     Spacer(modifier = Modifier.height(32.dp))
                 }
@@ -222,16 +226,12 @@ fun AgendarCitaScreen(
         val loadedService = servicio!!
         AlertDialog(
             onDismissRequest = { showConfirmationDialog = false },
-            title = {
-                Text("Confirmar Agendamiento", fontWeight = FontWeight.Bold)
-            },
+            title = { Text("Confirmar Agendamiento", fontWeight = FontWeight.Bold) },
             text = {
                 Column {
                     Text("¿Estás seguro de que deseas agendar el siguiente servicio?")
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    val priceText = if (loadedService.precio.startsWith("$")) loadedService.precio
-                    else "\$${loadedService.precio}" 
+                    val priceText = if (loadedService.precio.startsWith("$")) loadedService.precio else "$${loadedService.precio}"
                     Text(
                         text = "${loadedService.servicio} $priceText",
                         fontWeight = FontWeight.SemiBold,
@@ -246,174 +246,112 @@ fun AgendarCitaScreen(
             confirmButton = {
                 Button(onClick = {
                     showConfirmationDialog = false
-
                     viewModel.registrarCita(
                         servicioId = loadedService.id,
                         fecha = selectedDateDbFormat!!,
                         hora = selectedTime!!,
                         telefono = telefono,
-                        onSuccess = {
-                            showSuccessDialog = true
-                        },
-                        onFailure = { errorMsg ->
-                            scope.launch { snackbarHostState.showSnackbar(errorMsg) }
-                        }
+                        onSuccess = { showSuccessDialog = true },
+                        onFailure = { errorMsg -> scope.launch { snackbarHostState.showSnackbar(errorMsg) } }
                     )
-                }) {
-                    Text("Sí, Confirmar Cita")
-                }
+                }) { Text("Sí, Confirmar Cita") }
             },
-            dismissButton = {
-                TextButton(onClick = { showConfirmationDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
+            dismissButton = { TextButton(onClick = { showConfirmationDialog = false }) { Text("Cancelar") } }
         )
     }
 
     if (showSuccessDialog) {
         AlertDialog(
-            onDismissRequest = { /* No se puede cerrar hasta que presione Aceptar */ },
+            onDismissRequest = {},
             title = { Text("¡Cita Agendada con Éxito!", fontWeight = FontWeight.Bold) },
-            text = { Text("Tu cita ha sido registrada y está pendiente de confirmación. Revisa la sección 'Mis Citas' para ver el estado.") },
+            text = { Text("Tu cita ha sido registrada. Revisa la sección 'Mis Citas' para ver el estado.") },
             confirmButton = {
                 Button(onClick = {
                     showSuccessDialog = false
                     navController.popBackStack()
-                }) {
-                    Text("Aceptar")
-                }
+                }) { Text("Aceptar") }
             }
         )
     }
 
-    // --- CÓDIGO CORREGIDO DEL DATE PICKER ---
     if (showDatePickerDialog) {
-        val today = Calendar.getInstance().apply {
-            time = Date()
+        // Correct way to get the start of today in the local timezone, as a UTC timestamp.
+        val startOfTodayMillis = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-        }
-        val todayUtcMillis = today.timeInMillis - TimeZone.getDefault().rawOffset
+        }.timeInMillis
 
-        val dateValidator: (Long) -> Boolean = { dateMillis ->
-            val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = dateMillis }
-            val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-            val isFutureOrToday = dateMillis >= todayUtcMillis
-            val isNotWeekend = dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY
-            isFutureOrToday && isNotWeekend
-        }
-
-        val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = todayUtcMillis,
-        )
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = startOfTodayMillis)
 
         DatePickerDialog(
             onDismissRequest = { showDatePickerDialog = false },
             confirmButton = {
                 Button(onClick = {
                     val selectedMillis = datePickerState.selectedDateMillis
-
                     if (selectedMillis != null) {
-                        if (!dateValidator(selectedMillis)) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Fecha inválida: No se permiten días pasados ni fines de semana (Sáb/Dom)."
-                                )
-                            }
+                        // 1. Validar si la fecha es pasada
+                        if (selectedMillis < startOfTodayMillis) {
+                            scope.launch { snackbarHostState.showSnackbar("No puedes seleccionar una fecha pasada.") }
                             return@Button
                         }
 
+                        // 2. Validar si es fin de semana
+                        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = selectedMillis }
+                        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+                        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
+                            scope.launch { snackbarHostState.showSnackbar("No se permiten citas en fin de semana.") }
+                            return@Button
+                        }
+
+                        // Si todas las validaciones pasan, se procede
                         val date = Date(selectedMillis)
-
-                        val uiFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-                        val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-
-                        // SOLUCIÓN DE ZONA HORARIA: Forzar UTC en los formateadores
-                        uiFormatter.timeZone = TimeZone.getTimeZone("UTC")
-                        dbFormatter.timeZone = TimeZone.getTimeZone("UTC")
-
+                        val uiFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+                        val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
                         selectedDateUiFormat = uiFormatter.format(date)
                         selectedDateDbFormat = dbFormatter.format(date)
-
+                        hasSelectedDate = true
                         viewModel.fetchHorasDisponibles(selectedMillis)
                         selectedTime = null
                     }
                     showDatePickerDialog = false
                 }) { Text("Aceptar") }
             },
-            dismissButton = {
-                TextButton(onClick = { showDatePickerDialog = false }) { Text("Cancelar") }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            dismissButton = { TextButton(onClick = { showDatePickerDialog = false }) { Text("Cancelar") } }
+        ) { DatePicker(state = datePickerState) }
     }
 }
 
-
-// --- COMPONENTES ---
+// --- COMPONENTES REFACTORIZADOS ---
 
 @Composable
-fun ServiceHeader(
-    servicio: Servicio,
-    cardBackgroundColor: Color,
-    secondaryTextColor: Color,
-    textColor: Color
-) {
+fun ServiceHeader(servicio: Servicio) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // IMAGEN ASÍNCRONA DEL SERVICIO
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
-                model = servicio.imagen, // <-- Usando la propiedad 'imagen'
+                model = servicio.imagen,
                 contentDescription = "Imagen de ${servicio.servicio}",
-                modifier = Modifier
-                    .size(64.dp) // Tamaño fijo
-                    .clip(RoundedCornerShape(8.dp)), // Bordes redondeados
+                modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop
             )
-
-            Spacer(modifier = Modifier.width(12.dp)) // Espacio entre imagen y texto
-
+            Spacer(modifier = Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    servicio.servicio,
-                    fontSize = 20.sp, // Ajuste para el espacio
-                    fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Duración: ${servicio.duracion} min",
-                    fontSize = 14.sp,
-                    color = secondaryTextColor,
-                    fontWeight = FontWeight.Normal
-                )
+                Text(servicio.servicio, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+                Text("Duración: ${servicio.duracion} min", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-
-        // CARD DE PRECIO
         Card(
-            modifier = Modifier
-                .widthIn(min = 80.dp)   // ancho mínimo; cambiar por .width(...) o .size(...) según necesites
-                .height(40.dp)
-                .wrapContentWidth(Alignment.End),
-            colors = CardDefaults.cardColors(containerColor = cardBackgroundColor),
-            border = BorderStroke(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-            )
+            modifier = Modifier.widthIn(min = 80.dp).height(40.dp).wrapContentWidth(Alignment.End),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
         ) {
             Text(
-                text = if (servicio.precio.startsWith("\$")) servicio.precio else "\$${servicio.precio}",
+                text = if (servicio.precio.startsWith("$")) servicio.precio else "$${servicio.precio}",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -424,59 +362,21 @@ fun ServiceHeader(
 }
 
 @Composable
-fun DatePickerComponent(
-    selectedDateText: String,
-    onOpenDialog: () -> Unit,
-    cardBackgroundColor: Color,
-    borderColor: Color,
-    textColor: Color,
-    secondaryTextColor: Color,
-) {
+fun DatePickerComponent(selectedDateText: String, onOpenDialog: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Outlined.Event,
-                contentDescription = "Fecha",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp).padding(end = 4.dp)
-            )
-            Text(
-                "Selecciona la Fecha",
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Icon(Icons.Outlined.Event, contentDescription = "Fecha", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).padding(end = 4.dp))
+            Text("Selecciona la Fecha", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
         }
-
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onOpenDialog),
-            colors = CardDefaults.cardColors(
-                containerColor = cardBackgroundColor
-            ),
-            border = BorderStroke(
-                width = 1.dp,
-                color = borderColor
-            ),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenDialog),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
             shape = MaterialTheme.shapes.medium
         ) {
-            Row(
-                modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = selectedDateText,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = secondaryTextColor
-                )
-                Icon(
-                    Icons.Outlined.Event,
-                    contentDescription = "Abrir Calendario",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+            Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(selectedDateText, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Outlined.Event, contentDescription = "Abrir Calendario", tint = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -487,132 +387,41 @@ fun TimeSelectionComponent(
     horas: List<HoraCitaDTO>,
     selectedTime: String?,
     onTimeSelected: (String) -> Unit,
-    errorTextColor: Color
+    hasSelectedDate: Boolean // Nuevo parámetro
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Filled.Schedule,
-                contentDescription = "Hora",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp).padding(end = 4.dp)
-            )
-            Text(
-                "Selecciona la Hora",
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Icon(Icons.Filled.Schedule, contentDescription = "Hora", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).padding(end = 4.dp))
+            Text("Selecciona la Hora", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
         }
-
-        if (horas.isEmpty()) {
-            Text(
-                text = "Selecciona una fecha para ver los horarios disponibles.",
-                color = errorTextColor,
-                fontWeight = FontWeight.Medium,
-                fontSize = 15.sp
-            )
+        if (!hasSelectedDate) {
+            Text("Selecciona una fecha para ver los horarios.", color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium, fontSize = 15.sp)
+        } else if (horas.isEmpty()) {
+            Text("No hay horarios disponibles para esta fecha.", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium, fontSize = 15.sp)
         } else {
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(horas) { horaDto ->
-
                     val isChipEnabled = horaDto.isAvailable
                     val isChipSelected = horaDto.hora == selectedTime
-
-                    val disabledGrayColor = Color(0xFFE0E0E0)
-                    val disabledTextColor = Color(0xFF9E9E9E)
-
-                    val containerColor = when {
-                        isChipEnabled && isChipSelected -> MaterialTheme.colorScheme.primary
-                        !isChipEnabled -> disabledGrayColor
-                        else -> MaterialTheme.colorScheme.surface
-                    }
-
-                    val labelColor = when {
-                        isChipEnabled && isChipSelected -> MaterialTheme.colorScheme.onPrimary
-                        !isChipEnabled -> disabledTextColor
-                        else -> MaterialTheme.colorScheme.onSurface
-                    }
-
-                    val borderStroke = if (!isChipEnabled) {
-                        BorderStroke(1.5.dp, Color(0xFFBDBDBD))
-                    } else if (isChipSelected) {
-                        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-                    } else {
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                    }
-
                     FilterChip(
                         selected = isChipSelected,
                         enabled = isChipEnabled,
-                        onClick = {
-                            if (isChipEnabled) {
-                                onTimeSelected(horaDto.hora)
-                            }
-                        },
-                        label = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Text(
-                                    horaDto.hora,
-                                    fontWeight = if (isChipEnabled) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = labelColor
-                                )
-
-                                // ÍCONO VISUAL para horas ocupadas
-                                if (!isChipEnabled) {
-                                    Icon(
-                                        imageVector = Icons.Default.Lock,
-                                        contentDescription = "Ocupado",
-                                        modifier = Modifier.size(16.dp),
-                                        tint = disabledTextColor
-                                    )
-                                }
-                            }
-                        },
-                        colors = FilterChipDefaults.filterChipColors(
-                            containerColor = containerColor,
-                            labelColor = labelColor,
-                            selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                            disabledContainerColor = disabledGrayColor,
-                            disabledLabelColor = disabledTextColor
-                        ),
-                        border = borderStroke
+                        onClick = { if (isChipEnabled) onTimeSelected(horaDto.hora) },
+                        label = { Text(horaDto.hora, fontWeight = if (isChipEnabled) FontWeight.SemiBold else FontWeight.Normal) },
+                        leadingIcon = if (!isChipEnabled) { { Icon(imageVector = Icons.Default.Lock, contentDescription = "Ocupado", modifier = Modifier.size(16.dp)) } } else null
                     )
                 }
             }
-
-            // LEYENDA mejorada y más visible
             if (horas.any { !it.isAvailable }) {
                 Spacer(modifier = Modifier.height(12.dp))
-
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                    ),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = "Información",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = "Las horas en gris están ocupadas y no pueden seleccionarse",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Medium
-                        )
+                    Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Icon(Icons.Default.Info, contentDescription = "Información", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                        Text("Las horas en gris están ocupadas.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                     }
                 }
             }
@@ -621,74 +430,79 @@ fun TimeSelectionComponent(
 }
 
 @Composable
-fun TelefonoField(
+fun TelefonoFieldWithValidation(
     telefono: String,
     onTelefonoChange: (String) -> Unit,
-    inputBackgroundColor: Color,
-    borderColor: Color,
-    textColor: Color,
-    secondaryTextColor: Color,
-    placeholderColor: Color
+    isPhoneValidated: Boolean,
+    showOtpField: Boolean,
+    otpCode: String,
+    onOtpChange: (String) -> Unit,
+    phoneError: String?,
+    isSendingCode: Boolean,
+    onSendCodeClick: () -> Unit,
+    onVerifyOtpClick: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Filled.Phone,
-                contentDescription = "Teléfono",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp).padding(end = 4.dp)
-            )
-            Text(
-                "Proporciona tu Teléfono",
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.primary
-            )
+            Icon(Icons.Filled.Phone, contentDescription = "Teléfono", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).padding(end = 4.dp))
+            Text("Proporciona y Verifica tu Teléfono", fontWeight = FontWeight.SemiBold, fontSize = 18.sp, color = MaterialTheme.colorScheme.primary)
         }
-
-        OutlinedTextField(
-            value = telefono,
-            onValueChange = {
-                if (it.all { char -> char.isDigit() } && it.length <= 10) {
-                    onTelefonoChange(it)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = telefono,
+                onValueChange = { if (it.all(Char::isDigit) && it.length <= 10) onTelefonoChange(it) },
+                label = { Text("Teléfono (10 dígitos)") },
+                placeholder = { Text("1234567890") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                modifier = Modifier.weight(1f),
+                shape = MaterialTheme.shapes.medium,
+                singleLine = true,
+                enabled = !isPhoneValidated
+            )
+            if (!isPhoneValidated) {
+                Button(
+                    onClick = onSendCodeClick,
+                    enabled = telefono.length == 10 && !isSendingCode,
+                    modifier = Modifier.height(56.dp).align(Alignment.CenterVertically)
+                ) {
+                    if (isSendingCode) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
+                    else Text(if (showOtpField) "Reenviar" else "Enviar")
                 }
-            },
-            label = {
-                Text(
-                    "Teléfono de Contacto (10 dígitos)",
-                    color = secondaryTextColor
+            } else {
+                Icon(
+                    imageVector = Icons.Default.Lock,
+                    contentDescription = "Teléfono Verificado",
+                    tint = Satori_Success, // Usando el color de éxito desde el tema
+                    modifier = Modifier.size(30.dp).align(Alignment.CenterVertically)
                 )
-            },
-            placeholder = {
-                Text(
-                    "1234567890",
-                    color = placeholderColor
+            }
+        }
+        if (isPhoneValidated) {
+            Text("Teléfono verificado. Puedes continuar.", color = Satori_Success, fontWeight = FontWeight.Medium)
+        }
+        if (phoneError != null) {
+            Text(phoneError, color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Medium)
+        }
+        if (showOtpField) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = otpCode,
+                    onValueChange = { if (it.all(Char::isDigit) && it.length <= 6) onOtpChange(it) },
+                    label = { Text("Código de 6 dígitos") },
+                    placeholder = { Text("123456") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    modifier = Modifier.weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
                 )
-            },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Phone
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = inputBackgroundColor,
-                focusedTextColor = textColor,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-
-                unfocusedContainerColor = inputBackgroundColor,
-                unfocusedTextColor = textColor,
-                unfocusedBorderColor = borderColor,
-                unfocusedLabelColor = secondaryTextColor,
-
-                cursorColor = MaterialTheme.colorScheme.primary,
-
-                // Color del placeholder
-                unfocusedPlaceholderColor = placeholderColor,
-                focusedPlaceholderColor = placeholderColor
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            singleLine = true
-        )
+                Button(
+                    onClick = onVerifyOtpClick,
+                    enabled = otpCode.length == 6,
+                    modifier = Modifier.height(56.dp).align(Alignment.CenterVertically),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) { Text("Verificar") }
+            }
+        }
     }
 }
 
@@ -697,56 +511,29 @@ fun AppointmentSummary(
     servicio: Servicio,
     quantity: Int,
     isReadyToBook: Boolean,
-    onConfirmClick: () -> Unit,
-    errorTextColor: Color
+    isPhoneValidated: Boolean,
+    onConfirmClick: () -> Unit
 ) {
     val precioPorSesion = servicio.precio.toDoubleOrNull() ?: 0.0
     val total = precioPorSesion * quantity
-
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                "Costo Total:",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            Text(
-                text = "$${String.format(Locale.getDefault(), "%.2f", total)}",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = MaterialTheme.colorScheme.primary
-            )
+        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Costo Total:", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            Text("$${String.format(Locale.getDefault(), "%.2f", total)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
         }
-
         Button(
             onClick = onConfirmClick,
             enabled = isReadyToBook,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.6f)
-            )
+            modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-            Text(
-                "Confirmar Cita",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Text("Confirmar Cita", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
         }
-
         if (!isReadyToBook) {
+            val errorText = if (isPhoneValidated) "Seleccione fecha y hora para confirmar."
+            else "Selecciona fecha, hora y verifica tu teléfono para confirmar."
             Text(
-                text = "Selecciona fecha, hora y proporciona tu teléfono para confirmar.",
-                color = errorTextColor,
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.sp,
