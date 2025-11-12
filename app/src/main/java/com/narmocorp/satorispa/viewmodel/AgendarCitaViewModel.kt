@@ -37,26 +37,16 @@ class AgendarCitaViewModel : ViewModel() {
     private val _servicio = MutableStateFlow<Servicio?>(null)
     val servicio: StateFlow<Servicio?> = _servicio
 
-    // Emite List<HoraCitaDTO>
+    private val _isPhoneValidatedOnProfile = MutableStateFlow(false)
+    val isPhoneValidatedOnProfile: StateFlow<Boolean> = _isPhoneValidatedOnProfile
+
     private val _horasDisponibles = MutableStateFlow<List<HoraCitaDTO>>(emptyList())
     val horasDisponibles: StateFlow<List<HoraCitaDTO>> = _horasDisponibles
 
-    // Lista de todas las posibles franjas horarias (Maestro de Horarios)
     private val masterHorarios = listOf(
-        "09:00",
-        "10:00",
-        "11:00",
-        "12:00",
-        "13:00",
-        "15:00",
-        "16:00",
-        "17:00",
-        "18:00"
+        "09:00", "10:00", "11:00", "12:00", "13:00", "15:00", "16:00", "17:00", "18:00"
     )
 
-    /**
-     * Carga los detalles del servicio usando su ID
-     */
     fun fetchServicioDetails(servicioId: String) {
         viewModelScope.launch {
             db.collection("servicios").document(servicioId)
@@ -64,19 +54,18 @@ class AgendarCitaViewModel : ViewModel() {
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         try {
-                            val loadedService = Servicio(
+                            _servicio.value = Servicio(
                                 id = document.id,
                                 servicio = document.getString("servicio") ?: "",
                                 categoria = document.getString("categoria") ?: "",
                                 descripcion = document.getString("descripcion") ?: "",
-                                duracion = document.getString("duracion") ?: "",
+                                duracion = document.get("duracion")?.toString() ?: "",
                                 estado = document.getString("estado") ?: "",
                                 imagen = document.getString("imagen") ?: "",
-                                precio = document.getString("precio") ?: "0"
+                                precio = document.get("precio")?.toString() ?: "0"
                             )
-                            _servicio.value = loadedService
                         } catch (e: Exception) {
-                            Log.e("AgendarCitaViewModel", "Error al convertir documento de servicio: ${document.id}", e)
+                            Log.e("AgendarCitaViewModel", "Error al convertir documento: ${document.id}", e)
                             _servicio.value = null
                         }
                     } else {
@@ -90,96 +79,111 @@ class AgendarCitaViewModel : ViewModel() {
         }
     }
 
-    /**
-     * Consulta las citas agendadas y calcula el estado de cada hora (isAvailable, isBookedByMe).
-     */
     fun fetchHorasDisponibles(dateMillis: Long) {
         _horasDisponibles.value = emptyList()
-
-        // 1. Obtener el ID del cliente logueado
         val clienteId = FirebaseAuth.getInstance().currentUser?.uid
 
-        // 2. Si el clienteId es null, asumimos que no hay reservas por mí y mostramos todas como libres
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+        val selectedDate = dateFormat.format(Date(dateMillis))
+
+        // --- LÓGICA DE TIEMPO (CORREGIDA USANDO UTC) ---
+        val nowInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        val selectedCalendarInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = dateMillis }
+
+        val isToday = nowInUtc.get(Calendar.YEAR) == selectedCalendarInUtc.get(Calendar.YEAR) &&
+                      nowInUtc.get(Calendar.DAY_OF_YEAR) == selectedCalendarInUtc.get(Calendar.DAY_OF_YEAR)
+
+        val relevantMasterHorarios = if (isToday) {
+            val currentHourInUtc = nowInUtc.get(Calendar.HOUR_OF_DAY)
+            masterHorarios.filter { it.substringBefore(':').toInt() > currentHourInUtc }
+        } else {
+            masterHorarios
+        }
+
+        if (relevantMasterHorarios.isEmpty()) {
+            _horasDisponibles.value = emptyList()
+            return
+        }
+
         if (clienteId == null) {
-            Log.w("AgendarCitaViewModel", "⚠️ ClienteId es NULL - Usuario no autenticado")
-            _horasDisponibles.value = masterHorarios.map { hora ->
+            _horasDisponibles.value = relevantMasterHorarios.map { hora ->
                 HoraCitaDTO(hora = hora, isAvailable = true, isBookedByMe = false)
             }
             return
         }
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-        dateFormat.timeZone = TimeZone.getTimeZone("UTC") // 🔥 IMPORTANTE: Usar UTC
-        val selectedDate = dateFormat.format(Date(dateMillis))
-
-        Log.d("AgendarCitaViewModel", "🔍 Consultando horas para fecha: $selectedDate (millis: $dateMillis)")
-        Log.d("AgendarCitaViewModel", "👤 Cliente ID: $clienteId")
+        Log.d("AgendarCitaViewModel", "Consultando horas para fecha: $selectedDate")
 
         viewModelScope.launch {
             try {
-                // 3. Consultar TODAS las citas ACTIVAS para esta fecha
                 val bookedCitasResult = db.collection("citas")
                     .whereEqualTo("fecha", selectedDate)
                     .whereIn("estado", listOf("Confirmada", "Pendiente"))
                     .get()
                     .await()
 
-                Log.d("AgendarCitaViewModel", "📋 Total de citas encontradas: ${bookedCitasResult.size()}")
+                val bookedTimes = bookedCitasResult.documents.mapNotNull { it.getString("hora") }.toSet()
 
-                // 4. Clasificar las reservas:
-                val bookedTimesByMe = mutableSetOf<String>()
-                val bookedTimesByOthers = mutableSetOf<String>()
-
-                bookedCitasResult.documents.forEach { document ->
-                    val hora = document.getString("hora") ?: return@forEach
-                    val idCitaCliente = document.getString("cliente_id")
-                    val estado = document.getString("estado")
-
-                    Log.d("AgendarCitaViewModel", "  ⏰ Cita: $hora | Cliente: $idCitaCliente | Estado: $estado")
-
-                    if (idCitaCliente == clienteId) {
-                        bookedTimesByMe.add(hora)
-                        Log.d("AgendarCitaViewModel", "    ✅ Hora $hora reservada por MÍ")
-                    } else {
-                        bookedTimesByOthers.add(hora)
-                        Log.d("AgendarCitaViewModel", "    ❌ Hora $hora reservada por OTRO cliente")
-                    }
-                }
-
-                Log.d("AgendarCitaViewModel", "📊 Resumen:")
-                Log.d("AgendarCitaViewModel", "  - Horas reservadas por mí: $bookedTimesByMe")
-                Log.d("AgendarCitaViewModel", "  - Horas reservadas por otros: $bookedTimesByOthers")
-
-                // 5. Mapear el maestro de horarios a los DTOs
-                val horasResult = masterHorarios.map { hora ->
-                    val isBookedByMe = hora in bookedTimesByMe
-                    val isBookedByOther = hora in bookedTimesByOthers
-
-                    // Una hora está disponible SÓLO si no ha sido reservada por NADIE
-                    val isAvailable = !isBookedByMe && !isBookedByOther
-
-                    Log.d("AgendarCitaViewModel", "  🕐 $hora -> Disponible: $isAvailable | Por mí: $isBookedByMe | Por otro: $isBookedByOther")
-
+                val horasResult = relevantMasterHorarios.map { hora ->
+                    val isBooked = hora in bookedTimes
                     HoraCitaDTO(
                         hora = hora,
-                        isAvailable = isAvailable,
-                        isBookedByMe = isBookedByMe
+                        isAvailable = !isBooked,
+                        isBookedByMe = isBooked && bookedCitasResult.documents.any { it.getString("hora") == hora && it.getString("cliente_id") == clienteId }
                     )
                 }
-
                 _horasDisponibles.value = horasResult
-                Log.d("AgendarCitaViewModel", "✅ Horas disponibles actualizadas: ${horasResult.size} horas")
 
             } catch (e: Exception) {
-                Log.e("AgendarCitaViewModel", "❌ Error al consultar horas disponibles para $selectedDate", e)
+                Log.e("AgendarCitaViewModel", "Error al consultar horas para $selectedDate", e)
                 _horasDisponibles.value = emptyList()
             }
         }
     }
 
-    /**
-     * Función final para registrar la cita en Firebase.
-     */
+    fun fetchProfileTelefono(onLoaded: (String?, Boolean) -> Unit) {
+        val clienteId = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                val document = db.collection("usuarios").document(clienteId).get().await()
+                if (document.exists()) {
+                    val telefono = document.getString("telefono")
+                    val isVerificado = document.getBoolean("telefonoVerificado") ?: false
+                    if (isVerificado && !telefono.isNullOrBlank()) {
+                        onLoaded(telefono, true)
+                    } else {
+                        onLoaded(telefono, false)
+                    }
+                } else {
+                    onLoaded(null, false)
+                }
+            } catch (e: Exception) {
+                Log.e("AgendarCitaViewModel", "Error al cargar teléfono del perfil", e)
+                onLoaded(null, false)
+            }
+        }
+    }
+
+    fun saveVerifiedTelefono(telefono: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val clienteId = FirebaseAuth.getInstance().currentUser?.uid
+        if (clienteId == null) {
+            onFailure("Error de autenticación.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val userDataUpdate = mapOf("telefonoVerificado" to true, "telefono" to telefono)
+                db.collection("usuarios").document(clienteId).update(userDataUpdate)
+                    .addOnSuccessListener {                        _isPhoneValidatedOnProfile.value = true
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e -> onFailure("Error al guardar el teléfono.") }
+            } catch (e: Exception) {
+                onFailure("Error interno al guardar teléfono.")
+            }
+        }
+    }
+
     fun registrarCita(
         servicioId: String,
         fecha: String,
@@ -189,58 +193,41 @@ class AgendarCitaViewModel : ViewModel() {
         onFailure: (String) -> Unit
     ) {
         val clienteId = FirebaseAuth.getInstance().currentUser?.uid
-
         if (clienteId == null) {
-            onFailure("Error: El usuario no está autenticado. Por favor, reinicia la sesión.")
+            onFailure("Error: Usuario no autenticado.")
             return
         }
-
         viewModelScope.launch {
             try {
-                // --- VERIFICACIÓN DE DUPLICADOS PARA ESTE CLIENTE (Capa de seguridad) ---
                 val existingCitas = db.collection("citas")
                     .whereEqualTo("cliente_id", clienteId)
                     .whereEqualTo("fecha", fecha)
                     .whereEqualTo("hora", hora)
                     .whereIn("estado", listOf("Confirmada", "Pendiente"))
-                    .get()
-                    .await()
+                    .get().await()
 
                 if (!existingCitas.isEmpty) {
-                    onFailure("Error: Ya tienes una cita agendada para el ${fecha} a las ${hora}. Por favor, selecciona otro horario.")
+                    onFailure("Ya tienes una cita agendada para esta fecha y hora.")
                     return@launch
                 }
 
-                // --- REGISTRO DE CITA (Si no hay duplicados) ---
-
-                val timestampFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-                timestampFormatter.timeZone = TimeZone.getTimeZone("UTC")
-                val currentTimestamp = timestampFormatter.format(Date())
-
+                val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
                 val citaData = hashMapOf(
                     "cliente_id" to clienteId,
                     "servicio" to servicioId,
                     "fecha" to fecha,
                     "hora" to hora,
                     "telefono" to telefono,
-                    "createdAt" to currentTimestamp,
-                    "updatedAt" to currentTimestamp,
+                    "createdAt" to timestamp,
+                    "updatedAt" to timestamp,
                     "cliente" to null,
                     "estado" to "Pendiente"
                 )
-
-                db.collection("citas")
-                    .add(citaData)
-                    .addOnSuccessListener {
-                        onSuccess()
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e("AgendarCitaViewModel", "Error al registrar la cita", e)
-                        onFailure("Error al registrar la cita. Inténtalo de nuevo.")
-                    }
+                db.collection("citas").add(citaData)
+                    .addOnSuccessListener { onSuccess() }
+                    .addOnFailureListener { e -> onFailure("Error al registrar la cita.") }
 
             } catch (e: Exception) {
-                Log.e("AgendarCitaViewModel", "Error en la verificación o registro de cita", e)
                 onFailure("Error interno al procesar la cita.")
             }
         }
