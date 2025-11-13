@@ -403,7 +403,7 @@ private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, tex
 private fun StatusIndicator(status: String) {
     val (backgroundColor, textColor) = when (status.lowercase()) {
         "confirmada" -> Color(0xFF4CAF50) to Color.White
-        "pendiente" -> Color(0xFFFFB300) to Color.Black
+        "pendiente" -> Color(0xFFFFB300) to Color.White
         "cancelada" -> Color(0xFFEF5350) to Color.White
         else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
     }
