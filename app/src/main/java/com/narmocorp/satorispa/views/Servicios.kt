@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -272,7 +273,7 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -281,13 +282,13 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 ) {
                     Text(
                         text = "$${service.precio}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = Color.Gray,
                         fontSize = 12.sp
                     )
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSecondary
                     )
                 }
             }
@@ -323,7 +324,7 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 Text(
                     text = service.servicio,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -332,12 +333,12 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 ) {
                     Text(
                         text = "$${service.precio}",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = Color.Gray
                     )
                     Icon(
                         Icons.Default.CalendarToday,
                         contentDescription = "Agendar cita",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSecondary
                     )
                 }
             }
@@ -354,7 +355,7 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
                 service.servicio,
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSecondary
             )
         },
         text = {
@@ -371,13 +372,13 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
                 Text(
                     text = "Precio: $${service.precio}",
                     fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = service.descripcion,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray
                 )
 
             }
