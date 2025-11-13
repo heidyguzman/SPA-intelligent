@@ -54,8 +54,8 @@ data class FaqItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AyudaScreen(navController: NavController) {
-    val faqList = listOf(
+fun AyudaScreen(navController: NavController, isTerapeuta: Boolean) {
+    val allFaqs = listOf(
         FaqItem("Cuenta y acceso", "¿Cómo puedo registrarme o iniciar sesión?", "Regístrate desde la pantalla principal en “Crear cuenta” con tu nombre, correo y contraseña, o inicia sesión si ya tienes una cuenta."),
         FaqItem("Cuenta y acceso", "¿Olvidé mi contraseña, ¿qué hago?", "Selecciona la opción “¿Olvidaste tu contraseña?” en la pantalla de inicio de sesión. Recibirás un enlace para restablecerla en tu correo."),
         FaqItem("Citas y servicios", "¿Puedo cambiar mi cita una vez agendada?", "Sí. En el apartado “Mis citas”, selecciona la cita que deseas modificar y presiona “Reprogramar” o “Cancelar”. Recibirás una confirmación al instante."),
@@ -64,6 +64,16 @@ fun AyudaScreen(navController: NavController) {
         FaqItem("Pagos", "¿Qué métodos de pago aceptan?", "Aceptamos pagos con tarjeta de crédito o débito, transferencias y pagos en efectivo al llegar al spa."),
         FaqItem("Atención al cliente", "¿Cómo puedo contactar con atención al cliente?", "Puedes comunicarte con nosotros desde el menú “Ayuda” → 312 233 7959.\nTambién puedes escribirnos por WhatsApp o al correo rvuelvas@ucol.mx.")
     )
+
+    val faqList = if (isTerapeuta) {
+        allFaqs.filterNot {
+            it.question == "¿Puedo cambiar mi cita una vez agendada?" ||
+            it.question == "¿Qué servicios ofrece el spa?" ||
+            it.question == "¿Qué métodos de pago aceptan?"
+        }
+    } else {
+        allFaqs
+    }
 
     val groupedFaqs = faqList.groupBy { it.category }
 
@@ -112,34 +122,36 @@ fun AyudaScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 groupedFaqs.forEach { (category, faqs) ->
-                    item {
-                        val icon = when (category) {
-                            "Cuenta y acceso" -> Icons.Default.ManageAccounts
-                            "Citas y servicios" -> Icons.Default.EventSeat
-                            "Pagos" -> Icons.Default.CreditCard
-                            "Atención al cliente" -> Icons.Default.ContactSupport
-                            else -> Icons.Default.HelpOutline
+                    if (faqs.isNotEmpty()) {
+                        item {
+                            val icon = when (category) {
+                                "Cuenta y acceso" -> Icons.Default.ManageAccounts
+                                "Citas y servicios" -> Icons.Default.EventSeat
+                                "Pagos" -> Icons.Default.CreditCard
+                                "Atención al cliente" -> Icons.Default.ContactSupport
+                                else -> Icons.Default.HelpOutline
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 8.dp, top = 16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = category,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(bottom = 8.dp, top = 16.dp) 
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = category,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
+                        items(faqs) { faq ->
+                            ExpandableFaqCard(faq = faq)
                         }
-                    }
-                    items(faqs) { faq ->
-                        ExpandableFaqCard(faq = faq)
                     }
                 }
             }
@@ -159,7 +171,7 @@ fun ExpandableFaqCard(faq: FaqItem) {
     ) {
         Column(
             modifier = Modifier
-                .animateContentSize() 
+                .animateContentSize()
                 .clickable { expanded = !expanded }
                 .padding(16.dp)
         ) {

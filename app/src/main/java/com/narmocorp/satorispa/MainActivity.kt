@@ -18,6 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -27,9 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
@@ -39,18 +45,15 @@ import com.narmocorp.satorispa.controller.loginUser
 import com.narmocorp.satorispa.ui.theme.SatoriSPATheme
 import com.narmocorp.satorispa.utils.SessionManager
 import com.narmocorp.satorispa.views.*
+import com.narmocorp.satorispa.views.cliente.AgendarCitaScreen
 import com.narmocorp.satorispa.views.cliente.ClientHomeScreen
 import com.narmocorp.satorispa.views.cliente.ClienteServiciosScreen
+import com.narmocorp.satorispa.views.cliente.MisCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.ConfigScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
-import androidx.navigation.NavType
-import androidx.navigation.compose.composable
-import androidx.navigation.navArgument
-import com.narmocorp.satorispa.views.cliente.AgendarCitaScreen
-import com.narmocorp.satorispa.views.cliente.MisCitasScreen
 
 private const val TAG = "MainActivity"
 
@@ -258,7 +261,27 @@ class MainActivity : FragmentActivity() {
                         }
 
                         composable("ayuda") {
-                            AyudaScreen(navController = navController)
+                            val user = FirebaseAuth.getInstance().currentUser
+                            val db = FirebaseFirestore.getInstance()
+                            var isTerapeuta by remember { mutableStateOf(false) } // Default to client
+
+                            if (user != null) {
+                                // Use a LaunchedEffect to fetch the user role once
+                                LaunchedEffect(key1 = user.uid) {
+                                    db.collection("usuarios").document(user.uid).get()
+                                        .addOnSuccessListener { document ->
+                                            if (document != null) {
+                                                val rol = document.getString("rol")?.trim()?.lowercase()
+                                                isTerapeuta = rol == "terapeuta"
+                                            }
+                                        }
+                                        .addOnFailureListener { exception ->
+                                            Log.e(TAG, "Error getting user role for AyudaScreen", exception)
+                                            // Keep default value (false) in case of error
+                                        }
+                                }
+                            }
+                            AyudaScreen(navController = navController, isTerapeuta = isTerapeuta)
                         }
 
                         composable("acerca_de") {
