@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -63,7 +64,9 @@ fun AgendarCitaScreen(
     var selectedDateDbFormat by remember { mutableStateOf<String?>(null) }
     var selectedDateUiFormat by remember { mutableStateOf("Seleccionar Fecha") }
     var selectedTime by remember { mutableStateOf<String?>(null) }
-    var hasSelectedDate by remember { mutableStateOf(false) } // Para controlar el mensaje de horarios
+    var hasSelectedDate by remember { mutableStateOf(false) } 
+    var comentarios by remember { mutableStateOf("") }
+    var isBooking by remember { mutableStateOf(false) } // Estado de carga para el botón principal
 
     // --- ESTADOS DE VALIDACIÓN DE TELÉFONO ---
     var telefono by remember { mutableStateOf("") }
@@ -196,13 +199,24 @@ fun AgendarCitaScreen(
                         }
                     )
                 }
+                item {
+                    OutlinedTextField(
+                        value = comentarios,
+                        onValueChange = { comentarios = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Comentarios (opcional)") },
+                        placeholder = { Text("Ej: Enfocarse más en la espalda.") },
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                        maxLines = 3
+                    )
+                }
                 item { HorizontalDivider(Modifier.padding(vertical = 4.dp)) }
                 item {
                     AppointmentSummary(
                         servicio = loadedService,
-                        quantity = 1,
                         isReadyToBook = selectedTime != null && selectedDateDbFormat != null && isPhoneValidated,
                         isPhoneValidated = isPhoneValidated,
+                        isBooking = isBooking, // Pasar el estado de carga
                         onConfirmClick = {
                             if (selectedTime != null && selectedDateDbFormat != null && isPhoneValidated) {
                                 showConfirmationDialog = true
@@ -241,18 +255,29 @@ fun AgendarCitaScreen(
                     )
                     Text("Fecha: $selectedDateUiFormat")
                     Text("Hora: $selectedTime")
+                    if (comentarios.isNotBlank()) {
+                        Text("Comentarios: $comentarios")
+                    }
                 }
             },
             confirmButton = {
                 Button(onClick = {
                     showConfirmationDialog = false
+                    isBooking = true // <-- ACTIVAR EL ESTADO DE CARGA
                     viewModel.registrarCita(
                         servicioId = loadedService.id,
                         fecha = selectedDateDbFormat!!,
                         hora = selectedTime!!,
                         telefono = telefono,
-                        onSuccess = { showSuccessDialog = true },
-                        onFailure = { errorMsg -> scope.launch { snackbarHostState.showSnackbar(errorMsg) } }
+                        comentarios = comentarios,
+                        onSuccess = {
+                            isBooking = false // <-- DESACTIVAR CARGA
+                            showSuccessDialog = true
+                        },
+                        onFailure = { errorMsg ->
+                            isBooking = false // <-- DESACTIVAR CARGA
+                            scope.launch { snackbarHostState.showSnackbar(errorMsg) }
+                        }
                     )
                 }) { Text("Sí, Confirmar Cita") }
             },
@@ -275,15 +300,16 @@ fun AgendarCitaScreen(
     }
 
     if (showDatePickerDialog) {
-        // Correct way to get the start of today in the local timezone, as a UTC timestamp.
-        val startOfTodayMillis = Calendar.getInstance().apply {
+        val startOfTodayUtcMillis = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = startOfTodayMillis)
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = startOfTodayUtcMillis
+        )
 
         DatePickerDialog(
             onDismissRequest = { showDatePickerDialog = false },
@@ -291,13 +317,11 @@ fun AgendarCitaScreen(
                 Button(onClick = {
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
-                        // 1. Validar si la fecha es pasada
-                        if (selectedMillis < startOfTodayMillis) {
+                        if (selectedMillis < startOfTodayUtcMillis) {
                             scope.launch { snackbarHostState.showSnackbar("No puedes seleccionar una fecha pasada.") }
                             return@Button
                         }
 
-                        // 2. Validar si es fin de semana
                         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = selectedMillis }
                         val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
                         if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
@@ -305,7 +329,6 @@ fun AgendarCitaScreen(
                             return@Button
                         }
 
-                        // Si todas las validaciones pasan, se procede
                         val date = Date(selectedMillis)
                         val uiFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
                         val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
@@ -323,7 +346,57 @@ fun AgendarCitaScreen(
     }
 }
 
-// --- COMPONENTES REFACTORIZADOS ---
+
+@Composable
+fun AppointmentSummary(
+    servicio: Servicio,
+    isReadyToBook: Boolean,
+    isPhoneValidated: Boolean,
+    isBooking: Boolean, // Nuevo parámetro
+    onConfirmClick: () -> Unit
+) {
+    val precioPorSesion = servicio.precio.toDoubleOrNull() ?: 0.0
+    val total = precioPorSesion
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Costo Total:", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+            Text("$${String.format(Locale.getDefault(), "%.2f", total)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
+        }
+        Button(
+            onClick = onConfirmClick,
+            enabled = isReadyToBook && !isBooking, // Se deshabilita si está cargando
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+        ) {
+            if (isBooking) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 3.dp
+                )
+            } else {
+                Text("Confirmar Cita", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        if (!isReadyToBook && !isBooking) {
+            val errorText = if (isPhoneValidated) "Seleccione fecha y hora para confirmar."
+            else "Selecciona fecha, hora y verifica tu teléfono para confirmar."
+            Text(
+                text = errorText,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
+    }
+}
+
+// El resto de los componentes no necesitan cambios
 
 @Composable
 fun ServiceHeader(servicio: Servicio) {
@@ -502,43 +575,6 @@ fun TelefonoFieldWithValidation(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) { Text("Verificar") }
             }
-        }
-    }
-}
-
-@Composable
-fun AppointmentSummary(
-    servicio: Servicio,
-    quantity: Int,
-    isReadyToBook: Boolean,
-    isPhoneValidated: Boolean,
-    onConfirmClick: () -> Unit
-) {
-    val precioPorSesion = servicio.precio.toDoubleOrNull() ?: 0.0
-    val total = precioPorSesion * quantity
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Costo Total:", fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-            Text("$${String.format(Locale.getDefault(), "%.2f", total)}", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.primary)
-        }
-        Button(
-            onClick = onConfirmClick,
-            enabled = isReadyToBook,
-            modifier = Modifier.fillMaxWidth().height(56.dp)
-        ) {
-            Text("Confirmar Cita", fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        }
-        if (!isReadyToBook) {
-            val errorText = if (isPhoneValidated) "Seleccione fecha y hora para confirmar."
-            else "Selecciona fecha, hora y verifica tu teléfono para confirmar."
-            Text(
-                text = errorText,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(top = 8.dp)
-            )
         }
     }
 }

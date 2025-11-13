@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -376,6 +377,11 @@ private fun CitaDetailsContent(cita: Cita) {
         DetailRow(icon = Icons.Default.Phone, text = "Teléfono: ${cita.telefono}")
         DetailRow(icon = Icons.Default.CalendarToday, text = "Fecha: ${formatDateUi(cita.fecha)}")
         DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${cita.hora}")
+
+        // Mostrar comentarios si existen
+        if (!cita.comentarios.isNullOrBlank()) {
+            DetailRow(icon = Icons.AutoMirrored.Filled.Comment, text = "Comentarios: ${cita.comentarios}")
+        }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
