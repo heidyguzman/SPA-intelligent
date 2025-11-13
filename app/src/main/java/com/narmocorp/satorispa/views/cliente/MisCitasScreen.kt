@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,8 +29,11 @@ import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.model.Cita
 import com.narmocorp.satorispa.viewmodel.MisCitasViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 // Colores de estado
 val StatusColorSuccess = Color(0xFF4CAF50)
@@ -48,7 +52,16 @@ fun MisCitasScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     var selectedCita by remember { mutableStateOf<Cita?>(null) }
 
+    // --- ESTADOS PARA DIÁLOGOS Y FILTROS ---
+    var showDatePicker by remember { mutableStateOf(false) }
+    var selectedDateDbFormat by remember { mutableStateOf<String?>(null) }
+    var selectedDateUiFormat by remember { mutableStateOf("Seleccionar fecha") }
+    var showCancelConfirmDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopBar(
                 onNavigateToNotifications = onNavigateToNotifications,
@@ -81,6 +94,17 @@ fun MisCitasScreen(
             HorizontalDivider(Modifier.padding(horizontal = 16.dp))
             Spacer(modifier = Modifier.height(16.dp))
 
+            DateFilter(
+                selectedDateText = selectedDateUiFormat,
+                onSelectDateClick = { showDatePicker = true },
+                onClearClick = {
+                    selectedDateDbFormat = null
+                    selectedDateUiFormat = "Seleccionar fecha"
+                    viewModel.filterCitasByDate(null)
+                },
+                isFilterActive = selectedDateDbFormat != null
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
             when {
                 isLoading -> {
@@ -90,11 +114,9 @@ fun MisCitasScreen(
                 }
                 citas.isEmpty() -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "No tienes citas agendadas aún. ¡Reserva una!",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
+                        val message = if (selectedDateDbFormat != null) "No hay citas para la fecha seleccionada."
+                        else "No tienes citas agendadas aún. ¡Reserva una!"
+                        Text(message, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
                     }
                 }
                 else -> {
@@ -103,9 +125,7 @@ fun MisCitasScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(citas) { cita ->
-                            CitaCard(cita = cita) {
-                                selectedCita = cita
-                            }
+                            CitaCard(cita = cita) { selectedCita = cita }
                         }
                     }
                 }
@@ -113,22 +133,177 @@ fun MisCitasScreen(
         }
     }
 
+    // --- DIÁLOGO DE DETALLES DE CITA ---
     selectedCita?.let { cita ->
-        CitaDetailsModal(cita = cita, onDismiss = { selectedCita = null })
+        CitaDetailsModal(
+            cita = cita,
+            onDismiss = { selectedCita = null },
+            onCancelClick = { showCancelConfirmDialog = true }
+        )
+    }
+
+    // --- DIÁLOGO DE CONFIRMACIÓN DE CANCELACIÓN ---
+    if (showCancelConfirmDialog && selectedCita != null) {
+        AlertDialog(
+            onDismissRequest = { showCancelConfirmDialog = false },
+            title = { Text("Confirmar Cancelación") },
+            text = { Text("¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.cancelCita(
+                            citaId = selectedCita!!.id,
+                            onSuccess = {
+                                scope.launch { snackbarHostState.showSnackbar("Cita cancelada con éxito.") }
+                                showCancelConfirmDialog = false
+                                selectedCita = null // Cierra el modal de detalles
+                            },
+                            onFailure = { errorMsg ->
+                                scope.launch { snackbarHostState.showSnackbar(errorMsg) }
+                            }
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Sí, Cancelar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCancelConfirmDialog = false }) { Text("No") }
+            }
+        )
+    }
+
+    // --- DIÁLOGO DEL CALENDARIO ---
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val selectedMillis = datePickerState.selectedDateMillis
+                        if (selectedMillis != null) {
+                            val date = Date(selectedMillis)
+                            val spanishLocale = Locale.forLanguageTag("es-ES")
+                            val uiFormatter = SimpleDateFormat("dd 'de' MMMM 'de' yyyy", spanishLocale).apply { timeZone = TimeZone.getTimeZone("UTC") }
+                            val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+                            selectedDateUiFormat = uiFormatter.format(date)
+                            selectedDateDbFormat = dbFormatter.format(date)
+                            viewModel.filterCitasByDate(selectedDateDbFormat)
+                        }
+                        showDatePicker = false
+                    }
+                ) { Text("Aceptar") }
+            },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") } }
+        ) {
+            DatePicker(state = datePickerState)
+        }
     }
 }
 
-// -------------------------------------------------------------------------
-// COMPONENTES DE DISEÑO
-// -------------------------------------------------------------------------
+
+@Composable
+fun CitaDetailsModal(
+    cita: Cita,
+    onDismiss: () -> Unit,
+    onCancelClick: () -> Unit
+) {
+    val isCancellable = remember(cita) {
+        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        cita.fecha > todayStr && cita.estado.lowercase() != "cancelada"
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.padding(vertical = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CitaDetailsContent(cita = cita)
+                Spacer(modifier = Modifier.height(24.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(
+                        onClick = onDismiss,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                        Text("Cerrar")
+                    }
+                    Button(
+                        onClick = onCancelClick,
+                        enabled = isCancellable,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Cancelar Cita")
+                    }
+                }
+                if (!isCancellable && cita.estado.lowercase() != "cancelada") {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Las citas solo se pueden cancelar hasta un día antes.",
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DateFilter(
+    selectedDateText: String,
+    onSelectDateClick: () -> Unit,
+    onClearClick: () -> Unit,
+    isFilterActive: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Button(
+            onClick = onSelectDateClick,
+            modifier = Modifier.weight(1f),
+            shape = CircleShape
+        ) {
+            Icon(Icons.Default.CalendarToday, contentDescription = "Calendario", modifier = Modifier.size(ButtonDefaults.IconSize))
+            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+            Text(
+                text = selectedDateText,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        if (isFilterActive) {
+            Button(
+                onClick = onClearClick,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                shape = CircleShape
+            ) {
+                Text("Limpiar")
+            }
+        }
+    }
+}
 
 @Composable
 fun CitaCard(cita: Cita, onClick: () -> Unit) {
-    // ...
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            // 💡 CAMBIO SOLICITADO: Color de fondo más bajo
             containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
         ),
         modifier = Modifier
@@ -172,30 +347,6 @@ fun CitaCard(cita: Cita, onClick: () -> Unit) {
 }
 
 @Composable
-fun CitaDetailsModal(cita: Cita, onDismiss: () -> Unit) {
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CitaDetailsContent(cita = cita)
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onDismiss,
-                ) {
-                    Text("Cerrar")
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun CitaDetailsContent(cita: Cita) {
     Column(
         modifier = Modifier.padding(16.dp),
@@ -228,7 +379,6 @@ private fun CitaDetailsContent(cita: Cita) {
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                // 💡 CORREGIDO: Usar AutoMirrored.Filled.Label
                 Icons.AutoMirrored.Filled.Label,
                 contentDescription = "Estado",
                 tint = MaterialTheme.colorScheme.primary,
@@ -258,10 +408,9 @@ private fun DetailRow(icon: ImageVector, text: String) {
 
 @Composable
 private fun StatusIndicator(status: String) {
-    // 💡 CORRECCIÓN APLICADA: Color de texto de Pendiente ahora es White
     val (backgroundColor, textColor) = when (status.lowercase(Locale.ROOT)) {
         "confirmada" -> StatusColorSuccess to Color.White
-        "pendiente" -> StatusColorPending to Color.White // ¡AQUÍ ESTÁ EL CAMBIO!
+        "pendiente" -> StatusColorPending to Color.White
         "cancelada" -> StatusColorError to Color.White
         else -> MaterialTheme.colorScheme.surface to MaterialTheme.colorScheme.onSurface
     }
@@ -295,9 +444,7 @@ fun formatDateUi(dateString: String): String {
         val date = inputFormat.parse(dateString)
 
         if (date != null) {
-            outputFormat.format(date).replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(spanishLocale) else it.toString()
-            }
+            outputFormat.format(date).replaceFirstChar { it.titlecase(spanishLocale) }
         } else {
             dateString
         }

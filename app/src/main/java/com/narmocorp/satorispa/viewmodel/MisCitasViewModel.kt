@@ -8,6 +8,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.narmocorp.satorispa.model.Cita
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.*
@@ -17,22 +18,49 @@ class MisCitasViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
+    private val _allCitas = MutableStateFlow<List<Cita>>(emptyList())
     private val _citas = MutableStateFlow<List<Cita>>(emptyList())
-    val citas: StateFlow<List<Cita>> = _citas
+    val citas: StateFlow<List<Cita>> = _citas.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
         fetchMisCitas()
     }
 
+    fun filterCitasByDate(fecha: String?) {
+        if (fecha == null) {
+            _citas.value = _allCitas.value
+        } else {
+            _citas.value = _allCitas.value.filter { it.fecha == fecha }
+        }
+    }
+
+    fun cancelCita(citaId: String, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                db.collection("citas").document(citaId)
+                    .update("estado", "Cancelada")
+                    .addOnSuccessListener {
+                        Log.d("CitasDebug", "Cita $citaId cancelada con éxito.")
+                        fetchMisCitas() // Recarga las citas para reflejar el cambio
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("CitasDebug", "Error al cancelar la cita $citaId", e)
+                        onFailure("No se pudo cancelar la cita. Inténtalo de nuevo.")
+                    }
+            } catch (e: Exception) {
+                Log.e("CitasDebug", "Excepción al cancelar la cita $citaId", e)
+                onFailure("Error interno al cancelar la cita.")
+            }
+        }
+    }
+
     private fun fetchMisCitas() {
         val currentUserId = auth.currentUser?.uid
-        Log.d("CitasDebug", "Buscando citas con UID: $currentUserId")
-
         if (currentUserId == null) {
-            Log.e("CitasDebug", "Usuario no autenticado.")
             _isLoading.value = false
             return
         }
@@ -46,47 +74,34 @@ class MisCitasViewModel : ViewModel() {
                     .get()
                     .await()
 
-                Log.d("CitasDebug", "Documentos devueltos por Firestore: ${citasSnapshot.size()}")
-
                 val citasList = citasSnapshot.documents.mapNotNull { document ->
                     val servicioId = document.getString("servicio") ?: ""
-
-                    // Sub-consulta: Obtener la imagen y el nombre del servicio
                     val servicioDoc = db.collection("servicios").document(servicioId).get().await()
-
                     val servicioImagenUrl = servicioDoc.getString("imagen") ?: ""
                     val servicioNombre = servicioDoc.getString("servicio") ?: "Servicio Desconocido"
 
-                    // Extraemos los campos sensibles a nulos de la cita
-                    val clienteId = document.getString("cliente_id")
-                    val clienteNombre = document.getString("cliente")
-                    val terapeutaNombre = document.getString("terapeuta")
-
                     Cita(
                         id = document.id,
-                        // String? -> String?
-                        cliente_id = clienteId,
-                        // String -> String (usamos ?: "" en la DB y en el modelo es String)
+                        cliente_id = document.getString("cliente_id"),
                         servicio = servicioId,
                         servicioNombre = servicioNombre,
-                        servicioImagen = servicioImagenUrl, // Asignamos la URL al campo del cliente
-                        // Línea AGREGADA: Asignamos la misma URL al campo del terapeuta para evitar errores.
+                        servicioImagen = servicioImagenUrl,
                         imagenServicio = servicioImagenUrl,
                         fecha = document.getString("fecha") ?: "",
                         hora = document.getString("hora") ?: "",
                         telefono = document.getString("telefono") ?: "",
                         estado = document.getString("estado") ?: "Pendiente",
-                        // String? -> String?
-                        cliente = clienteNombre ?: "",
-                        terapeuta = terapeutaNombre
+                        cliente = document.getString("cliente") ?: "",
+                        terapeuta = document.getString("terapeuta")
                     )
                 }
 
-                _citas.value = citasList.filter { it.cliente_id == currentUserId }
-                Log.d("CitasDebug", "Citas mostradas en UI: ${_citas.value.size}")
+                _allCitas.value = citasList
+                _citas.value = citasList
 
             } catch (e: Exception) {
                 Log.e("CitasDebug", "Error fatal al cargar citas: ${e.message}", e)
+                _allCitas.value = emptyList()
                 _citas.value = emptyList()
             } finally {
                 _isLoading.value = false
