@@ -189,6 +189,7 @@ class AgendarCitaViewModel : ViewModel() {
         fecha: String,
         hora: String,
         telefono: String,
+        comentarios: String?, // Parámetro nuevo y opcional
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -223,6 +224,12 @@ class AgendarCitaViewModel : ViewModel() {
                     "cliente" to null,
                     "estado" to "Pendiente"
                 )
+
+                // Añade los comentarios solo si no son nulos o vacíos
+                if (!comentarios.isNullOrBlank()) {
+                    citaData["comentarios"] = comentarios
+                }
+
                 db.collection("citas").add(citaData)
                     .addOnSuccessListener { onSuccess() }
                     .addOnFailureListener { e -> onFailure("Error al registrar la cita.") }

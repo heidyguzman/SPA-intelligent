@@ -22,5 +22,6 @@ data class Cita(
 
     val telefono: String = "",
     val terapeuta: String? = null,
-    val updatedAt: Timestamp? = null
+    val updatedAt: Timestamp? = null,
+    val comentarios: String? = null // Nuevo campo para comentarios
 )
