@@ -92,7 +92,8 @@ class MisCitasViewModel : ViewModel() {
                         telefono = document.getString("telefono") ?: "",
                         estado = document.getString("estado") ?: "Pendiente",
                         cliente = document.getString("cliente") ?: "",
-                        terapeuta = document.getString("terapeuta")
+                        terapeuta = document.getString("terapeuta"),
+                        comentarios = document.getString("comentarios") // Leer el nuevo campo
                     )
                 }
 
