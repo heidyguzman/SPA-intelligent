@@ -87,7 +87,7 @@ fun TerapeutaCitasScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopBar(
-                onNavigateToNotifications = { /* implementar si hace falta */ },
+                onNavigateToNotifications = { navController.navigate("notificaciones") },
                 onNavigateToConfig = { navController.navigate("terapeuta_config") }
             )
         },

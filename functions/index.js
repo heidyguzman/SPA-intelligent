@@ -183,7 +183,7 @@ exports.notificarClienteNuevaCita = onDocumentCreated("citas/{citaId}", async (e
 exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) => {
     console.log("Ejecutando la función de recordatorios de citas.");
     const ahora = admin.firestore.Timestamp.now();
-    
+
     // Se buscan citas en un rango de 24 a 25 horas desde el momento de ejecución.
     const inicioRango = new admin.firestore.Timestamp(ahora.seconds + (24 * 60 * 60), ahora.nanoseconds);
     const finRango = new admin.firestore.Timestamp(ahora.seconds + (25 * 60 * 60), ahora.nanoseconds);
