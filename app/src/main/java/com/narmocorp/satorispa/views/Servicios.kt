@@ -10,16 +10,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -33,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import com.narmocorp.satorispa.R
 import com.narmocorp.satorispa.model.Servicio
+import com.narmocorp.satorispa.ui.theme.SatoriSPATheme
 import com.narmocorp.satorispa.viewmodel.ServiciosViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,9 +46,12 @@ fun ServicesScreen(
     val categories = listOf("Todos") + services.map { it.categoria }.distinct()
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Todos") }
     var selectedService by remember { mutableStateOf<Servicio?>(null) }
-
     var searchQuery by remember { mutableStateOf("") }
     val context = LocalContext.current
+
+    val primaryColor = MaterialTheme.colorScheme.primary
+    val backgroundColor = MaterialTheme.colorScheme.background
+    val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
 
     val filteredServices = services.filter { service ->
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
@@ -73,38 +76,53 @@ fun ServicesScreen(
                         IconButton(onClick = { navController.navigate("login") }) {
                             Icon(Icons.Default.AccountCircle, contentDescription = "Login", modifier = Modifier.size(36.dp))
                         }
-                    } else {
-                        // TODO: Show Profile/Logout icon for logged-in user
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.White
+                    containerColor = backgroundColor
                 )
             )
-        }
+        },
+        containerColor = backgroundColor
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
-                .background(Color.White)
+                .background(backgroundColor)
         ) {
             Text(
                 text = "Servicios",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(16.dp),
-                color = MaterialTheme.colorScheme.onSecondary
+                color = primaryColor,
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterHorizontally)
             )
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 label = { Text("Buscar") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search Icon") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Search Icon",
+                        tint = primaryColor
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(30.dp)
+                shape = RoundedCornerShape(30.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = primaryColor,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.secondary,
+                    focusedLabelColor = primaryColor,
+                    cursorColor = primaryColor,
+                    focusedTextColor = onSecondaryColor,
+                    unfocusedTextColor = onSecondaryColor
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -117,7 +135,13 @@ fun ServicesScreen(
                     FilterChip(
                         selected = category == selectedCategory,
                         onClick = { selectedCategory = category },
-                        label = { Text(category) }
+                        label = { Text(category) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = primaryColor,
+                            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            labelColor = onSecondaryColor
+                        )
                     )
                 }
             }
@@ -134,12 +158,12 @@ fun ServicesScreen(
                             text = "Lo más reciente",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondary
+                            color = onSecondaryColor
                         )
                         Icon(
-                            imageVector = Icons.Filled.ArrowForward,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = "Scroll horizontal",
-                            tint = MaterialTheme.colorScheme.onSecondary,
+                            tint = onSecondaryColor,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -167,12 +191,12 @@ fun ServicesScreen(
                             text = "Todos los servicios",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSecondary
+                            color = onSecondaryColor
                         )
                         Icon(
                             imageVector = Icons.Filled.ArrowDownward,
                             contentDescription = "Scroll vertical",
-                            tint = MaterialTheme.colorScheme.onSecondary,
+                            tint = onSecondaryColor,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -208,11 +232,12 @@ fun ServicesScreen(
             onDismiss = { selectedService = null },
             onBookClick = {
                 if (isGuest) {
-                    Toast.makeText(context, "Inicia sesión en tu cuenta.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Inicia sesión para agendar una cita.", Toast.LENGTH_LONG).show()
                     navController.navigate("login")
                 } else {
-                    // TODO: Handle booking for logged-in user
+                    navController.navigate("agendar_cita/${service.id}")
                 }
+                selectedService = null
             }
         )
     }
@@ -225,7 +250,8 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
             .width(160.dp)
             .clickable { onItemClick(service) },
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
             Image(
@@ -246,7 +272,7 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     text = service.servicio,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -255,10 +281,14 @@ fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                 ) {
                     Text(
                         text = "$${service.precio}",
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 12.sp
                     )
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita", tint = MaterialTheme.colorScheme.onSecondary)
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = "Agendar cita",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -272,7 +302,8 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
             .fillMaxWidth()
             .clickable { onItemClick(service) },
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column {
             Image(
@@ -289,14 +320,25 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
                     .height(100.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(text = service.servicio, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSecondary)
+                Text(
+                    text = service.servicio,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(text = "$${service.precio}", color = Color.Gray)
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Agendar cita", tint = MaterialTheme.colorScheme.onSecondary)
+                    Text(
+                        text = "$${service.precio}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Icon(
+                        Icons.Default.CalendarToday,
+                        contentDescription = "Agendar cita",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -307,7 +349,14 @@ fun ServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
 fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(service.servicio, fontWeight = FontWeight.Bold, fontSize = 24.sp, color = MaterialTheme.colorScheme.onSecondary) },
+        title = {
+            Text(
+                service.servicio,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
         text = {
             Column {
                 Image(
@@ -319,19 +368,22 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
                     contentScale = ContentScale.Crop
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Precio: $${service.precio}", fontSize = 18.sp, color = MaterialTheme.colorScheme.onSecondary)
+                Text(
+                    text = "Precio: $${service.precio}",
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = service.descripcion, fontSize = 16.sp, color = Color.Gray)
+                Text(
+                    text = service.descripcion,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
 
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onBookClick()
-                onDismiss()
-
-                
-            }) {
+            Button(onClick = onBookClick) {
                 Text("Agendar Cita")
             }
         },
@@ -343,9 +395,10 @@ fun ServiceDetailsModal(service: Servicio, onDismiss: () -> Unit, onBookClick: (
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun ServicesScreenPreview() {
-    ServicesScreen(navController = rememberNavController(), isGuest = true)
+    SatoriSPATheme {
+        ServicesScreen(navController = rememberNavController(), isGuest = true)
+    }
 }
