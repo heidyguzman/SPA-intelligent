@@ -148,7 +148,7 @@ fun ConfigScreen(navController: NavController) {
                     onClick = {
                         FirebaseAuth.getInstance().signOut()
                         Toast.makeText(context, "Sesión cerrada exitosamente", Toast.LENGTH_SHORT).show()
-                        navController.navigate("login") {
+                        navController.navigate("start") {
                             popUpTo(navController.graph.id) {
                                 inclusive = true
                             }
