@@ -3,6 +3,7 @@ const {initializeApp} = require("firebase-admin/app");
 const {onCall, HttpsError} = require("firebase-functions/v2/https");
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
 const {getMessaging} = require("firebase-admin/messaging");
+const {onSchedule} = require("firebase-functions/v2/scheduler");
 
 initializeApp();
 
@@ -21,53 +22,40 @@ exports.enviarNotificacion = onCall(async (request) => {
   }
 
   try {
-    // Terapeutas y clientes están en la colección 'usuarios'
-    const userDoc = await admin.firestore()
-        .collection("usuarios").doc(usuarioId).get();
-
+    const userDoc = await admin.firestore().collection("usuarios").doc(usuarioId).get();
     if (!userDoc.exists) {
       console.log("Usuario no encontrado:", usuarioId);
-      throw new HttpsError(
-          "not-found", `Usuario ${usuarioId} no encontrado.`,
-      );
+      throw new HttpsError("not-found", `Usuario ${usuarioId} no encontrado.`);
     }
 
     const token = userDoc.data().fcmToken;
-
     if (!token) {
       console.log("No hay token FCM para el usuario:", usuarioId);
-      // No es un error fatal
       return {success: false, error: "Token no encontrado"};
     }
 
-    const message = {
-      notification: {
+    // Usar un mensaje de solo datos para asegurar la ejecución en segundo plano
+    const payload = {
+      data: {
         title: titulo,
         body: mensaje,
-      },
-      data: {
         tipo: tipo || "general",
+        usuarioId: usuarioId,
       },
       token: token,
     };
 
-    const response = await getMessaging().send(message);
+    const response = await getMessaging().send(payload);
     console.log("Notificación enviada con éxito:", response);
     return {success: true, messageId: response};
   } catch (error) {
     console.error("Error procesando la notificación:", error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError(
-        "unknown",
-        "Ocurrió un error desconocido.",
-        error.message,
-    );
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("unknown", "Ocurrió un error desconocido.", error.message);
   }
 });
 
-// Función que se activa al crear una nueva cita en Firestore
+// Función que se activa al crear una nueva cita en Firestore para notificar al TERAPEUTA
 exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async (event) => {
   const snap = event.data;
   if (!snap) {
@@ -75,22 +63,16 @@ exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async 
     return;
   }
   const citaData = snap.data();
-
   const {servicio, fecha} = citaData;
 
   if (!servicio) {
-    console.log(
-        "La cita no tiene un 'servicio'. No se puede encontrar al terapeuta.",
-    );
+    console.log("La cita no tiene un 'servicio'. No se puede encontrar al terapeuta.");
     return null;
   }
 
-  console.log(
-      `Nueva cita creada para el servicio ${servicio}. Buscando terapeuta. `,
-  );
+  console.log(`Nueva cita para ${servicio}. Buscando terapeuta.`);
 
   try {
-    // Obtener el nombre del servicio
     const servicioDoc = await admin.firestore().collection("servicios").doc(servicio).get();
     if (!servicioDoc.exists) {
       console.error("No se encontró el servicio:", servicio);
@@ -98,13 +80,10 @@ exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async 
     }
     const nombreServicio = servicioDoc.data().servicio;
 
-    // Find the therapist assigned to the service
-    const terapeutasSnapshot = await admin.firestore()
-        .collection("usuarios")
+    const terapeutasSnapshot = await admin.firestore().collection("usuarios")
         .where("rol", "==", "terapeuta")
         .where("terapeuta_servicio", "==", servicio)
-        .limit(1)
-        .get();
+        .limit(1).get();
 
     if (terapeutasSnapshot.empty) {
       console.error("No se encontró un terapeuta para el servicio:", servicio);
@@ -116,34 +95,189 @@ exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async 
     const token = terapeutaDoc.data().fcmToken;
 
     if (!token) {
-      console.error(
-          "No se encontró token FCM para el terapeuta:",
-          terapeutaId,
-      );
+      console.error("No se encontró token FCM para el terapeuta:", terapeutaId);
       return null;
     }
 
-    // Mensaje de la notificación
-    const body =
-      `Tienes una nueva cita para un servicio de ${nombreServicio} ` +
-      `el día ${fecha}.`;
-
+    const body = `Tienes una nueva cita para un servicio de ${nombreServicio} el día ${fecha}.`;
     const payload = {
       data: {
         title: "¡Nueva Cita Asignada!",
         body: body,
         tipo: "nueva_cita",
-        usuarioId: terapeutaId, // ID del usuario para identificarlo en la app
+        usuarioId: terapeutaId,
       },
       token: token,
     };
 
-    // Enviar la notificación
     const response = await getMessaging().send(payload);
-    console.log("Notificación de nueva cita enviada con éxito:", response);
+    console.log("Notificación de nueva cita enviada con éxito al terapeuta:", response);
     return response;
   } catch (error) {
     console.error("Error al enviar la notificación al terapeuta:", error);
     return null;
   }
+});
+
+// Función que se activa al crear una nueva cita en Firestore para notificar al CLIENTE
+exports.notificarClienteNuevaCita = onDocumentCreated("citas/{citaId}", async (event) => {
+  const snap = event.data;
+  if (!snap) {
+    console.log("No data associated with the event");
+    return;
+  }
+  const citaData = snap.data();
+  const {cliente_id, servicio, fecha} = citaData;
+
+  if (!cliente_id) {
+    console.log("La cita no tiene un 'cliente_id'. No se puede notificar.");
+    return null;
+  }
+
+  console.log(`Nueva cita creada por ${cliente_id} para el servicio ${servicio}.`);
+
+  try {
+    const clienteDoc = await admin.firestore().collection("usuarios").doc(cliente_id).get();
+    if (!clienteDoc.exists) {
+      console.error("No se encontró el cliente:", cliente_id);
+      return null;
+    }
+    const token = clienteDoc.data().fcmToken;
+
+    if (!token) {
+      console.error("No se encontró token FCM para el cliente:", cliente_id);
+      return null;
+    }
+
+    const servicioDoc = await admin.firestore().collection("servicios").doc(servicio).get();
+    if (!servicioDoc.exists) {
+      console.error("No se encontró el servicio:", servicio);
+      return null;
+    }
+    const nombreServicio = servicioDoc.data().servicio;
+
+    const body = `Tu cita para ${nombreServicio} el ${fecha} ha sido agendada con éxito.`;
+    const payload = {
+      data: {
+        title: "¡Cita Confirmada!",
+        body: body,
+        tipo: "nueva_cita_cliente",
+        citaId: event.params.citaId,
+        usuarioId: cliente_id, // Asegura que se guarda para el cliente correcto
+      },
+      token: token,
+    };
+
+    const response = await getMessaging().send(payload);
+    console.log("Notificación de nueva cita enviada con éxito al cliente:", response);
+    return response;
+  } catch (error) {
+    console.error("Error al enviar la notificación al cliente:", error);
+    return null;
+  }
+});
+
+// Función programada para enviar recordatorios 24 horas antes de la cita.
+// Se ejecuta cada hora para buscar citas que cumplan el criterio.
+// NOTA: El campo 'fecha' en 'citas' debe ser de tipo Timestamp para que esto funcione.
+exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) => {
+    console.log("Ejecutando la función de recordatorios de citas.");
+    const ahora = admin.firestore.Timestamp.now();
+    
+    // Se buscan citas en un rango de 24 a 25 horas desde el momento de ejecución.
+    const inicioRango = new admin.firestore.Timestamp(ahora.seconds + (24 * 60 * 60), ahora.nanoseconds);
+    const finRango = new admin.firestore.Timestamp(ahora.seconds + (25 * 60 * 60), ahora.nanoseconds);
+
+    try {
+        const querySnapshot = await admin.firestore().collection('citas')
+            .where('fecha', '>=', inicioRango)
+            .where('fecha', '<', finRango)
+            .where('recordatorioEnviado', '!=', true) // Evita enviar recordatorios duplicados
+            .get();
+
+        if (querySnapshot.empty) {
+            console.log("No hay citas para recordar en la próxima hora.");
+            return null;
+        }
+
+        console.log(`Se encontraron ${querySnapshot.docs.length} citas para recordar.`);
+
+        const promises = querySnapshot.docs.map(async (doc) => {
+            const cita = doc.data();
+            const citaId = doc.id;
+            const { cliente_id, servicio, fecha } = cita;
+
+            if (!cliente_id) {
+                console.log(`La cita ${citaId} no tiene cliente_id. Saltando.`);
+                return;
+            }
+
+            try {
+                const [clienteDoc, servicioDoc] = await Promise.all([
+                    admin.firestore().collection("usuarios").doc(cliente_id).get(),
+                    admin.firestore().collection("servicios").doc(servicio).get()
+                ]);
+
+                if (!clienteDoc.exists) {
+                    console.error("No se encontró el cliente:", cliente_id);
+                    return;
+                }
+                if (!servicioDoc.exists) {
+                    console.error("No se encontró el servicio:", servicio);
+                    return;
+                }
+
+                const token = clienteDoc.data().fcmToken;
+                const nombreServicio = servicioDoc.data().servicio;
+
+                const fechaLegible = new Date(fecha.toMillis()).toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' });
+
+                const title = "Recordatorio de Cita";
+                const body = `Te recordamos tu cita para ${nombreServicio} el ${fechaLegible}. ¡No faltes!`;
+
+                // 1. Almacenar la notificación para el historial del cliente.
+                const notificacion = {
+                    titulo: title,
+                    mensaje: body,
+                    fecha: admin.firestore.FieldValue.serverTimestamp(),
+                    leida: false,
+                    tipo: "recordatorio_cita",
+                    citaId: citaId,
+                };
+                await admin.firestore().collection("usuarios").doc(cliente_id).collection("notificaciones").add(notificacion);
+
+                // 2. Enviar notificación Push si el cliente tiene un token FCM.
+                if (token) {
+                    const payload = {
+                        data: {
+                            title: title,
+                            body: body,
+                            tipo: "recordatorio_cita",
+                            citaId: citaId,
+                            usuarioId: cliente_id,
+                        },
+                        token: token,
+                    };
+                    await getMessaging().send(payload);
+                    console.log(`Notificación de recordatorio enviada para la cita ${citaId}`);
+                } else {
+                    console.log(`No se encontró token FCM para ${cliente_id}. La notificación solo fue guardada en su historial.`);
+                }
+
+                // 3. Marcar la cita para no volver a enviar un recordatorio.
+                return doc.ref.update({ recordatorioEnviado: true });
+
+            } catch (error) {
+                console.error(`Error procesando el recordatorio para la cita ${citaId}:`, error);
+            }
+        });
+
+        await Promise.all(promises);
+        console.log("Procesamiento de recordatorios completado.");
+        return null;
+
+    } catch (error) {
+        console.error("Error en la función programada de recordatorios:", error);
+        return null;
+    }
 });

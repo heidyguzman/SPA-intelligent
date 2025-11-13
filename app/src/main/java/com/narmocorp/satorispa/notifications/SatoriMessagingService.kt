@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import android.util.Log
+import com.narmocorp.satorispa.R
 
 class SatoriMessagingService : FirebaseMessagingService() {
 
@@ -57,7 +58,7 @@ class SatoriMessagingService : FirebaseMessagingService() {
 
         // Construir la notificación
         val builder = NotificationCompat.Builder(this, canalId)
-            .setSmallIcon(android.R.drawable.ic_dialog_info) // Cambiar por tu ícono
+            .setSmallIcon(R.drawable.logo)
             .setContentTitle(titulo)
             .setContentText(mensaje)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
