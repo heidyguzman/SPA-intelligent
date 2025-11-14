@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -113,7 +114,8 @@ fun TerapeutaCitasScreen(navController: NavController) {
                     text = "Mis Citas",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -347,7 +349,8 @@ private fun CitaDetailsContent(cita: Cita) {
             text = "Detalles de la Cita",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+            color = MaterialTheme.colorScheme.onSecondary
         )
 
         if (!cita.imagenServicio.isNullOrEmpty()) {

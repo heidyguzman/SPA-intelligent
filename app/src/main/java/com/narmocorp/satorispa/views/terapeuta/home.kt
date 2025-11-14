@@ -217,7 +217,9 @@ fun TerapeutaHomeScreen(
                 Text(
                     text = "Citas para hoy",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSecondary
+
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
