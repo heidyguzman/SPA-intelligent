@@ -1,6 +1,11 @@
 package com.narmocorp.satorispa.views
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Patterns
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -11,6 +16,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,28 +27,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import android.widget.Toast
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.rememberAsyncImagePainter
-import com.narmocorp.satorispa.controller.PerfilController
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import com.narmocorp.satorispa.controller.AuthController
-import android.util.Patterns
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.foundation.text.KeyboardActions
-import android.content.Context
+import com.narmocorp.satorispa.controller.PerfilController
 import com.narmocorp.satorispa.viewmodel.ClientHomeViewModel
+import java.io.File
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,28 +64,41 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
     var cargando by remember { mutableStateOf(true) }
     var guardando by remember { mutableStateOf(false) }
 
-    // Bandera para mostrar el AlertDialog de CIERRE DE SESIÓN (SOLO para cambio de correo)
     var mostrarDialogoExito by remember { mutableStateOf(false) }
-
-    // ************ ESTADOS PARA CAMBIO DE EMAIL ************
     var mostrarDialogoCambioEmail by remember { mutableStateOf(false) }
     var nuevoEmailInput by remember { mutableStateOf("") }
     var contrasenaActualInput by remember { mutableStateOf("") }
-    // *******************************************************
 
-    val showToast: (Context, String) -> Unit = { ctx, msg ->
-        Toast.makeText(ctx, msg, Toast.LENGTH_LONG).show()
-    }
+    // --- ESTADOS Y LAUNCHERS PARA SELECCIÓN DE IMAGEN ---
+    var showImageSourceDialog by remember { mutableStateOf(false) }
+    var tempImageUri by remember { mutableStateOf<Uri?>(null) }
 
-
-    // Launcher para seleccionar imagen
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         nuevaImagenUri = uri
     }
 
-    // Cargar datos del perfil al iniciar
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success: Boolean ->
+        if (success) {
+            nuevaImagenUri = tempImageUri
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            val uri = createTempImageUri(context)
+            tempImageUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            Toast.makeText(context, "Permiso de cámara denegado.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     LaunchedEffect(Unit) {
         PerfilController.obtenerDatosUsuario(
             onSuccess = { user ->
@@ -97,7 +116,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
         )
     }
 
-    // Colores del tema
     val primaryBrandColor = MaterialTheme.colorScheme.primary
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
     val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
@@ -116,7 +134,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
             )
         } else {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Header
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -131,7 +148,7 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(
-                            Icons.Filled.ArrowBack,
+                            Icons.Default.ArrowBack,
                             contentDescription = "Atrás",
                             tint = textOnSecondaryPlatform,
                             modifier = Modifier.size(24.dp)
@@ -146,14 +163,12 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                     )
                 }
 
-                // Contenido scrolleable
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
-                    // Foto de perfil
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -163,7 +178,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                         Box(
                             modifier = Modifier.size(120.dp)
                         ) {
-                            // Imagen de perfil
                             Box(
                                 modifier = Modifier
                                     .size(120.dp)
@@ -172,22 +186,13 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                                     .border(3.dp, MaterialTheme.colorScheme.primary, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                if (nuevaImagenUri != null) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(nuevaImagenUri),
-                                        contentDescription = "Nueva foto de perfil",
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else if (imagenUrl.isNotEmpty()) {
-                                    Image(
-                                        painter = rememberAsyncImagePainter(imagenUrl),
+                                val imageModel: Any? = nuevaImagenUri ?: if (imagenUrl.isNotEmpty()) imagenUrl else null
+
+                                if (imageModel != null) {
+                                    AsyncImage(
+                                        model = imageModel,
                                         contentDescription = "Foto de perfil",
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .clip(CircleShape),
+                                        modifier = Modifier.fillMaxSize().clip(CircleShape),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
@@ -200,16 +205,13 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                                 }
                             }
 
-                            // Botón de cámara
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .align(Alignment.BottomEnd)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.primary)
-                                    .clickable {
-                                        imagePickerLauncher.launch("image/*")
-                                    },
+                                    .clickable { showImageSourceDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
@@ -229,14 +231,11 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
-                            .clickable {
-                                imagePickerLauncher.launch("image/*")
-                            }
+                            .clickable { showImageSourceDialog = true }
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Información personal
                     Text(
                         "Información Personal",
                         fontSize = 14.sp,
@@ -265,7 +264,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // CORREO ELECTRÓNICO (SOLO LECTURA + BOTÓN)
                     OutlinedTextField(
                         value = email,
                         onValueChange = { },
@@ -277,7 +275,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         },
-                        // Ícono de editar que abre el diálogo
                         trailingIcon = {
                             IconButton(onClick = {
                                 mostrarDialogoCambioEmail = true
@@ -300,12 +297,11 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                             disabledTextColor = textOnSurface
                         ),
                         singleLine = true,
-                        enabled = false // Siempre deshabilitado para edición directa
+                        enabled = false
                     )
 
                     Spacer(modifier = Modifier.height(32.dp))
 
-                    // Botón de guardar
                     Button(
                         onClick = {
                             if (nombre.isEmpty() || apellido.isEmpty()) {
@@ -319,7 +315,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
 
                             guardando = true
 
-                            // Se llama al PerfilController para actualizar nombre/apellido/imagen.
                             PerfilController.actualizarPerfil(
                                 nombre = nombre,
                                 apellido = apellido,
@@ -328,21 +323,12 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                                 imagenUri = nuevaImagenUri,
                                 onSuccess = {
                                     guardando = false
-
-                                    // *** INICIO DE LA CORRECCIÓN ***
-                                    // Solo mostrar Toast de éxito si no es cambio de correo
                                     Toast.makeText(
                                         context,
                                         "Perfil actualizado correctamente.",
                                         Toast.LENGTH_LONG
                                     ).show()
-
-                                    // Si la actualización fue exitosa, limpiamos la URI local
-                                    // para que se use la nueva URL de la imagen si se cambió.
                                     nuevaImagenUri = null
-
-                                    // Aquí NO se activa mostrarDialogoExito, lo cual era el problema.
-                                    // *** FIN DE LA CORRECCIÓN ***
                                 },
                                 onError = { mensaje ->
                                     guardando = false
@@ -389,7 +375,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
         }
     }
 
-    // El AlertDialog de éxito (Cerrar Sesión) solo se usa si se cambia el correo
     if (mostrarDialogoExito) {
         CorreoCambiadoExitoDialog(
             navController = navController,
@@ -399,7 +384,6 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
         )
     }
 
-    // ************ DIÁLOGO DE CAMBIO DE EMAIL ************
     if (mostrarDialogoCambioEmail) {
         CambioEmailDialog(
             onDismiss = {
@@ -412,20 +396,15 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
                 AuthController.cambiarCorreo(
                     nuevoCorreo = nuevoEmail,
                     contrasenaActual = contrasena,
-                    onSuccess = { mensaje ->
-                        // 1. Ocultar el diálogo de ingreso de datos
+                    onSuccess = {
                         mostrarDialogoCambioEmail = false
-
-                        // 2. Actualizar el estado del email en la pantalla
                         email = nuevoEmail
-
-                        // 3. Desactivar loading y activar el AlertDialog de CIERRE DE SESIÓN
                         guardando = false
-                        mostrarDialogoExito = true // Muestra el diálogo de re-login SOLO aquí
+                        mostrarDialogoExito = true
                     },
                     onError = { mensaje ->
                         guardando = false
-                        showToast(context, mensaje)
+                        Toast.makeText(context, mensaje, Toast.LENGTH_LONG).show()
                     }
                 )
             },
@@ -436,10 +415,69 @@ fun EditarPerfilScreen(navController: NavController, clienteViewModel: ClientHom
             onContrasenaActualChange = { contrasenaActualInput = it },
         )
     }
+
+    if (showImageSourceDialog) {
+        ImageSourceChooserDialog(
+            onDismiss = { showImageSourceDialog = false },
+            onTakePhotoClick = {
+                showImageSourceDialog = false
+                when (PackageManager.PERMISSION_GRANTED) {
+                    ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) -> {
+                        val uri = createTempImageUri(context)
+                        tempImageUri = uri
+                        cameraLauncher.launch(uri)
+                    }
+                    else -> {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }
+            },
+            onChooseFromGalleryClick = {
+                showImageSourceDialog = false
+                galleryLauncher.launch("image/*")
+            }
+        )
+    }
 }
 
 
-// ************ COMPOSABLE DEL DIÁLOGO DE CAMBIO DE EMAIL ************
+@Composable
+private fun ImageSourceChooserDialog(
+    onDismiss: () -> Unit,
+    onTakePhotoClick: () -> Unit,
+    onChooseFromGalleryClick: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Cambiar foto de perfil") },
+        text = {
+            Column {
+                ListItem(
+                    headlineContent = { Text("Tomar foto") },
+                    leadingContent = { Icon(Icons.Default.CameraAlt, contentDescription = null) },
+                    modifier = Modifier.clickable { onTakePhotoClick() }
+                )
+                ListItem(
+                    headlineContent = { Text("Elegir de la galería") },
+                    leadingContent = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
+                    modifier = Modifier.clickable { onChooseFromGalleryClick() }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val file = File.createTempFile("JPEG_${System.currentTimeMillis()}_", ".jpg", context.externalCacheDir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+}
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CambioEmailDialog(
@@ -455,13 +493,10 @@ fun CambioEmailDialog(
     val textOnSurface = MaterialTheme.colorScheme.onSurface
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
-    val errorColor = MaterialTheme.colorScheme.error // Usar color de error del tema
+    val errorColor = MaterialTheme.colorScheme.error
 
-    // El unfocusedBorderColor se define localmente para asegurar contraste en modo oscuro
     val unfocusedBorderColorVisible = Color.LightGray.copy(alpha = 0.5f)
 
-
-    // Validación de formato de email
     val isEmailValid = Patterns.EMAIL_ADDRESS.matcher(nuevoEmail).matches()
     val isFormValid = isEmailValid && contrasenaActual.isNotEmpty()
 
@@ -471,7 +506,7 @@ fun CambioEmailDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Default.Email, contentDescription = null, tint = primaryBrandColor) },
         title = { Text("Cambiar Correo Electrónico") },
-        containerColor = MaterialTheme.colorScheme.surface, // Se adapta al modo oscuro/claro
+        containerColor = MaterialTheme.colorScheme.surface,
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
@@ -480,7 +515,6 @@ fun CambioEmailDialog(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Campo Nuevo Correo
                 OutlinedTextField(
                     value = nuevoEmail,
                     onValueChange = onNuevoEmailChange,
@@ -506,7 +540,6 @@ fun CambioEmailDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Campo Contraseña Actual
                 OutlinedTextField(
                     value = contrasenaActual,
                     onValueChange = onContrasenaActualChange,
@@ -515,7 +548,7 @@ fun CambioEmailDialog(
                     trailingIcon = {
                         IconButton(onClick = { contrasenaVisible = !contrasenaVisible }) {
                             Icon(
-                                imageVector = if (contrasenaVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                                imageVector = if (contrasenaVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (contrasenaVisible) "Ocultar" else "Mostrar",
                                 tint = primaryBrandColor
                             )
@@ -570,7 +603,6 @@ fun CambioEmailDialog(
 }
 
 
-// ************ NUEVO COMPOSABLE: DIÁLOGO DE ÉXITO PARA REQUERIR LOGIN ************
 @Composable
 fun CorreoCambiadoExitoDialog(
     navController: NavController,
@@ -601,7 +633,6 @@ fun CorreoCambiadoExitoDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    // Cierra la sesión y navega al login
                     AuthController.cerrarSesion()
                     onDismiss()
                     navController.navigate("login") {
@@ -618,7 +649,6 @@ fun CorreoCambiadoExitoDialog(
     )
 }
 
-// ************ COMPOSABLE DE CAMPO DE TEXTO (ASUMO QUE ES NECESARIO) ************
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampoTextoPersonalizado(
