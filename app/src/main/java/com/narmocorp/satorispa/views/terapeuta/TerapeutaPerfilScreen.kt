@@ -234,11 +234,11 @@ fun TerapeutaPerfilScreen(
                         }
                     }
 
-                    Text("Cambiar foto de perfil", fontSize = 13.sp, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium, modifier = Modifier.clickable { if (!subiendoFoto) showDialog = true })
+                    Text("Cambiar foto de perfil", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSecondary, fontWeight = FontWeight.Medium, modifier = Modifier.clickable { if (!subiendoFoto) showDialog = true })
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    Text("Información Personal", fontWeight = FontWeight.Bold, fontSize = 18.sp, modifier = Modifier.align(Alignment.Start))
+                    Text("Información Personal", fontWeight = FontWeight.Bold,color = MaterialTheme.colorScheme.onSecondary, fontSize = 18.sp, modifier = Modifier.align(Alignment.Start))
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(value = nombre, onValueChange = {}, label = { Text("Nombre") }, leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }, modifier = Modifier.fillMaxWidth(), colors = OutlinedTextFieldDefaults.colors(disabledTextColor = MaterialTheme.colorScheme.onSurface, disabledBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f), disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f), disabledLeadingIconColor = MaterialTheme.colorScheme.primary), enabled = false)
