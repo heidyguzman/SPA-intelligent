@@ -1,7 +1,9 @@
 package com.narmocorp.satorispa.viewmodel
 
+import android.app.Application
+import android.content.Context
 import android.util.Log
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration // Importación necesaria
@@ -12,9 +14,10 @@ import kotlinx.coroutines.flow.asStateFlow
 
 private const val TAG = "ClientHomeViewModel"
 
-class ClientHomeViewModel : ViewModel() {
+class ClientHomeViewModel(application: Application) : AndroidViewModel(application) {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
+    private val sharedPreferences = application.getSharedPreferences("NfcPref", Context.MODE_PRIVATE)
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
     val userState: StateFlow<UserState> = _userState.asStateFlow()
@@ -55,6 +58,11 @@ class ClientHomeViewModel : ViewModel() {
                     val user = snapshot.toObject(User::class.java)
                     if (user != null) {
                         _userState.value = UserState.Success(user)
+                        // Guardar el NFC UID en SharedPreferences
+                        with(sharedPreferences.edit()) {
+                            putString("nfc_uid", user.nfc)
+                            apply()
+                        }
                     } else {
                         _userState.value = UserState.Error("Error al parsear datos del usuario")
                     }

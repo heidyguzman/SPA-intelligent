@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Satori SPA</string>
+    <string name="servicedesc">Satori SPA HCE Service</string>
+    <string name="aiddescription">Satori SPA AID</string>
 </resources>

@@ -11,6 +11,7 @@ import com.narmocorp.satorispa.utils.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 private const val TAG = "LoginController"
 
@@ -40,17 +41,29 @@ fun loginUser(
                     sessionManager.saveSessionPreference(keepSession)
                     Log.d(TAG, "Authenticated and verified user uid=${user.uid}")
 
-                    db.collection("usuarios").document(user.uid)
-                        .get()
+                    val userDocRef = db.collection("usuarios").document(user.uid)
+
+                    userDocRef.get()
                         .addOnSuccessListener { document ->
                             if (document != null && document.exists()) {
+                                // Check for NFC UID
+                                if (!document.contains("nfc")) {
+                                    val nfcUid = UUID.randomUUID().toString().replace("-", "").substring(0, 8).uppercase()
+                                    userDocRef.update("nfc", nfcUid)
+                                        .addOnSuccessListener {
+                                            Log.d(TAG, "NFC UID generated and saved for user ${user.uid}")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            Log.e(TAG, "Error saving NFC UID for user ${user.uid}", e)
+                                        }
+                                }
+
                                 val notificacionBienvenidaEnviada = document.getBoolean("notificacionBienvenidaEnviada") ?: false
 
                                 // Get the latest FCM token and update it in Firestore for the current user.
                                 FirebaseMessaging.getInstance().token.addOnCompleteListener { tokenTask ->
                                     if (tokenTask.isSuccessful) {
                                         val token = tokenTask.result
-                                        val userDocRef = db.collection("usuarios").document(user.uid)
 
                                         if (!notificacionBienvenidaEnviada) {
                                             // First login: update token, set welcome flag, and send notification.

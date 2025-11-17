@@ -1,6 +1,9 @@
 package com.narmocorp.satorispa
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -54,6 +57,7 @@ import com.narmocorp.satorispa.views.terapeuta.TerapeutaCambiarContrasenaScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaCitasScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaHomeScreen
 import com.narmocorp.satorispa.views.terapeuta.TerapeutaPerfilScreen
+import java.util.concurrent.Executor
 
 private const val TAG = "MainActivity"
 
@@ -88,6 +92,7 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         initializeAppCheck()
+        createNotificationChannels()
         requestPermissions()
 
         enableEdgeToEdge()
@@ -293,6 +298,53 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+            // Canal para Citas de Cliente (Confirmaciones)
+            val citasChannel = NotificationChannel(
+                "citas_channel",
+                "Confirmación de Citas",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notificaciones para nuevas citas agendadas."
+            }
+
+            // Canal para Citas de Terapeuta
+            val citasTerapeutaChannel = NotificationChannel(
+                "citas_terapeuta_channel",
+                "Nuevas Citas (Terapeutas)",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifica a los terapeutas sobre nuevas citas asignadas."
+            }
+
+            // Canal para Recordatorios
+            val recordatoriosChannel = NotificationChannel(
+                "recordatorios_channel",
+                "Recordatorios de Citas",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Recordatorios para citas próximas."
+            }
+
+            // Canal General
+            val generalChannel = NotificationChannel(
+                "general_channel",
+                "Notificaciones Generales",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notificaciones generales y anuncios."
+            }
+
+            notificationManager.createNotificationChannel(citasChannel)
+            notificationManager.createNotificationChannel(citasTerapeutaChannel)
+            notificationManager.createNotificationChannel(recordatoriosChannel)
+            notificationManager.createNotificationChannel(generalChannel)
+        }
+    }
+
     private fun requestPermissions() {
         val permissionsToRequest = mutableListOf<String>()
 
@@ -329,61 +381,59 @@ class MainActivity : FragmentActivity() {
     }
 
     private fun navigateToUserHome(navController: NavController) {
-        val auth = FirebaseAuth.getInstance()
-        val db = FirebaseFirestore.getInstance()
-        val user = auth.currentUser
-
+        val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
-            navController.navigate("start") { popUpTo("auth_gate") { inclusive = true } }
+            navController.navigate("start") {
+                popUpTo("auth_gate") { inclusive = true }
+            }
             return
         }
 
-        db.collection("usuarios").document(user.uid).get()
+        FirebaseFirestore.getInstance().collection("usuarios").document(user.uid).get()
             .addOnSuccessListener { document ->
                 val rol = document?.getString("rol")?.trim()?.lowercase()
-                val destination = when (rol) {
-                    "cliente" -> "cliente_home"
-                    "terapeuta" -> "terapeuta_home"
-                    else -> "start" // Fallback
+                val destination = if (rol == "terapeuta") "terapeuta_home" else "cliente_home"
+                navController.navigate(destination) {
+                    popUpTo("auth_gate") { inclusive = true }
                 }
-                navController.navigate(destination) { popUpTo("auth_gate") { inclusive = true } }
             }
             .addOnFailureListener {
-                Log.e(TAG, "Error getting user role", it)
-                navController.navigate("start") { popUpTo("auth_gate") { inclusive = true } }
+                Log.e(TAG, "Error getting user role, defaulting to cliente_home", it)
+                // Default to client home on failure
+                navController.navigate("cliente_home") {
+                    popUpTo("auth_gate") { inclusive = true }
+                }
             }
     }
 
     private fun showBiometricPrompt(onSuccess: () -> Unit) {
         val biometricManager = BiometricManager.from(this)
-        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL) == BiometricManager.BIOMETRIC_SUCCESS) {
-            val executor = ContextCompat.getMainExecutor(this)
-            val biometricPrompt = BiometricPrompt(this, executor,
-                object : BiometricPrompt.AuthenticationCallback() {
-                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        super.onAuthenticationSucceeded(result)
-                        onSuccess()
-                    }
-
-                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                        super.onAuthenticationError(errorCode, errString)
-                        finish()
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                    }
-                })
-
-            val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Inicio de Sesión Biométrico")
-                .setSubtitle("Inicia sesión con tu huella o Face ID")
-                .setNegativeButtonText("Cancelar")
-                .build()
-
-            biometricPrompt.authenticate(promptInfo)
-        } else {
-            onSuccess()
+        if (biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_WEAK) != BiometricManager.BIOMETRIC_SUCCESS) {
+            onSuccess() // Si no se puede usar biométrico, simplemente navega.
+            return
         }
+
+        val executor: Executor = ContextCompat.getMainExecutor(this)
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Verificación biométrica")
+            .setSubtitle("Confirma tu identidad para continuar")
+            .setNegativeButtonText("Usar contraseña")
+            .build()
+
+        val biometricPrompt = BiometricPrompt(this, executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    onSuccess()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    // El usuario canceló o hubo un error. Puedes manejarlo si es necesario.
+                    Log.d(TAG, "Biometric auth error: $errString")
+                }
+            })
+
+        biometricPrompt.authenticate(promptInfo)
     }
 }

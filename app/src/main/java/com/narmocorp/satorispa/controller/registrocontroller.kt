@@ -3,6 +3,7 @@ package com.narmocorp.satorispa.controller
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Timestamp
+import java.util.UUID
 
 object RegistroController {
     /**
@@ -34,11 +35,13 @@ object RegistroController {
                     user.sendEmailVerification()
                         .addOnCompleteListener { verificationTask ->
                             if (verificationTask.isSuccessful) {
+                                val nfcUid = UUID.randomUUID().toString().replace("-", "").substring(0, 8).uppercase()
                                 val userData = hashMapOf(
                                     "nombre" to nombre,
                                     "apellido" to apellido,
                                     "correo" to correo,
                                     "rol" to "cliente",
+                                    "nfc" to nfcUid,
                                     "createdAt" to Timestamp.now()
                                 )
 

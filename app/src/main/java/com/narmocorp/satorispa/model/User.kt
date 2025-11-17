@@ -8,5 +8,6 @@ data class User(
     val correo: String = "",
     val rol: String = "",
     val imagenUrl: String = "", // URL de la imagen de perfil
+    val nfc: String = "",
     val createdAt: Timestamp? = null
 )
