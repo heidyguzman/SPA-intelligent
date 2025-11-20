@@ -1,8 +1,17 @@
 package com.narmocorp.satorispa.views
 
-import androidx.compose.foundation.Image
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,14 +19,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -27,10 +41,10 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.narmocorp.satorispa.R
+import com.narmocorp.satorispa.ui.theme.Satori_Notification_Badge
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
-import androidx.compose.material.icons.filled.Notifications
 
 data class Notificacion(
     val id: String = "",
@@ -41,17 +55,33 @@ data class Notificacion(
     val leida: Boolean = false
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NotificacionesScreen(navController: NavController) {
     var notificaciones by remember { mutableStateOf<List<Notificacion>>(emptyList()) }
     var cargando by remember { mutableStateOf(true) }
+
+    // Estado para el Modo Selección
+    var isSelectionMode by remember { mutableStateOf(false) }
+    var seleccionados by remember { mutableStateOf(setOf<String>()) }
+
     val scope = rememberCoroutineScope()
+    val haptic = LocalHapticFeedback.current // Para vibración al hacer long press
 
     // Colores del tema
     val primaryBrandColor = MaterialTheme.colorScheme.primary
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
     val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
     val backgroundColor = MaterialTheme.colorScheme.background
+    val onBackgroundColor = MaterialTheme.colorScheme.onBackground
+    val errorColor = MaterialTheme.colorScheme.error
+
+    // Manejar el botón "Atrás" físico del dispositivo
+    BackHandler(enabled = isSelectionMode) {
+        // Si está en modo selección, salir del modo
+        isSelectionMode = false
+        seleccionados = emptySet()
+    }
 
     // Cargar notificaciones al iniciar
     LaunchedEffect(Unit) {
@@ -63,13 +93,22 @@ fun NotificacionesScreen(navController: NavController) {
         }
     }
 
+    fun recargarDatos() {
+        scope.launch {
+            cargarNotificaciones { lista -> notificaciones = lista }
+            isSelectionMode = false
+            seleccionados = emptySet()
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header con esquinas redondeadas (tipo card compacto)
+
+            // --- HEADER DINÁMICO ---
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -77,44 +116,104 @@ fun NotificacionesScreen(navController: NavController) {
                     .clip(RoundedCornerShape(20.dp))
                     .background(secondaryBrandColor)
                     .padding(vertical = 12.dp, horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.ArrowBack,
-                        contentDescription = "Atrás",
-                        tint = textOnSecondaryPlatform,
-                        modifier = Modifier.size(24.dp)
-                    )
+                if (isSelectionMode) {
+                    // MODO SELECCIÓN: Botón X y Contador
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = {
+                                isSelectionMode = false
+                                seleccionados = emptySet()
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Cancelar selección",
+                                tint = textOnSecondaryPlatform,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "${seleccionados.size}",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textOnSecondaryPlatform
+                        )
+                    }
+
+                    // Botones de acción (Borrar)
+                    Row {
+                        // Opcional: Botón para seleccionar todo
+                        IconButton(
+                            onClick = {
+                                if (seleccionados.size == notificaciones.size) {
+                                    seleccionados = emptySet()
+                                } else {
+                                    seleccionados = notificaciones.map { it.id }.toSet()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.SelectAll,
+                                contentDescription = "Seleccionar todo",
+                                tint = textOnSecondaryPlatform
+                            )
+                        }
+
+                        IconButton(
+                            onClick = {
+                                if (seleccionados.isNotEmpty()) {
+                                    scope.launch {
+                                        eliminarMultiplesNotificaciones(seleccionados.toList()) {
+                                            recargarDatos()
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            Icon(
+                                Icons.Filled.Delete,
+                                contentDescription = "Borrar seleccionados",
+                                tint = errorColor
+                            )
+                        }
+                    }
+                } else {
+                    // MODO NORMAL: Botón Atrás y Título
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.ArrowBack,
+                                contentDescription = "Atrás",
+                                tint = textOnSecondaryPlatform,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            "Notificaciones",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textOnSecondaryPlatform
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    "Notificaciones",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = textOnSecondaryPlatform
-                )
             }
 
+            // --- LISTA ---
             if (cargando) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(backgroundColor),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = primaryBrandColor)
                 }
             } else if (notificaciones.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(backgroundColor),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -123,12 +222,12 @@ fun NotificacionesScreen(navController: NavController) {
                             Icons.Default.Notifications,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = Color.LightGray
+                            tint = onBackgroundColor.copy(alpha = 0.2f)
                         )
                         Text(
                             "No hay notificaciones",
                             fontSize = 16.sp,
-                            color = Color.Gray
+                            color = onBackgroundColor.copy(alpha = 0.5f)
                         )
                     }
                 }
@@ -144,39 +243,41 @@ fun NotificacionesScreen(navController: NavController) {
                     // Esta semana
                     if (notificacionesAgrupadas["estaSemana"]?.isNotEmpty() == true) {
                         item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    "Esta semana",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = textOnSecondaryPlatform
-                                )
-                            }
+                            Text(
+                                "Esta semana",
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = textOnSecondaryPlatform,
+                                modifier = Modifier.padding(top = 8.dp)
+                            )
                         }
-
                         items(notificacionesAgrupadas["estaSemana"] ?: emptyList()) { notif ->
-                            TarjetaNotificacion(
-                                notif,
+                            TarjetaNotificacionSelectable(
+                                notificacion = notif,
+                                isSelectionMode = isSelectionMode,
+                                isSelected = seleccionados.contains(notif.id),
+                                onLongClick = {
+                                    if (!isSelectionMode) {
+                                        isSelectionMode = true
+                                        seleccionados = setOf(notif.id)
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
+                                },
+                                onClick = {
+                                    if (isSelectionMode) {
+                                        seleccionados = if (seleccionados.contains(notif.id)) {
+                                            seleccionados - notif.id
+                                        } else {
+                                            seleccionados + notif.id
+                                        }
+                                        // Si deselecciona todo, podríamos salir del modo,
+                                        // pero es mejor dejar que el usuario salga con la X o Atrás.
+                                    }
+                                },
                                 onMarcarLeida = {
                                     scope.launch {
                                         marcarComoLeida(notif.id)
-                                        cargarNotificaciones { listaNotificaciones ->
-                                            notificaciones = listaNotificaciones
-                                        }
-                                    }
-                                },
-                                onEliminar = {
-                                    scope.launch {
-                                        eliminarNotificacion(notif.id)
-                                        cargarNotificaciones { listaNotificaciones ->
-                                            notificaciones = listaNotificaciones
-                                        }
+                                        recargarDatos()
                                     }
                                 }
                             )
@@ -194,150 +295,164 @@ fun NotificacionesScreen(navController: NavController) {
                                 modifier = Modifier.padding(top = 8.dp)
                             )
                         }
-
                         items(notificacionesAgrupadas["anteriores"] ?: emptyList()) { notif ->
-                            TarjetaNotificacion(
-                                notif,
-                                onMarcarLeida = {
-                                    scope.launch {
-                                        marcarComoLeida(notif.id)
-                                        cargarNotificaciones { listaNotificaciones ->
-                                            notificaciones = listaNotificaciones
+                            TarjetaNotificacionSelectable(
+                                notificacion = notif,
+                                isSelectionMode = isSelectionMode,
+                                isSelected = seleccionados.contains(notif.id),
+                                onLongClick = {
+                                    if (!isSelectionMode) {
+                                        isSelectionMode = true
+                                        seleccionados = setOf(notif.id)
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    }
+                                },
+                                onClick = {
+                                    if (isSelectionMode) {
+                                        seleccionados = if (seleccionados.contains(notif.id)) {
+                                            seleccionados - notif.id
+                                        } else {
+                                            seleccionados + notif.id
                                         }
                                     }
                                 },
-                                onEliminar = {
+                                onMarcarLeida = {
                                     scope.launch {
-                                        eliminarNotificacion(notif.id)
-                                        cargarNotificaciones { listaNotificaciones ->
-                                            notificaciones = listaNotificaciones
-                                        }
+                                        marcarComoLeida(notif.id)
+                                        recargarDatos()
                                     }
                                 }
                             )
                         }
                     }
 
-                    // Espacio al final
-                    item {
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
+                    item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
             }
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TarjetaNotificacion(
+fun TarjetaNotificacionSelectable(
     notificacion: Notificacion,
-    onMarcarLeida: () -> Unit,
-    onEliminar: () -> Unit
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
+    onLongClick: () -> Unit,
+    onClick: () -> Unit,
+    onMarcarLeida: () -> Unit
 ) {
-    // Colores del tema
     val primaryColor = MaterialTheme.colorScheme.primary
-    val secondaryColor = MaterialTheme.colorScheme.secondary
     val textColor = MaterialTheme.colorScheme.onSecondary
-    val errorColor = MaterialTheme.colorScheme.error
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val backgroundRead = MaterialTheme.colorScheme.background
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clip(RoundedCornerShape(16.dp))
+            // combinedClickable maneja tanto el click simple como el largo
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notificacion.leida) Color(0xfff5f5f5) else Color.White
+            containerColor = if (notificacion.leida) backgroundRead else surfaceColor
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        border = BorderStroke(1.dp, Color.LightGray)
+        // Borde azul si está seleccionado, gris tenue si no
+        border = if (isSelected) BorderStroke(2.dp, primaryColor) else BorderStroke(1.dp, onSurfaceColor.copy(alpha = 0.1f))
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            // Contenido principal
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Checkbox animado (solo aparece en modo selección)
+            AnimatedVisibility(
+                visible = isSelectionMode,
+                enter = expandHorizontally(animationSpec = tween(200)) + fadeIn(),
+                exit = shrinkHorizontally(animationSpec = tween(200)) + fadeOut()
             ) {
-                // Icono
-                Surface(
-                    modifier = Modifier.size(48.dp),
-                    color = secondaryColor,
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.logo),
-                        contentDescription = "Logo",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(8.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                }
-
-                // Información
-                Column(
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.Top)
+                        .padding(end = 8.dp)
+                        .height(48.dp), // Para alinear visualmente con el icono
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        notificacion.titulo,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = textColor
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onClick() } // Delegamos al onClick de la tarjeta
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        notificacion.mensaje,
-                        fontSize = 14.sp,
-                        color = Color.Gray
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        formatearFecha(notificacion.fecha),
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                }
-
-                // Badge si no está leída
-                if (!notificacion.leida) {
-                    Surface(
-                        modifier = Modifier.size(24.dp),
-                        color = Color(0xff2196F3),
-                        shape = RoundedCornerShape(50)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                "1",
-                                fontSize = 12.sp,
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
                 }
             }
 
-            // Botones de acción
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(36.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Botón marcar como leída
-                if (!notificacion.leida) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Icono con fondo gris claro
+                    Surface(
+                        modifier = Modifier.size(48.dp),
+                        color = Color.LightGray,
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "Logo",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            notificacion.titulo,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            notificacion.mensaje,
+                            fontSize = 14.sp,
+                            color = onSurfaceColor.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            formatearFecha(notificacion.fecha),
+                            fontSize = 12.sp,
+                            color = onSurfaceColor.copy(alpha = 0.5f)
+                        )
+                    }
+
+                    if (!notificacion.leida) {
+                        Surface(
+                            modifier = Modifier.size(12.dp),
+                            color = Satori_Notification_Badge,
+                            shape = RoundedCornerShape(50)
+                        ) {}
+                    }
+                }
+
+                // Botón de acción (solo si no estamos en modo selección para no causar toques accidentales)
+                // O si prefieres que siga estando, puedes dejarlo, pero usualmente en modo selección se deshabilitan acciones internas.
+                if (!notificacion.leida && !isSelectionMode) {
+                    Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = onMarcarLeida,
                         modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
+                            .fillMaxWidth()
+                            .height(36.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = primaryColor,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -349,51 +464,22 @@ fun TarjetaNotificacion(
                             contentDescription = "Marcar como leída",
                             modifier = Modifier.size(16.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "Leída",
-                            fontSize = 12.sp
-                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Marcar como leída", fontSize = 12.sp)
                     }
-                }
-
-                // Botón eliminar
-                Button(
-                    onClick = onEliminar,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = errorColor,
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = "Eliminar",
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        "Eliminar",
-                        fontSize = 12.sp
-                    )
                 }
             }
         }
     }
 }
 
+// --- FUNCIONES FIREBASE (Igual que antes) ---
+
 fun cargarNotificaciones(callback: (List<Notificacion>) -> Unit) {
     val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
     val db = FirebaseFirestore.getInstance()
-
-    db.collection("usuarios")
-        .document(usuarioId)
-        .collection("notificaciones")
-        .orderBy("fecha", Query.Direction.DESCENDING)
-        .get()
+    db.collection("usuarios").document(usuarioId).collection("notificaciones")
+        .orderBy("fecha", Query.Direction.DESCENDING).get()
         .addOnSuccessListener { snapshot ->
             val lista = snapshot.documents.map { doc ->
                 Notificacion(
@@ -406,112 +492,63 @@ fun cargarNotificaciones(callback: (List<Notificacion>) -> Unit) {
                 )
             }
             callback(lista)
-        }
-        .addOnFailureListener {
-            callback(emptyList())
-        }
+        }.addOnFailureListener { callback(emptyList()) }
 }
 
 fun marcarComoLeida(notificacionId: String) {
     val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-    val db = FirebaseFirestore.getInstance()
-
-    db.collection("usuarios")
-        .document(usuarioId)
-        .collection("notificaciones")
-        .document(notificacionId)
-        .update("leida", true)
+    FirebaseFirestore.getInstance().collection("usuarios").document(usuarioId)
+        .collection("notificaciones").document(notificacionId).update("leida", true)
 }
 
-fun eliminarNotificacion(notificacionId: String) {
+fun eliminarMultiplesNotificaciones(ids: List<String>, onSuccess: () -> Unit) {
     val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
     val db = FirebaseFirestore.getInstance()
-
-    db.collection("usuarios")
-        .document(usuarioId)
-        .collection("notificaciones")
-        .document(notificacionId)
-        .delete()
+    val batch = db.batch()
+    ids.forEach { id ->
+        val ref = db.collection("usuarios").document(usuarioId)
+            .collection("notificaciones").document(id)
+        batch.delete(ref)
+    }
+    batch.commit().addOnSuccessListener { onSuccess() }
 }
 
 fun agruparPorSemana(notificaciones: List<Notificacion>): Map<String, List<Notificacion>> {
     val ahora = System.currentTimeMillis() / 1000
     val unaSemanaAtras = ahora - (7 * 24 * 60 * 60)
-
-    val estaSemana = notificaciones.filter { it.fecha >= unaSemanaAtras }
-    val anteriores = notificaciones.filter { it.fecha < unaSemanaAtras }
-
     return mapOf(
-        "estaSemana" to estaSemana,
-        "anteriores" to anteriores
+        "estaSemana" to notificaciones.filter { it.fecha >= unaSemanaAtras },
+        "anteriores" to notificaciones.filter { it.fecha < unaSemanaAtras }
     )
 }
 
 fun formatearFecha(timestamp: Long): String {
     if (timestamp == 0L) return ""
-    val fecha = Date(timestamp * 1000)
     val formato = SimpleDateFormat("dd/MMM/yy - HH:mm", Locale("es", "ES"))
-    return formato.format(fecha)
+    return formato.format(Date(timestamp * 1000))
 }
 
-// Función para contar notificaciones no leídas con listener en tiempo real
 fun contarNotificacionesNoLeidas(callback: (Int) -> Unit) {
     val usuarioId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-    val db = FirebaseFirestore.getInstance()
-
-    db.collection("usuarios")
-        .document(usuarioId)
-        .collection("notificaciones")
-        .whereEqualTo("leida", false)
-        .addSnapshotListener { snapshot, error ->
-            if (error != null) {
-                callback(0)
-                return@addSnapshotListener
-            }
-            val count = snapshot?.size() ?: 0
-            callback(count)
-        }
+    FirebaseFirestore.getInstance().collection("usuarios").document(usuarioId)
+        .collection("notificaciones").whereEqualTo("leida", false)
+        .addSnapshotListener { snapshot, _ -> callback(snapshot?.size() ?: 0) }
 }
 
-// Composable para el ícono de campanita con badge
 @Composable
-fun IconoCampanaConBadge(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    tint: Color = MaterialTheme.colorScheme.primary
-) {
+fun IconoCampanaConBadge(onClick: () -> Unit, modifier: Modifier = Modifier, tint: Color = MaterialTheme.colorScheme.primary) {
     var notificacionesCount by remember { mutableStateOf(0) }
-
-    LaunchedEffect(Unit) {
-        contarNotificacionesNoLeidas { count ->
-            notificacionesCount = count
-        }
-    }
-
+    LaunchedEffect(Unit) { contarNotificacionesNoLeidas { notificacionesCount = it } }
     Box(modifier = modifier) {
         IconButton(onClick = onClick) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = "Notificaciones",
-                tint = tint,
-                modifier = Modifier.size(28.dp)
-            )
+            Icon(Icons.Default.Notifications, "Notificaciones", tint = tint, modifier = Modifier.size(28.dp))
         }
-
         if (notificacionesCount > 0) {
             Badge(
                 containerColor = MaterialTheme.colorScheme.error,
                 contentColor = Color.White,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = (-4).dp, y = 8.dp)
-            ) {
-                Text(
-                    text = if (notificacionesCount > 99) "99+" else notificacionesCount.toString(),
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 8.dp)
+            ) { Text(if (notificacionesCount > 99) "99+" else notificacionesCount.toString(), fontSize = 10.sp, fontWeight = FontWeight.Bold) }
         }
     }
 }
