@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CalendarToday
@@ -58,8 +57,6 @@ fun ServicesScreen(
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
                 (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
-
-    val recentServices = services.take(4)
 
     Scaffold(
         topBar = {
@@ -156,39 +153,6 @@ fun ServicesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Lo más reciente",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = onSecondaryColor
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Scroll horizontal",
-                            tint = onSecondaryColor,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(recentServices) { service ->
-                            PopularServiceItem(service = service) {
-                                selectedService = it
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
                             text = "Todos los servicios",
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
@@ -241,58 +205,6 @@ fun ServicesScreen(
                 selectedService = null
             }
         )
-    }
-}
-
-@Composable
-fun PopularServiceItem(service: Servicio, onItemClick: (Servicio) -> Unit) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .clickable { onItemClick(service) },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column {
-            Image(
-                painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.servicio,
-                modifier = Modifier
-                    .height(100.dp)
-                    .fillMaxWidth(),
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .height(80.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = service.servicio,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "$${service.precio}",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
-                    Icon(
-                        Icons.Default.CalendarToday,
-                        contentDescription = "Agendar cita",
-                        tint = MaterialTheme.colorScheme.onSecondary
-                    )
-                }
-            }
-        }
     }
 }
 

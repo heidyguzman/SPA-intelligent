@@ -9,7 +9,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
@@ -58,9 +57,6 @@ fun ClienteServiciosScreen(
         (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
                 (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
-
-    // MODIFICACIÓN: Cambiado de popularServices a recentServices, alineado con Servicios.kt
-    val recentServices = services.take(4)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -158,42 +154,6 @@ fun ClienteServiciosScreen(
                 item {
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // MODIFICACIÓN: Sección "Lo más reciente" con flecha (Alineado con Servicios.kt)
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "Lo más reciente",
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = onSecondaryColor
-                        )
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = "Scroll horizontal",
-                            tint = onSecondaryColor,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                    // FIN MODIFICACIÓN
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // MODIFICACIÓN: Usando recentServices
-                        items(recentServices) { service ->
-                            PopularServiceCard(service = service) {
-                                selectedService = it
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     // MODIFICACIÓN: Sección "Todos los servicios" con flecha (Alineado con Servicios.kt)
                     Row(
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -253,57 +213,6 @@ fun ClienteServiciosScreen(
                 selectedService = null
             }
         )
-    }
-}
-
-@Composable
-private fun PopularServiceCard(service: Servicio, onItemClick: (Servicio) -> Unit) {
-    Card(
-        modifier = Modifier
-            .width(160.dp)
-            .clickable { onItemClick(service) },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column {
-            Image(
-                painter = rememberAsyncImagePainter(service.imagen),
-                contentDescription = service.servicio,
-                modifier = Modifier
-                    .height(100.dp)
-                    .fillMaxWidth(),
-                contentScale = ContentScale.Crop
-            )
-            Column(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .height(80.dp),
-                verticalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = service.servicio,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSecondary
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "$${service.precio}",
-                        color = Color.Gray,
-                        fontSize = 12.sp
-                    )
-                    Icon(
-                        Icons.Default.CalendarToday,
-                        contentDescription = "Agendar cita",
-                        tint = MaterialTheme.colorScheme.onSecondary, // Alineado con Servicios.kt
-                    )
-                }
-            }
-        }
     }
 }
 
