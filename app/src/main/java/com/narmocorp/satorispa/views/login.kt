@@ -44,6 +44,8 @@ import android.widget.Toast
 import androidx.compose.material3.AlertDialog
 import androidx.compose.ui.platform.LocalContext
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import android.util.Patterns
 
 @Composable
 fun Login(
@@ -290,9 +292,14 @@ fun Login(
     }
 }
 
+private fun isValidEmail(email: String): Boolean {
+    return Patterns.EMAIL_ADDRESS.matcher(email).matches()
+}
+
 @Composable
 private fun ForgotPasswordDialog(onDismiss: () -> Unit) {
     var email by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val primaryBrandColor = Color(0xff995d2d)
@@ -306,28 +313,52 @@ private fun ForgotPasswordDialog(onDismiss: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = { 
+                        if (it.length <= 100) {
+                            email = it
+                        }
+                        emailError = null
+                    },
                     label = { Text("Correo") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
+                    isError = emailError != null,
+                    supportingText = { 
+                        if (emailError != null) {
+                            Text(emailError!!, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    if (email.isNotBlank()) {
-                        auth.sendPasswordResetEmail(email)
-                            .addOnCompleteListener { task ->
-                                if (task.isSuccessful) {
-                                    Toast.makeText(context, "Correo de recuperación enviado.", Toast.LENGTH_SHORT).show()
-                                    onDismiss()
-                                } else {
-                                    Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                    when {
+                        email.isBlank() -> {
+                            emailError = "Por favor, introduce tu correo."
+                        }
+                        email.length > 100 -> {
+                            emailError = "El correo no puede tener más de 100 caracteres."
+                        }
+                        !isValidEmail(email) -> {
+                            emailError = "El formato del correo no es válido."
+                        }
+                        else -> {
+                            auth.sendPasswordResetEmail(email)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        Toast.makeText(context, "Correo de recuperación enviado.", Toast.LENGTH_SHORT).show()
+                                        onDismiss()
+                                    } else {
+                                        val errorMessage = when (task.exception) {
+                                            is FirebaseAuthInvalidUserException -> "No existe un usuario registrado con este correo."
+                                            else -> task.exception?.message ?: "Ocurrió un error inesperado."
+                                        }
+                                        Toast.makeText(context, "Error: $errorMessage", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
-                            }
-                    } else {
-                        Toast.makeText(context, "Por favor, introduce tu correo.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = primaryBrandColor)
