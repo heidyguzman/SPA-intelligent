@@ -104,21 +104,21 @@ fun loginUser(
                                     }
                                     else -> {
                                         val rolRaw = document.getString("rol")
-                                        val msg = "Rol de usuario no reconocido: '$rolRaw'"
-                                        Log.d(TAG, msg)
+                                        val msg = "Rol de usuario no reconocido."
+                                        Log.d(TAG, "Rol de usuario no reconocido: '$rolRaw'")
                                         onLoginError(msg)
                                     }
                                 }
                             } else {
-                                val msg = "No se encontró el usuario en la base de datos. uid=${user.uid}"
-                                Log.d(TAG, msg)
+                                val msg = "No se encontró el usuario en la base de datos."
+                                Log.d(TAG, "No se encontró el usuario en la base de datos. uid=${user.uid}")
                                 auth.signOut()
                                 onLoginError(msg)
                             }
                         }
                         .addOnFailureListener { e ->
-                            val msg = "Error al obtener datos del usuario: ${e.message}"
-                            Log.e(TAG, msg, e)
+                            val msg = "Error al obtener los datos del usuario."
+                            Log.e(TAG, "Error al obtener datos del usuario: ${e.message}", e)
                             auth.signOut()
                             onLoginError(msg)
                         }
@@ -127,20 +127,20 @@ fun loginUser(
                     auth.signOut()
                     onLoginError("Por favor, verifica tu correo electrónico para poder iniciar sesión.")
                 } else if (user == null) {
-                    val msg = "Usuario autenticado pero currentUser es null."
-                    Log.d(TAG, msg)
+                    val msg = "Ocurrió un error inesperado. Por favor, inténtalo de nuevo."
+                    Log.d(TAG, "Usuario autenticado pero currentUser es null.")
                     onLoginError(msg)
                 }
 
             } else {
-                val msg = task.exception?.message ?: "Correo o contraseña incorrectos."
-                Log.d(TAG, "Authentication failed: $msg", task.exception)
+                val msg = "Correo o contraseña incorrectos."
+                Log.d(TAG, "Authentication failed: ${task.exception?.message}", task.exception)
                 onLoginError(msg)
             }
         }
         .addOnFailureListener { e ->
-            val msg = "Error de conexión: ${e.message}"
-            Log.e(TAG, msg, e)
+            val msg = "Error de conexión. Por favor, revisa tu conexión a internet."
+            Log.e(TAG, "Error de conexión: ${e.message}", e)
             onLoginError(msg)
         }
 }

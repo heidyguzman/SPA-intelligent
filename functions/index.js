@@ -34,6 +34,7 @@ exports.enviarNotificacion = onCall(async (request) => {
       return {success: false, error: "Token no encontrado"};
     }
 
+    // Usar un mensaje de solo datos para asegurar la ejecución en segundo plano
     const payload = {
       data: {
         title: titulo,
@@ -42,14 +43,6 @@ exports.enviarNotificacion = onCall(async (request) => {
         usuarioId: usuarioId,
       },
       token: token,
-      android: {
-        priority: "high",
-        notification: {
-          title: titulo,
-          body: mensaje,
-          channelId: "general_channel",
-        },
-      },
     };
 
     const response = await getMessaging().send(payload);
@@ -106,24 +99,15 @@ exports.notificarTerapeutaNuevaCita = onDocumentCreated("citas/{citaId}", async 
       return null;
     }
 
-    const title = "¡Nueva Cita Asignada!";
     const body = `Tienes una nueva cita para un servicio de ${nombreServicio} el día ${fecha}.`;
     const payload = {
       data: {
-        title: title,
+        title: "¡Nueva Cita Asignada!",
         body: body,
         tipo: "nueva_cita",
         usuarioId: terapeutaId,
       },
       token: token,
-      android: {
-        priority: "high",
-        notification: {
-          title: title,
-          body: body,
-          channelId: "citas_terapeuta_channel",
-        },
-      },
     };
 
     const response = await getMessaging().send(payload);
@@ -171,25 +155,17 @@ exports.notificarClienteNuevaCita = onDocumentCreated("citas/{citaId}", async (e
       return null;
     }
     const nombreServicio = servicioDoc.data().servicio;
-    const title = "¡Cita Confirmada!";
+
     const body = `Tu cita para ${nombreServicio} el ${fecha} ha sido agendada con éxito.`;
     const payload = {
       data: {
-        title: title,
+        title: "¡Cita Confirmada!",
         body: body,
         tipo: "nueva_cita_cliente",
         citaId: event.params.citaId,
         usuarioId: cliente_id, // Asegura que se guarda para el cliente correcto
       },
       token: token,
-      android: {
-        priority: "high",
-        notification: {
-          title: title,
-          body: body,
-          channelId: "citas_channel", // ¡IMPORTANTE! Este canal debe existir en tu app Android.
-        },
-      },
     };
 
     const response = await getMessaging().send(payload);
@@ -202,10 +178,13 @@ exports.notificarClienteNuevaCita = onDocumentCreated("citas/{citaId}", async (e
 });
 
 // Función programada para enviar recordatorios 24 horas antes de la cita.
+// Se ejecuta cada hora para buscar citas que cumplan el criterio.
+// NOTA: El campo 'fecha' en 'citas' debe ser de tipo Timestamp para que esto funcione.
 exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) => {
     console.log("Ejecutando la función de recordatorios de citas.");
     const ahora = admin.firestore.Timestamp.now();
 
+    // Se buscan citas en un rango de 24 a 25 horas desde el momento de ejecución.
     const inicioRango = new admin.firestore.Timestamp(ahora.seconds + (24 * 60 * 60), ahora.nanoseconds);
     const finRango = new admin.firestore.Timestamp(ahora.seconds + (25 * 60 * 60), ahora.nanoseconds);
 
@@ -213,7 +192,7 @@ exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) =
         const querySnapshot = await admin.firestore().collection('citas')
             .where('fecha', '>=', inicioRango)
             .where('fecha', '<', finRango)
-            .where('recordatorioEnviado', '!=', true)
+            .where('recordatorioEnviado', '!=', true) // Evita enviar recordatorios duplicados
             .get();
 
         if (querySnapshot.empty) {
@@ -239,18 +218,24 @@ exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) =
                     admin.firestore().collection("servicios").doc(servicio).get()
                 ]);
 
-                if (!clienteDoc.exists || !servicioDoc.exists) {
-                    console.error(`Cliente o servicio no encontrado para la cita ${citaId}.`);
+                if (!clienteDoc.exists) {
+                    console.error("No se encontró el cliente:", cliente_id);
+                    return;
+                }
+                if (!servicioDoc.exists) {
+                    console.error("No se encontró el servicio:", servicio);
                     return;
                 }
 
                 const token = clienteDoc.data().fcmToken;
                 const nombreServicio = servicioDoc.data().servicio;
+
                 const fechaLegible = new Date(fecha.toMillis()).toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' });
 
                 const title = "Recordatorio de Cita";
                 const body = `Te recordamos tu cita para ${nombreServicio} el ${fechaLegible}. ¡No faltes!`;
 
+                // 1. Almacenar la notificación para el historial del cliente.
                 const notificacion = {
                     titulo: title,
                     mensaje: body,
@@ -261,6 +246,7 @@ exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) =
                 };
                 await admin.firestore().collection("usuarios").doc(cliente_id).collection("notificaciones").add(notificacion);
 
+                // 2. Enviar notificación Push si el cliente tiene un token FCM.
                 if (token) {
                     const payload = {
                         data: {
@@ -271,14 +257,6 @@ exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) =
                             usuarioId: cliente_id,
                         },
                         token: token,
-                        android: {
-                            priority: "high",
-                            notification: {
-                                title: title,
-                                body: body,
-                                channelId: "recordatorios_channel",
-                            },
-                        },
                     };
                     await getMessaging().send(payload);
                     console.log(`Notificación de recordatorio enviada para la cita ${citaId}`);
@@ -286,6 +264,7 @@ exports.enviarRecordatoriosDeCitas = onSchedule("every 1 hours", async (event) =
                     console.log(`No se encontró token FCM para ${cliente_id}. La notificación solo fue guardada en su historial.`);
                 }
 
+                // 3. Marcar la cita para no volver a enviar un recordatorio.
                 return doc.ref.update({ recordatorioEnviado: true });
 
             } catch (error) {
