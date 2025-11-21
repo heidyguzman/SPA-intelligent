@@ -40,6 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.narmocorp.satorispa.R
+import android.widget.Toast
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.platform.LocalContext
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun Login(
@@ -52,6 +56,7 @@ fun Login(
     var contrasena by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var keepSession by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     // GESTIÓN DE COLORES
     val primaryColor = MaterialTheme.colorScheme.primary
@@ -63,6 +68,10 @@ fun Login(
     val backgroundColor = MaterialTheme.colorScheme.background
     val surfaceColor = MaterialTheme.colorScheme.surface
     // -------------------------------------------------------------
+
+    if (showForgotPasswordDialog) {
+        ForgotPasswordDialog(onDismiss = { showForgotPasswordDialog = false })
+    }
 
     BoxWithConstraints(
         modifier = modifier
@@ -266,7 +275,7 @@ fun Login(
                 Spacer(Modifier.height(16.dp))
 
                 TextButton(
-                    onClick = { navController.navigate("forgot_password") },
+                    onClick = { showForgotPasswordDialog = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
@@ -279,4 +288,57 @@ fun Login(
             }
         }
     }
+}
+
+@Composable
+private fun ForgotPasswordDialog(onDismiss: () -> Unit) {
+    var email by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val auth = FirebaseAuth.getInstance()
+    val primaryBrandColor = Color(0xff995d2d)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Recuperar Contraseña") },
+        text = {
+            Column {
+                Text("Ingresa tu correo electrónico para enviarte un enlace de recuperación.")
+                Spacer(Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Correo") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (email.isNotBlank()) {
+                        auth.sendPasswordResetEmail(email)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Toast.makeText(context, "Correo de recuperación enviado.", Toast.LENGTH_SHORT).show()
+                                    onDismiss()
+                                } else {
+                                    Toast.makeText(context, "Error: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                    } else {
+                        Toast.makeText(context, "Por favor, introduce tu correo.", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = primaryBrandColor)
+            ) {
+                Text("Enviar", color = Color.White)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
+        }
+    )
 }

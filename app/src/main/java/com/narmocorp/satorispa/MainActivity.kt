@@ -168,10 +168,6 @@ class MainActivity : FragmentActivity() {
                             Register(navController = navController)
                         }
 
-                        composable("forgot_password") {
-                            ForgotPasswordFlow(navController = navController)
-                        }
-
                         composable("cliente_home") {
                             ClientHomeScreen(
                                 onNavigateToNotifications = { navController.navigate("notificaciones") },
