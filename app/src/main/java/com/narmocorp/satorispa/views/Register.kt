@@ -4,6 +4,7 @@ import android.util.Log
 import android.util.Patterns
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,6 +81,7 @@ fun Register(
     val surfaceColor = MaterialTheme.colorScheme.surface
     val errorColor = MaterialTheme.colorScheme.error
     val successColor = Color(0xFF4CAF50)
+    val titleColor = if (isSystemInDarkTheme()) Color.White else Color(0xff995d2d)
 
     fun showMessage(message: String) {
         scope.launch {
@@ -192,7 +194,7 @@ fun Register(
 
                 Text(
                     text = "CREA TU CUENTA",
-                    color = onBackgroundColor.copy(alpha = 0.85f),
+                    color = titleColor,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 20.dp)

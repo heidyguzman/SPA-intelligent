@@ -2,6 +2,7 @@ package com.narmocorp.satorispa.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -69,6 +70,7 @@ fun Login(
     val subtleTextColor = MaterialTheme.colorScheme.onSurfaceVariant
     val backgroundColor = MaterialTheme.colorScheme.background
     val surfaceColor = MaterialTheme.colorScheme.surface
+    val titleColor = if (isSystemInDarkTheme()) Color.White else Color(0xff995d2d)
     // -------------------------------------------------------------
 
     if (showForgotPasswordDialog) {
@@ -164,7 +166,7 @@ fun Login(
 
                 Text(
                     text = "SATORI SPA LE DA LA BIENVENIDA",
-                    color = onBackgroundColor.copy(alpha = 0.85f), // Color del tema
+                    color = titleColor,
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(bottom = 24.dp)
@@ -303,10 +305,18 @@ private fun ForgotPasswordDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val primaryBrandColor = Color(0xff995d2d)
+    val titleColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.onSurface else primaryBrandColor
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Recuperar Contraseña") },
+        title = {
+            Text(
+                text = "Recuperar Contraseña",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                color = titleColor
+            )
+        },
         text = {
             Column {
                 Text("Ingresa tu correo electrónico para enviarte un enlace de recuperación.")
