@@ -1,3 +1,4 @@
+
 package com.narmocorp.satorispa.views.cliente
 
 import androidx.compose.foundation.Image
