@@ -3,6 +3,7 @@ package com.narmocorp.satorispa.views.cliente
 import android.app.Activity
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -44,7 +45,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 import com.narmocorp.satorispa.utils.PhoneAuthManager
 import com.narmocorp.satorispa.utils.PhoneAuthListener
-
+import androidx.compose.ui.res.painterResource
+import com.narmocorp.satorispa.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,9 +66,9 @@ fun AgendarCitaScreen(
     var selectedDateDbFormat by remember { mutableStateOf<String?>(null) }
     var selectedDateUiFormat by remember { mutableStateOf("Seleccionar Fecha") }
     var selectedTime by remember { mutableStateOf<String?>(null) }
-    var hasSelectedDate by remember { mutableStateOf(false) } 
+    var hasSelectedDate by remember { mutableStateOf(false) }
     var comentarios by remember { mutableStateOf("") }
-    var isBooking by remember { mutableStateOf(false) } // Estado de carga para el botón principal
+    var isBooking by remember { mutableStateOf(false) }
 
     // --- ESTADOS DE VALIDACIÓN DE TELÉFONO ---
     var telefono by remember { mutableStateOf("") }
@@ -85,8 +87,7 @@ fun AgendarCitaScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-
-    // --- CALLBACK PARA PHONE AUTH (INTEGRA PERSISTENCIA) ---
+    // --- CALLBACK PARA PHONE AUTH ---
     val phoneAuthListener = remember {
         object : PhoneAuthListener {
             override fun onCodeSent(id: String) {
@@ -129,7 +130,7 @@ fun AgendarCitaScreen(
             if (isValidated && loadedTelefono != null) {
                 telefono = loadedTelefono
                 isPhoneValidated = true
-                scope.launch { snackbarHostState.showSnackbar("Teléfono recuperado y validado.") }
+                scope.launch { snackbarHostState.showSnackbar("¡Bienvenido! Tus datos han sido cargados.") }
             }
         }
     }
@@ -142,7 +143,56 @@ fun AgendarCitaScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        // --- AQUÍ ESTÁ TU SNACKBAR PERSONALIZADO ---
+        snackbarHost = {
+            SnackbarHost(snackbarHostState) { data ->
+                // 1. Detectamos si el sistema está en modo oscuro
+                val isDarkTheme = isSystemInDarkTheme()
+
+                // 2. Definimos tu color Café Satori
+                val satoriCafe = Color(0xFFB08D73)
+
+                // 3. Decidimos los colores según el tema:
+                // - Fondo: Si es oscuro -> Blanco (como te gustó). Si es claro -> Tu Café.
+                val backgroundColor = if (isDarkTheme) Color.White else satoriCafe
+
+                // - Texto: Si el fondo es blanco (oscuro) -> Letras Café. Si el fondo es café (claro) -> Letras Blancas.
+                val contentColor = if (isDarkTheme) satoriCafe else Color.White
+
+                Card(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = backgroundColor
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // IMAGEN DEL LOGO (Sin tint, usa sus colores originales)
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "Logo App",
+                            modifier = Modifier.size(32.dp),
+                            contentScale = ContentScale.Fit
+                        )
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Text(
+                            text = data.visuals.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = contentColor, // <-- Aquí aplicamos el color de texto dinámico
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Agendar Cita", fontWeight = FontWeight.Bold) },
@@ -216,7 +266,7 @@ fun AgendarCitaScreen(
                         servicio = loadedService,
                         isReadyToBook = selectedTime != null && selectedDateDbFormat != null && isPhoneValidated,
                         isPhoneValidated = isPhoneValidated,
-                        isBooking = isBooking, // Pasar el estado de carga
+                        isBooking = isBooking,
                         onConfirmClick = {
                             if (selectedTime != null && selectedDateDbFormat != null && isPhoneValidated) {
                                 showConfirmationDialog = true
@@ -263,7 +313,7 @@ fun AgendarCitaScreen(
             confirmButton = {
                 Button(onClick = {
                     showConfirmationDialog = false
-                    isBooking = true // <-- ACTIVAR EL ESTADO DE CARGA
+                    isBooking = true
                     viewModel.registrarCita(
                         servicioId = loadedService.id,
                         fecha = selectedDateDbFormat!!,
@@ -271,11 +321,11 @@ fun AgendarCitaScreen(
                         telefono = telefono,
                         comentarios = comentarios,
                         onSuccess = {
-                            isBooking = false // <-- DESACTIVAR CARGA
+                            isBooking = false
                             showSuccessDialog = true
                         },
                         onFailure = { errorMsg ->
-                            isBooking = false // <-- DESACTIVAR CARGA
+                            isBooking = false
                             scope.launch { snackbarHostState.showSnackbar(errorMsg) }
                         }
                     )
@@ -300,15 +350,30 @@ fun AgendarCitaScreen(
     }
 
     if (showDatePickerDialog) {
-        val startOfTodayUtcMillis = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
+        val selectableDates = remember {
+            object : SelectableDates {
+                val today = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }.timeInMillis
+
+                override fun isSelectableDate(utcTimeMillis: Long): Boolean {
+                    if (utcTimeMillis < today) {
+                        return false
+                    }
+                    val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+                    calendar.timeInMillis = utcTimeMillis
+                    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+                    return dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY
+                }
+            }
+        }
 
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = startOfTodayUtcMillis
+            initialSelectedDateMillis = null, // Corrección: null para que no haya fecha seleccionada por defecto
+            selectableDates = selectableDates
         )
 
         DatePickerDialog(
@@ -317,18 +382,6 @@ fun AgendarCitaScreen(
                 Button(onClick = {
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
-                        if (selectedMillis < startOfTodayUtcMillis) {
-                            scope.launch { snackbarHostState.showSnackbar("No puedes seleccionar una fecha pasada.") }
-                            return@Button
-                        }
-
-                        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = selectedMillis }
-                        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
-                        if (dayOfWeek == Calendar.SATURDAY || dayOfWeek == Calendar.SUNDAY) {
-                            scope.launch { snackbarHostState.showSnackbar("No se permiten citas en fin de semana.") }
-                            return@Button
-                        }
-
                         val date = Date(selectedMillis)
                         val uiFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
                         val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
@@ -346,13 +399,12 @@ fun AgendarCitaScreen(
     }
 }
 
-
 @Composable
 fun AppointmentSummary(
     servicio: Servicio,
     isReadyToBook: Boolean,
     isPhoneValidated: Boolean,
-    isBooking: Boolean, // Nuevo parámetro
+    isBooking: Boolean,
     onConfirmClick: () -> Unit
 ) {
     val precioPorSesion = servicio.precio.toDoubleOrNull() ?: 0.0
@@ -368,7 +420,7 @@ fun AppointmentSummary(
         }
         Button(
             onClick = onConfirmClick,
-            enabled = isReadyToBook && !isBooking, // Se deshabilita si está cargando
+            enabled = isReadyToBook && !isBooking,
             modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
             if (isBooking) {
@@ -395,8 +447,6 @@ fun AppointmentSummary(
         }
     }
 }
-
-// El resto de los componentes no necesitan cambios
 
 @Composable
 fun ServiceHeader(servicio: Servicio) {
@@ -460,7 +510,7 @@ fun TimeSelectionComponent(
     horas: List<HoraCitaDTO>,
     selectedTime: String?,
     onTimeSelected: (String) -> Unit,
-    hasSelectedDate: Boolean // Nuevo parámetro
+    hasSelectedDate: Boolean
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -545,7 +595,7 @@ fun TelefonoFieldWithValidation(
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = "Teléfono Verificado",
-                    tint = Satori_Success, // Usando el color de éxito desde el tema
+                    tint = Satori_Success,
                     modifier = Modifier.size(30.dp).align(Alignment.CenterVertically)
                 )
             }
