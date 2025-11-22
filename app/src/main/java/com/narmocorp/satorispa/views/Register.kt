@@ -409,14 +409,22 @@ fun Register(
                                             "rol" to "cliente",
                                             "imagenUrl" to ""
                                         )
-                                        user?.let {
-                                            db.collection("usuarios").document(it.uid)
+                                        user?.let { firebaseUser ->
+                                            firebaseUser.sendEmailVerification()
+                                                .addOnCompleteListener { emailTask ->
+                                                    if (emailTask.isSuccessful) {
+                                                        showMessage("Registro exitoso. Revisa tu correo para verificar tu cuenta.")
+                                                    } else {
+                                                        showMessage("Registro exitoso, pero falló el envío de correo de verificación.")
+                                                    }
+                                                }
+
+                                            db.collection("usuarios").document(firebaseUser.uid)
                                                 .set(userData)
                                                 .addOnSuccessListener {
                                                     isLoading = false
-                                                    showMessage("Registro exitoso. ¡Bienvenido!")
                                                     scope.launch {
-                                                        delay(1600)
+                                                        delay(2000) // Adjusted delay to allow user to read the message
                                                         navController.navigate("login") {
                                                             popUpTo("register") { inclusive = true }
                                                         }
