@@ -86,16 +86,17 @@ class AgendarCitaViewModel : ViewModel() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val selectedDate = dateFormat.format(Date(dateMillis))
 
-        // --- LÓGICA DE TIEMPO (CORREGIDA USANDO UTC) ---
+        // --- LÓGICA DE TIEMPO (CORREGIDA PARA USAR ZONA HORARIA LOCAL) ---
         val nowInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         val selectedCalendarInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = dateMillis }
 
         val isToday = nowInUtc.get(Calendar.YEAR) == selectedCalendarInUtc.get(Calendar.YEAR) &&
-                      nowInUtc.get(Calendar.DAY_OF_YEAR) == selectedCalendarInUtc.get(Calendar.DAY_OF_YEAR)
+                nowInUtc.get(Calendar.DAY_OF_YEAR) == selectedCalendarInUtc.get(Calendar.DAY_OF_YEAR)
 
         val relevantMasterHorarios = if (isToday) {
-            val currentHourInUtc = nowInUtc.get(Calendar.HOUR_OF_DAY)
-            masterHorarios.filter { it.substringBefore(':').toInt() > currentHourInUtc }
+            // Si la fecha seleccionada es hoy, filtramos usando la hora LOCAL del dispositivo.
+            val currentHourInLocal = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            masterHorarios.filter { it.substringBefore(':').toInt() > currentHourInLocal }
         } else {
             masterHorarios
         }
