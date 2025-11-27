@@ -1,9 +1,11 @@
 package com.narmocorp.satorispa
 
 import android.content.Context
+import android.content.Intent
 import android.nfc.cardemulation.HostApduService
 import android.os.Bundle
 import android.util.Log
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class HceService : HostApduService() {
 
@@ -48,7 +50,12 @@ class HceService : HostApduService() {
 
             if (nfcUid != null) {
                 Log.d(TAG, "Sending NFC UID: $nfcUid")
-                // Se envía únicamente el UID, sin el código de estado, según lo solicitado.
+
+                // ¡NUEVO! Notifica a la app que el UID se envió
+                val intent = Intent("nfc-uid-sent-success")
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+
+                // Se envía únicamente el UID, sin el código de estado.
                 return Utils.hexStringToByteArray(nfcUid)
             } else {
                 Log.w(TAG, "NFC UID not found in SharedPreferences")
