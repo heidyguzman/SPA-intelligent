@@ -6,36 +6,35 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
 fun PoliticaPrivacidadScreen(navController: NavController) {
-    // CORRECCIÓN: Usar MaterialTheme.colorScheme en lugar de colores fijos
     val primaryBrandColor = MaterialTheme.colorScheme.primary
     val secondaryBrandColor = MaterialTheme.colorScheme.secondary
-    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary // Blanco en Dark Mode (Header)
-    val textOnBackground = MaterialTheme.colorScheme.onBackground       // Blanco en Dark Mode (Título/Texto de Card)
-    val textColorBody = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f) // Texto del cuerpo
+    val textOnSecondaryPlatform = MaterialTheme.colorScheme.onSecondary
+    val textOnBackground = MaterialTheme.colorScheme.onBackground
+    val textColorBody = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Usa el color de fondo del tema
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Header
+            // Header - SIN CAMBIOS
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -72,7 +71,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
-                // Icono decorativo (Diseño original restaurado)
+                // Icono decorativo - SIN CAMBIOS
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -98,17 +97,17 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                 Text(
                     "Última actualización: Octubre 2025",
                     fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f), // Usa color del tema
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Introducción Card (Diseño original restaurado)
+                // Introducción Card - SIN CAMBIOS
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface // Usa color del tema
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -126,7 +125,7 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                         Text(
                             "En Satori SPA, protegemos tu privacidad y datos personales con los más altos estándares de seguridad.",
                             fontSize = 14.sp,
-                            color = textOnBackground, // << CORRECCIÓN: Usar onBackground
+                            color = textOnBackground,
                             lineHeight = 20.sp
                         )
                     }
@@ -134,110 +133,150 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Contenido de política
-                SeccionPrivacidad(
-                    titulo = "1. Información que Recopilamos",
-                    contenido = "Recopilamos información personal que nos proporcionas directamente:\n\n" +
-                            "• Información de cuenta: nombre, correo electrónico\n" +
-                            "• Información de perfil: foto, preferencias, historial\n" +
-                            "• Datos de NFC: identificación de la tarjeta o dispositivo asociado.",
-                    titleColor = textOnBackground,
+                // NUEVO DISEÑO: Cards con Iconos
+                CardPrivacidad(
+                    numero = "1",
+                    titulo = "Información que Recopilamos",
+                    contenido = "Recopilamos información personal que nos proporcionas directamente:",
+                    bullets = listOf(
+                        "Información de cuenta: nombre, correo electrónico",
+                        "Información de perfil: foto, preferencias, historial",
+                        "Datos de NFC: identificación de la tarjeta o dispositivo asociado"
+                    ),
+                    icono = Icons.Default.Info,
+                    iconColor = Color(0xFF3B82F6),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "2. Cómo Usamos tu Información",
-                    contenido = "Utilizamos tus datos para:\n\n" +
-                            "• Proporcionar y mejorar nuestros servicios\n" +
-                            "• Enviar confirmaciones y recordatorios\n" +
-                            "• Comunicarnos contigo sobre servicios\n" +
-                            "• Validar accesos mediante NFC.\n" +
-                            "• Cumplir con requisitos legales",
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "2",
+                    titulo = "Cómo Usamos tu Información",
+                    contenido = "Utilizamos tus datos para:",
+                    bullets = listOf(
+                        "Proporcionar y mejorar nuestros servicios",
+                        "Enviar confirmaciones y recordatorios",
+                        "Comunicarnos contigo sobre servicios",
+                        "Validar accesos mediante NFC",
+                        "Cumplir con requisitos legales"
+                    ),
+                    icono = Icons.Default.Settings,
+                    iconColor = Color(0xFF8B5CF6),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "3. Compartir Información",
-                    contenido = "Compartimos tu información solo cuando es necesario:\n\n" +
-                            "• Con terapeutas: para coordinar servicios\n" +
-                            "• Por requisitos legales: autoridades competentes\n\n" +
-                            "Nunca vendemos tu información personal a terceros.",
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "3",
+                    titulo = "Compartir Información",
+                    contenido = "Compartimos tu información solo cuando es necesario:",
+                    bullets = listOf(
+                        "Con terapeutas: para coordinar servicios",
+                        "Por requisitos legales: autoridades competentes"
+                    ),
+                    nota = "Nunca vendemos tu información personal a terceros.",
+                    icono = Icons.Default.Share,
+                    iconColor = Color(0xFF10B981),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "4. Seguridad de Datos",
-                    contenido = "Implementamos medidas de seguridad robustas:\n\n" +
-                            "• Almacenamiento seguro en servidores protegidos\n" +
-                            "• Acceso restringido a información personal\n" +
-                            "• Monitoreo continuo de seguridad\n" +
-                            "• Auditorías regulares de sistemas\n" +
-                            "• Cumplimiento con estándares internacionales",
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "4",
+                    titulo = "Seguridad de Datos",
+                    contenido = "Implementamos medidas de seguridad robustas:",
+                    bullets = listOf(
+                        "Almacenamiento seguro en servidores protegidos",
+                        "Acceso restringido a información personal",
+                        "Monitoreo continuo de seguridad",
+                        "Auditorías regulares de sistemas",
+                        "Cumplimiento con estándares internacionales"
+                    ),
+                    icono = Icons.Default.Security,
+                    iconColor = Color(0xFFEF4444),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "5. Tus Derechos",
-                    contenido = "Tienes derecho a:\n\n" +
-                            "• Acceder a tus datos personales\n" +
-                            "• Corregir información inexacta\n" +
-                            "• Solicitar eliminación de tu cuenta\n" +
-                            "• Oponerte al procesamiento de datos\n" +
-                            "• Portabilidad de tus datos\n" +
-                            "• Retirar consentimiento en cualquier momento\n\n" ,
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "5",
+                    titulo = "Tus Derechos",
+                    contenido = "Tienes derecho a:",
+                    bullets = listOf(
+                        "Acceder a tus datos personales",
+                        "Corregir información inexacta",
+                        "Solicitar eliminación de tu cuenta",
+                        "Oponerte al procesamiento de datos",
+                        "Portabilidad de tus datos",
+                        "Retirar consentimiento en cualquier momento"
+                    ),
+                    icono = Icons.Default.Verified,
+                    iconColor = Color(0xFF06B6D4),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "6. Cookies y Tecnologías Similares",
-                    contenido = "Utilizamos cookies para:\n\n" +
-                            "• Mantener tu sesión activa\n" +
-                            "• Recordar preferencias\n" +
-                            "• Analizar uso de la aplicación\n" +
-                            "• Mejorar funcionalidad\n\n" +
-                            "Puedes gestionar cookies en la configuración de tu dispositivo.",
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "6",
+                    titulo = "Cookies y Tecnologías Similares",
+                    contenido = "Utilizamos cookies para:",
+                    bullets = listOf(
+                        "Mantener tu sesión activa",
+                        "Recordar preferencias",
+                        "Analizar uso de la aplicación",
+                        "Mejorar funcionalidad"
+                    ),
+                    nota = "Puedes gestionar cookies en la configuración de tu dispositivo.",
+                    icono = Icons.Default.Cookie,
+                    iconColor = Color(0xFFF59E0B),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "7. Retención de Datos",
-                    contenido = "Conservamos tus datos personales:\n\n" +
-                            "• Mientras mantengas una cuenta activa\n" +
-                            "• El tiempo necesario para proporcionar servicios\n" +
-                            "• Según lo requiera la ley (registros fiscales, etc.)\n" +
-                            "• Hasta que solicites eliminación\n\n" +
-                            "Datos anonimizados pueden conservarse para análisis estadísticos.",
-                    titleColor = textOnBackground,
+                CardPrivacidad(
+                    numero = "7",
+                    titulo = "Retención de Datos",
+                    contenido = "Conservamos tus datos personales:",
+                    bullets = listOf(
+                        "Mientras mantengas una cuenta activa",
+                        "El tiempo necesario para proporcionar servicios",
+                        "Según lo requiera la ley (registros fiscales, etc.)",
+                        "Hasta que solicites eliminación"
+                    ),
+                    nota = "Datos anonimizados pueden conservarse para análisis estadísticos.",
+                    icono = Icons.Default.Timer,
+                    iconColor = Color(0xFFA855F7),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-                SeccionPrivacidad(
-                    titulo = "8. Privacidad de Menores",
+                CardPrivacidad(
+                    numero = "8",
+                    titulo = "Privacidad de Menores",
                     contenido = "Nuestros servicios están dirigidos a personas mayores de 18 años. No recopilamos intencionalmente información de menores sin consentimiento parental.",
-                    titleColor = textOnBackground,
+                    icono = Icons.Default.ChildCare,
+                    iconColor = Color(0xFFF43F5E),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
-
-                SeccionPrivacidad(
-                    titulo = "9. Cambios a esta Política",
+                CardPrivacidad(
+                    numero = "9",
+                    titulo = "Cambios a esta Política",
                     contenido = "Podemos actualizar esta política periódicamente. Te notificaremos cambios importantes por email o mediante aviso en la aplicación. El uso continuado después de cambios constituye aceptación.",
-                    titleColor = textOnBackground,
+                    icono = Icons.Default.Update,
+                    iconColor = Color(0xFF64748B),
+                    textColor = textOnBackground,
                     bodyColor = textColorBody
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Card de compromiso (Diseño original restaurado)
+                // Card de compromiso - SIN CAMBIOS
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = secondaryBrandColor.copy(alpha = 0.3f) // Color claro base
+                        containerColor = secondaryBrandColor.copy(alpha = 0.3f)
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -256,13 +295,13 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
                             "Tu confianza es nuestra prioridad",
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold,
-                            color = textOnBackground // << CORRECCIÓN: Usar onBackground
+                            color = textOnBackground
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "Protegemos tus datos con los más altos estándares de seguridad y transparencia.",
                             fontSize = 13.sp,
-                            color = textColorBody, // << CORRECCIÓN: Usar color del tema
+                            color = textColorBody,
                             lineHeight = 18.sp
                         )
                     }
@@ -275,20 +314,117 @@ fun PoliticaPrivacidadScreen(navController: NavController) {
 }
 
 @Composable
-fun SeccionPrivacidad(titulo: String, contenido: String, titleColor: Color, bodyColor: Color) { // << CORRECCIÓN: Parámetros de color
-    Column(modifier = Modifier.padding(bottom = 20.dp)) {
-        Text(
-            text = titulo,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = titleColor // << CORRECCIÓN: Usar color pasado
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = contenido,
-            fontSize = 14.sp,
-            color = bodyColor, // << CORRECCIÓN: Usar color pasado
-            lineHeight = 22.sp
-        )
+fun CardPrivacidad(
+    numero: String,
+    titulo: String,
+    contenido: String,
+    bullets: List<String>? = null,
+    nota: String? = null,
+    icono: ImageVector,
+    iconColor: Color,
+    textColor: Color,
+    bodyColor: Color
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.Top
+        ) {
+            // Icono con fondo de color
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(iconColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icono,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            // Contenido
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$numero. $titulo",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = contenido,
+                    fontSize = 14.sp,
+                    color = bodyColor,
+                    lineHeight = 20.sp,
+                    textAlign = TextAlign.Justify
+                )
+
+                // Bullets si existen
+                bullets?.let { bulletList ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    bulletList.forEach { bullet ->
+                        Row(
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .size(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(iconColor)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = bullet,
+                                fontSize = 14.sp,
+                                color = bodyColor,
+                                lineHeight = 20.sp,
+                                textAlign = TextAlign.Justify,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                // Nota adicional si existe
+                nota?.let {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = it,
+                        fontSize = 13.sp,
+                        color = bodyColor,
+                        lineHeight = 18.sp,
+                        textAlign = TextAlign.Justify,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(iconColor.copy(alpha = 0.1f))
+                            .padding(12.dp)
+                    )
+                }
+            }
+        }
     }
 }
