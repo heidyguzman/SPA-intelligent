@@ -234,9 +234,8 @@ fun CitaDetailsModal(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
-                        onClick = onDismiss,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                        ) {
+                        onClick = onDismiss
+                    ) {
                         Text("Cerrar")
                     }
                     Button(
@@ -250,7 +249,7 @@ fun CitaDetailsModal(
                 if (!isCancellable && cita.estado.lowercase() != "cancelada") {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Las citas solo se pueden cancelar hasta un día antes.",
+                        text = "Las citas solo se pueden cancelar un día antes de la agenda.",
                         style = MaterialTheme.typography.bodySmall,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
@@ -291,7 +290,6 @@ fun DateFilter(
         if (isFilterActive) {
             Button(
                 onClick = onClearClick,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 shape = CircleShape
             ) {
                 Text("Limpiar")
@@ -377,6 +375,11 @@ private fun CitaDetailsContent(cita: Cita) {
         DetailRow(icon = Icons.Default.Phone, text = "Teléfono: ${cita.telefono}")
         DetailRow(icon = Icons.Default.CalendarToday, text = "Fecha: ${formatDateUi(cita.fecha)}")
         DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${cita.hora}")
+
+        // Mostrar terapeuta si existe
+        if (!cita.terapeuta.isNullOrBlank()) {
+            DetailRow(icon = Icons.Default.Person, text = "Terapeuta: ${cita.terapeuta}")
+        }
 
         // Mostrar comentarios si existen
         if (!cita.comentarios.isNullOrBlank()) {
