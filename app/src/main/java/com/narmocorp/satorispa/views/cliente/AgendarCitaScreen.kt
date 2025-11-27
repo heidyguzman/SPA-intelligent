@@ -143,7 +143,6 @@ fun AgendarCitaScreen(
     }
 
     Scaffold(
-        // --- AQUÍ ESTÁ TU SNACKBAR PERSONALIZADO ---
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
                 // 1. Detectamos si el sistema está en modo oscuro
@@ -186,7 +185,7 @@ fun AgendarCitaScreen(
                         Text(
                             text = data.visuals.message,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = contentColor, // <-- Aquí aplicamos el color de texto dinámico
+                            color = contentColor,
                             fontWeight = FontWeight.Medium
                         )
                     }

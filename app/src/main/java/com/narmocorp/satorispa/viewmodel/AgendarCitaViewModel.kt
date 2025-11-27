@@ -213,8 +213,21 @@ class AgendarCitaViewModel : ViewModel() {
                     return@launch
                 }
 
+                // --- MODIFICACIÓN: BUSCAR EL TERAPEUTA ---
+                val terapeutasSnapshot = db.collection("usuarios")
+                    .whereEqualTo("terapeuta_servicio", servicioId)
+                    .limit(1) // Asumimos que un servicio es manejado por un solo terapeuta
+                    .get()
+                    .await()
+
+                val terapeutaNombre = if (!terapeutasSnapshot.isEmpty) {
+                    terapeutasSnapshot.documents[0].getString("nombre")
+                } else {
+                    null // Si no se encuentra un terapeuta, se guarda como nulo
+                }
+
                 val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
-                val citaData = hashMapOf(
+                val citaData = hashMapOf<String, Any?>(
                     "cliente_id" to clienteId,
                     "servicio" to servicioId,
                     "fecha" to fecha,
@@ -223,10 +236,10 @@ class AgendarCitaViewModel : ViewModel() {
                     "createdAt" to timestamp,
                     "updatedAt" to timestamp,
                     "cliente" to null,
-                    "estado" to "Pendiente"
+                    "estado" to "Pendiente",
+                    "terapeuta" to terapeutaNombre // <-- AÑADIR TERAPEUTA A LA CITA
                 )
 
-                // Añade los comentarios solo si no son nulos o vacíos
                 if (!comentarios.isNullOrBlank()) {
                     citaData["comentarios"] = comentarios
                 }
