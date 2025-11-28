@@ -52,7 +52,8 @@ class AgendarCitaViewModel : ViewModel() {
                             _servicio.value = Servicio(
                                 id = document.id,
                                 servicio = document.getString("servicio") ?: "",
-                                categoria = document.getString("categoria") ?: "",
+                                categoriaId = document.getString("categoriaId") ?: "",
+                                categoriaNombre = document.getString("categoriaNombre") ?: "",
                                 descripcion = document.getString("descripcion") ?: "",
                                 duracion = document.get("duracion")?.toString() ?: "",
                                 estado = document.getString("estado") ?: "",

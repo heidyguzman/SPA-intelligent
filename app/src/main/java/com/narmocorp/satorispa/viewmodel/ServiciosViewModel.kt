@@ -29,7 +29,8 @@ class ServiciosViewModel : ViewModel() {
                             Servicio(
                                 id = document.id,
                                 servicio = document.get("servicio")?.toString() ?: "",
-                                categoria = document.get("categoria")?.toString() ?: "",
+                                categoriaId = document.get("categoriaId")?.toString() ?: "",
+                                categoriaNombre = document.get("categoriaNombre")?.toString() ?: "",
                                 descripcion = document.get("descripcion")?.toString() ?: "",
                                 duracion = document.get("duracion")?.toString() ?: "",
                                 estado = document.get("estado")?.toString() ?: "",

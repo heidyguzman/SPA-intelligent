@@ -43,7 +43,7 @@ fun ServicesScreen(
     serviciosViewModel: ServiciosViewModel = viewModel()
 ) {
     val services by serviciosViewModel.servicios.collectAsState()
-    val categories = listOf("Todos") + services.map { it.categoria }.distinct()
+    val categories = listOf("Todos") + services.map { it.categoriaNombre }.distinct()
     var selectedCategory by remember { mutableStateOf(categories.firstOrNull() ?: "Todos") }
     var selectedService by remember { mutableStateOf<Servicio?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -54,7 +54,7 @@ fun ServicesScreen(
     val onSecondaryColor = MaterialTheme.colorScheme.onSecondary
 
     val filteredServices = services.filter { service ->
-        (selectedCategory == "Todos" || service.categoria == selectedCategory) &&
+        (selectedCategory == "Todos" || service.categoriaNombre == selectedCategory) &&
                 (searchQuery.isEmpty() || service.servicio.contains(searchQuery, ignoreCase = true))
     }
 
