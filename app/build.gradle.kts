@@ -91,4 +91,7 @@ dependencies {
     // Añadir la dependencia de App Check
     implementation("com.google.firebase:firebase-appcheck")
     implementation("com.google.firebase:firebase-appcheck-playintegrity")
+
+    implementation("com.airbnb.android:lottie-compose:6.4.1") // O la versión más reciente
+
 }
