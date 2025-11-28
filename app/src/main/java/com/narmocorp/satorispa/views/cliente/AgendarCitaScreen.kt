@@ -194,7 +194,7 @@ fun AgendarCitaScreen(
         },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Agendar Cita", fontWeight = FontWeight.Bold) },
+                title = { Text("Agendar Cita", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ChevronLeft, contentDescription = "Atrás")
@@ -289,7 +289,7 @@ fun AgendarCitaScreen(
         val loadedService = servicio!!
         AlertDialog(
             onDismissRequest = { showConfirmationDialog = false },
-            title = { Text("Confirmar Agendamiento", fontWeight = FontWeight.Bold) },
+            title = { Text("Confirmar Agendamiento", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
             text = {
                 Column {
                     Text("¿Estás seguro de que deseas agendar el siguiente servicio?")
@@ -337,7 +337,7 @@ fun AgendarCitaScreen(
     if (showSuccessDialog) {
         AlertDialog(
             onDismissRequest = {},
-            title = { Text("¡Cita Agendada con Éxito!", fontWeight = FontWeight.Bold) },
+            title = { Text("¡Cita Agendada con Éxito!", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary) },
             text = { Text("Tu cita ha sido registrada. Revisa la sección 'Mis Citas' para ver el estado.") },
             confirmButton = {
                 Button(onClick = {
@@ -371,7 +371,7 @@ fun AgendarCitaScreen(
         }
 
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = null, // Corrección: null para que no haya fecha seleccionada por defecto
+            initialSelectedDateMillis = null,
             selectableDates = selectableDates
         )
 

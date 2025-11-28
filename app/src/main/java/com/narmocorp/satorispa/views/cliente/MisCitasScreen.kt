@@ -331,7 +331,7 @@ fun CitaCard(cita: Cita, onClick: () -> Unit) {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "${formatDateUi(cita.fecha)} ${cita.hora}",
+                    text = "${formatDateUi(cita.fecha)} ${formatTimeUi(cita.hora)}",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodySmall
@@ -374,7 +374,7 @@ private fun CitaDetailsContent(cita: Cita) {
         DetailRow(icon = Icons.Filled.Spa, text = "Servicio: ${cita.servicioNombre}")
         DetailRow(icon = Icons.Default.Phone, text = "Teléfono: ${cita.telefono}")
         DetailRow(icon = Icons.Default.CalendarToday, text = "Fecha: ${formatDateUi(cita.fecha)}")
-        DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${cita.hora}")
+        DetailRow(icon = Icons.Filled.Schedule, text = "Hora: ${formatTimeUi(cita.hora)}")
 
         // Mostrar terapeuta si existe
         if (!cita.terapeuta.isNullOrBlank()) {
@@ -459,5 +459,20 @@ fun formatDateUi(dateString: String): String {
         }
     } catch (_: Exception) {
         dateString
+    }
+}
+
+fun formatTimeUi(timeString: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        val time = inputFormat.parse(timeString)
+        if (time != null) {
+            outputFormat.format(time)
+        } else {
+            timeString
+        }
+    } catch (_: Exception) {
+        timeString
     }
 }
