@@ -63,8 +63,12 @@ fun AgendarCitaScreen(
     var showDatePickerDialog by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSuccessDialog by remember { mutableStateOf(false) }
+
+    // Almacena la fecha en formato YYYY-MM-DD para la base de datos
     var selectedDateDbFormat by remember { mutableStateOf<String?>(null) }
+    // Almacena la fecha en formato legible "28 Nov 2025" para la UI
     var selectedDateUiFormat by remember { mutableStateOf("Seleccionar Fecha") }
+
     var selectedTime by remember { mutableStateOf<String?>(null) }
     var hasSelectedDate by remember { mutableStateOf(false) }
     var comentarios by remember { mutableStateOf("") }
@@ -145,17 +149,9 @@ fun AgendarCitaScreen(
     Scaffold(
         snackbarHost = {
             SnackbarHost(snackbarHostState) { data ->
-                // 1. Detectamos si el sistema está en modo oscuro
                 val isDarkTheme = isSystemInDarkTheme()
-
-                // 2. Definimos tu color Café Satori
                 val satoriCafe = Color(0xFFB08D73)
-
-                // 3. Decidimos los colores según el tema:
-                // - Fondo: Si es oscuro -> Blanco (como te gustó). Si es claro -> Tu Café.
                 val backgroundColor = if (isDarkTheme) Color.White else satoriCafe
-
-                // - Texto: Si el fondo es blanco (oscuro) -> Letras Café. Si el fondo es café (claro) -> Letras Blancas.
                 val contentColor = if (isDarkTheme) satoriCafe else Color.White
 
                 Card(
@@ -172,16 +168,13 @@ fun AgendarCitaScreen(
                         modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // IMAGEN DEL LOGO (Sin tint, usa sus colores originales)
                         Image(
                             painter = painterResource(id = R.drawable.logo),
                             contentDescription = "Logo App",
                             modifier = Modifier.size(32.dp),
                             contentScale = ContentScale.Fit
                         )
-
                         Spacer(modifier = Modifier.width(16.dp))
-
                         Text(
                             text = data.visuals.message,
                             style = MaterialTheme.typography.bodyMedium,
@@ -349,22 +342,27 @@ fun AgendarCitaScreen(
     }
 
     if (showDatePickerDialog) {
+        // Se usa UTC porque el DatePicker de Material3 trabaja internamente en UTC
+        val calendarUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        // Resetear a medianoche UTC
+        calendarUtc.set(Calendar.HOUR_OF_DAY, 0)
+        calendarUtc.set(Calendar.MINUTE, 0)
+        calendarUtc.set(Calendar.SECOND, 0)
+        calendarUtc.set(Calendar.MILLISECOND, 0)
+
+        val todayMillis = calendarUtc.timeInMillis
+
         val selectableDates = remember {
             object : SelectableDates {
-                val today = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }.timeInMillis
-
                 override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                    if (utcTimeMillis < today) {
+                    // No permitir fechas pasadas
+                    if (utcTimeMillis < todayMillis) {
                         return false
                     }
                     val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
                     calendar.timeInMillis = utcTimeMillis
                     val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+                    // Bloquear sábados y domingos
                     return dayOfWeek != Calendar.SATURDAY && dayOfWeek != Calendar.SUNDAY
                 }
             }
@@ -382,11 +380,17 @@ fun AgendarCitaScreen(
                     val selectedMillis = datePickerState.selectedDateMillis
                     if (selectedMillis != null) {
                         val date = Date(selectedMillis)
+                        // Formateadores UTC para asegurar que lo que ve el usuario en el calendario
+                        // sea lo que se guarda, sin desplazamientos por zona horaria
                         val uiFormatter = SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
                         val dbFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
+
                         selectedDateUiFormat = uiFormatter.format(date)
                         selectedDateDbFormat = dbFormatter.format(date)
                         hasSelectedDate = true
+
+                        // Enviamos los milisegundos tal cual al ViewModel
+                        // El ViewModel ahora sabrá compararlos correctamente
                         viewModel.fetchHorasDisponibles(selectedMillis)
                         selectedTime = null
                     }

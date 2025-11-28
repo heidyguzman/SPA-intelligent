@@ -15,20 +15,15 @@ import java.util.*
 
 /**
  * Data Transfer Object (DTO) que indica el estado de cada hora.
- * isAvailable = true SOLO si no ha sido reservada por NADIE.
  */
 data class HoraCitaDTO(
     val hora: String,
-    // La hora está disponible si nadie (ni el cliente actual ni otros) la ha reservado.
     val isAvailable: Boolean,
-    // La hora ha sido reservada por el cliente actual (para fines de distinción visual).
     val isBookedByMe: Boolean
 ) {
-    // Es seleccionable si está disponible.
     val isSelectable: Boolean
         get() = isAvailable
 }
-
 
 class AgendarCitaViewModel : ViewModel() {
 
@@ -79,25 +74,34 @@ class AgendarCitaViewModel : ViewModel() {
         }
     }
 
+    // --- CORRECCIÓN CRÍTICA AQUÍ ---
     fun fetchHorasDisponibles(dateMillis: Long) {
         _horasDisponibles.value = emptyList()
         val clienteId = FirebaseAuth.getInstance().currentUser?.uid
 
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }
-        val selectedDate = dateFormat.format(Date(dateMillis))
+        // 1. Formateador para la fecha seleccionada (viene en UTC desde el DatePicker)
+        // Esto genera strings tipo "2025-11-28" basados en lo que el usuario vio en el calendario.
+        val selectedDateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+            timeZone = TimeZone.getTimeZone("UTC")
+        }
+        val selectedDateString = selectedDateFormatter.format(Date(dateMillis))
 
-        // --- LÓGICA DE TIEMPO (CORREGIDA PARA USAR ZONA HORARIA LOCAL) ---
-        val nowInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
-        val selectedCalendarInUtc = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = dateMillis }
+        // 2. Formateador para "HOY" en la zona horaria del dispositivo (Local)
+        val localDateFormatter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault() // Hora local del celular
+        }
+        val todayDateString = localDateFormatter.format(Date())
 
-        val isToday = nowInUtc.get(Calendar.YEAR) == selectedCalendarInUtc.get(Calendar.YEAR) &&
-                nowInUtc.get(Calendar.DAY_OF_YEAR) == selectedCalendarInUtc.get(Calendar.DAY_OF_YEAR)
+        // 3. Comparación segura: ¿La fecha seleccionada (texto) es igual a hoy (texto)?
+        val isToday = selectedDateString == todayDateString
 
+        // 4. Filtrado de horas
         val relevantMasterHorarios = if (isToday) {
-            // Si la fecha seleccionada es hoy, filtramos usando la hora LOCAL del dispositivo.
+            // Si es HOY, obtenemos la hora actual del dispositivo y filtramos
             val currentHourInLocal = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
             masterHorarios.filter { it.substringBefore(':').toInt() > currentHourInLocal }
         } else {
+            // Si NO es hoy (es mañana o futuro), mostramos todos los horarios
             masterHorarios
         }
 
@@ -113,12 +117,13 @@ class AgendarCitaViewModel : ViewModel() {
             return
         }
 
-        Log.d("AgendarCitaViewModel", "Consultando horas para fecha: $selectedDate")
+        Log.d("AgendarCitaViewModel", "Consultando horas para fecha: $selectedDateString (Es hoy: $isToday)")
 
         viewModelScope.launch {
             try {
+                // Consultamos a Firebase usando el String correcto "yyyy-MM-dd"
                 val bookedCitasResult = db.collection("citas")
-                    .whereEqualTo("fecha", selectedDate)
+                    .whereEqualTo("fecha", selectedDateString)
                     .whereIn("estado", listOf("Confirmada", "Pendiente"))
                     .get()
                     .await()
@@ -136,7 +141,7 @@ class AgendarCitaViewModel : ViewModel() {
                 _horasDisponibles.value = horasResult
 
             } catch (e: Exception) {
-                Log.e("AgendarCitaViewModel", "Error al consultar horas para $selectedDate", e)
+                Log.e("AgendarCitaViewModel", "Error al consultar horas para $selectedDateString", e)
                 _horasDisponibles.value = emptyList()
             }
         }
@@ -175,7 +180,8 @@ class AgendarCitaViewModel : ViewModel() {
             try {
                 val userDataUpdate = mapOf("telefonoVerificado" to true, "telefono" to telefono)
                 db.collection("usuarios").document(clienteId).update(userDataUpdate)
-                    .addOnSuccessListener {                        _isPhoneValidatedOnProfile.value = true
+                    .addOnSuccessListener {
+                        _isPhoneValidatedOnProfile.value = true
                         onSuccess()
                     }
                     .addOnFailureListener { e -> onFailure("Error al guardar el teléfono.") }
@@ -190,7 +196,7 @@ class AgendarCitaViewModel : ViewModel() {
         fecha: String,
         hora: String,
         telefono: String,
-        comentarios: String?, // Parámetro nuevo y opcional
+        comentarios: String?,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
     ) {
@@ -213,17 +219,16 @@ class AgendarCitaViewModel : ViewModel() {
                     return@launch
                 }
 
-                // --- MODIFICACIÓN: BUSCAR EL TERAPEUTA ---
                 val terapeutasSnapshot = db.collection("usuarios")
                     .whereEqualTo("terapeuta_servicio", servicioId)
-                    .limit(1) // Asumimos que un servicio es manejado por un solo terapeuta
+                    .limit(1)
                     .get()
                     .await()
 
                 val terapeutaNombre = if (!terapeutasSnapshot.isEmpty) {
                     terapeutasSnapshot.documents[0].getString("nombre")
                 } else {
-                    null // Si no se encuentra un terapeuta, se guarda como nulo
+                    null
                 }
 
                 val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault()).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
@@ -237,7 +242,7 @@ class AgendarCitaViewModel : ViewModel() {
                     "updatedAt" to timestamp,
                     "cliente" to null,
                     "estado" to "Pendiente",
-                    "terapeuta" to terapeutaNombre // <-- AÑADIR TERAPEUTA A LA CITA
+                    "terapeuta" to terapeutaNombre
                 )
 
                 if (!comentarios.isNullOrBlank()) {
